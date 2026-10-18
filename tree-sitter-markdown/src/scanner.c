@@ -1347,7 +1347,7 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             lexer->result_symbol = TOKEN_EOF;
             return true;
         }
-        if (valid_symbols[CODE_FENCE_LINE] && lexer->lookahead != '\n' && lexer->lookahead != '\r' && !lexer->eof(lexer)) {
+        if (valid_symbols[CODE_FENCE_LINE] && lexer->lookahead != '\n' && lexer->lookahead != '\r') {
             return parse_code_fence_line(s, lexer, valid_symbols);
         }
         // We are not matching. This is where the parsing logic for most

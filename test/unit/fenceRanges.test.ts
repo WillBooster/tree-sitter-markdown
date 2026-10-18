@@ -34,6 +34,17 @@ test('closing fence ranges exclude trailing whitespace with and without a final 
       }
     }
     for (const fence of ['```', '~~~']) {
+      for (const whitespace of ['   ', '\t']) {
+        const source = `${fence}\nx\n${whitespace}`;
+        writeFileSync(input, source);
+        const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+          cwd: repositoryRoot,
+          encoding: 'utf8',
+          timeout: 10_000,
+        });
+        expect(tree, source).not.toContain('ERROR');
+        expect(tree, source).toContain(`(code_fence_content [1, 0] - [2, ${whitespace.length}]`);
+      }
       for (const prefix of ['    ', '     ', '\t', 'text ']) {
         for (const newline of ['', '\n']) {
           for (const nested of [false, true]) {
