@@ -1,5 +1,0 @@
-# Corpus inputs end lines with spaces where Markdown reads them (e.g. hard line breaks), so editors must keep them.
-# Kept here because the root .editorconfig is generated.
-[*]
-insert_final_newline = unset
-trim_trailing_whitespace = false
