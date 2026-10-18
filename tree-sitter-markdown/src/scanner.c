@@ -1655,8 +1655,8 @@ static bool list_marker_follows(Scanner *s, TSLexer *lexer, const bool *valid_sy
     Scanner matched_state = *s;
     bool marker_symbols[sizeof(paragraph_interrupt_symbols) / sizeof(bool)];
     memcpy(marker_symbols, paragraph_interrupt_symbols, sizeof(marker_symbols));
-    marker_symbols[SETEXT_H1_UNDERLINE] = false;
-    marker_symbols[SETEXT_H2_UNDERLINE] = false;
+    marker_symbols[SETEXT_H1_UNDERLINE] = valid_symbols[SETEXT_H1_UNDERLINE];
+    marker_symbols[SETEXT_H2_UNDERLINE] = valid_symbols[SETEXT_H2_UNDERLINE];
     marker_symbols[INDENTED_CHUNK_START] = true;
     marker_symbols[NO_INDENTED_CHUNK] = false;
     for (unsigned i = LIST_MARKER_MINUS; i <= LIST_MARKER_DOT_DONT_INTERRUPT; i++) {
