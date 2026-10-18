@@ -1213,8 +1213,8 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
         }
     }
 
-    // check if delimiter row has the same number of cells and at least one pipe
     size_t delimiter_cell_count = 0;
+    bool delimiter_separator = false;
     if (lexer->lookahead == '|') {
         advance(s, lexer);
     }
@@ -1223,6 +1223,7 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
             advance(s, lexer);
         }
         if (lexer->lookahead == '|') {
+            delimiter_separator = true;
             delimiter_cell_count++;
             advance(s, lexer);
             continue;
@@ -1251,20 +1252,20 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
             advance(s, lexer);
         }
         if (lexer->lookahead == '|') {
+            delimiter_separator = true;
             if (!had_one_minus) {
                 delimiter_cell_count++;
             }
             advance(s, lexer);
             continue;
         }
-        if (lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+        if (lexer->lookahead != '\r' && lexer->lookahead != '\n' &&
+            !lexer->eof(lexer)) {
             return false;
-        } else {
-            break;
         }
+        break;
     }
-    // if the cell counts are not equal then this is not a table
-    if (cell_count != delimiter_cell_count) {
+    if (cell_count != delimiter_cell_count || !delimiter_separator) {
         return false;
     }
 
