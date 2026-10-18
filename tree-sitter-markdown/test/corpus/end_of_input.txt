@@ -20,7 +20,8 @@ ATX heading with closing sequence at end of input
   (section
     (atx_heading
       (atx_h2_marker)
-      (inline))))
+      (inline)
+      (atx_heading_closing_sequence))))
 
 ================================================================================
 ATX heading with trailing whitespace at end of input
