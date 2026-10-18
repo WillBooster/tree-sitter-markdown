@@ -983,7 +983,9 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
     }
     char name[11];
     size_t name_length = 0;
-    while (iswalpha((wint_t)lexer->lookahead)) {
+    while (('a' <= lexer->lookahead && lexer->lookahead <= 'z') ||
+           ('A' <= lexer->lookahead && lexer->lookahead <= 'Z') ||
+           (name_length > 0 && '0' <= lexer->lookahead && lexer->lookahead <= '9')) {
         if (name_length < 10) {
             name[name_length++] = (char)towlower((wint_t)lexer->lookahead);
         } else {
