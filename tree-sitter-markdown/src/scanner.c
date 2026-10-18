@@ -1286,6 +1286,8 @@ static bool parse_code_fence_line(Scanner *s, TSLexer *lexer, const bool *valid_
     return true;
 }
 
+static bool pipe_table_row_follows(Scanner *s, TSLexer *lexer);
+
 static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     // A normal tree-sitter rule decided that the current branch is invalid and
     // now "requests" an error to stop the branch
@@ -1498,7 +1500,10 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             if (valid_symbols[PIPE_TABLE_LINE_ENDING]) {
                 interrupt_symbols[PIPE_TABLE_START] = false;
             }
-            if (!lexer->eof(lexer) && !scan(s, lexer, interrupt_symbols)) {
+            bool continues = valid_symbols[PIPE_TABLE_LINE_ENDING] && lexer->lookahead == '|'
+                ? pipe_table_row_follows(s, lexer)
+                : !lexer->eof(lexer) && !scan(s, lexer, interrupt_symbols);
+            if (continues) {
                 s->matched = matched_temp;
                 // If the last line break ended a paragraph and no new block
                 // opened, the last line break should have been a soft line
@@ -1553,6 +1558,12 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         }
     }
     return false;
+}
+
+static bool pipe_table_row_follows(Scanner *s, TSLexer *lexer) {
+    advance(s, lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') advance(s, lexer);
+    return !lexer->eof(lexer) && lexer->lookahead != '\n' && lexer->lookahead != '\r';
 }
 
 void *tree_sitter_markdown_external_scanner_create(void) {

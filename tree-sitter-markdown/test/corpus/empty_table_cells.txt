@@ -5,8 +5,8 @@ Empty body cells retain table rows
 |-|-|-|
 |x||
 ||y|
-|
 |||
+|
 
 --------------------------------------------------------------------------------
 
@@ -17,8 +17,8 @@ Empty body cells retain table rows
       (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
       (pipe_table_row (pipe_table_cell))
       (pipe_table_row (pipe_table_cell))
-      (pipe_table_row)
-      (pipe_table_row))))
+      (pipe_table_row))
+    (paragraph (inline))))
 
 ================================================================================
 An empty quoted table body row can gain cell content

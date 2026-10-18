@@ -30,7 +30,19 @@ test('empty table cells and pipe-only body rows parse and remain editable', () =
       cwd: repositoryRoot,
       timeout: 60_000,
     });
-    for (const row of ['|', '||', '|||', '|x||', '||x|', '|x||y|', String.raw`||x\|y||`, '| |', '|x| |y|']) {
+    for (const row of [
+      '|',
+      '| ',
+      '| \t',
+      '||',
+      '|||',
+      '|x||',
+      '||x|',
+      '|x||y|',
+      String.raw`||x\|y||`,
+      '| |',
+      '|x| |y|',
+    ]) {
       for (const [prefix, continuation] of [
         ['', ''],
         ['> ', '> '],
@@ -41,7 +53,7 @@ test('empty table cells and pipe-only body rows parse and remain editable', () =
             const before = `${prefix}|a|b|c|${newline}${continuation}|-|-|-|${newline}${continuation}`;
             const source = before + row + ending;
             const tree = parse(source);
-            expect([...tree.matchAll(/\(pipe_table_row \[/g)], source).toHaveLength(1);
+            expect([...tree.matchAll(/\(pipe_table_row \[/g)], source).toHaveLength(row.trim() === '|' ? 0 : 1);
             const at = Buffer.byteLength(before + row[0]);
             const changed = before + row[0] + 'v' + row.slice(1) + ending;
             expect(parse(source, [`${at} 0 v`]), source).toBe(parse(changed));
