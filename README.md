@@ -21,6 +21,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Nested `list_item` nodes own their leading container prefixes, so deleting an item does not remove the following item’s indentation.
+- Trailing horizontal padding is outside nonempty `pipe_table_cell` ranges; spaces between words remain inside the cell.
 - Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
 - HTML heading tags `h1` through `h6`, including closing and mixed-case forms, start HTML blocks.
 - Malformed HTML tags such as `<hr/x>` and `<div/ x>` remain paragraph text; a slash immediately after the tag name must complete `/>`.
