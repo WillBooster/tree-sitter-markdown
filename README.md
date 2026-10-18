@@ -31,10 +31,8 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - Ordered lists interrupt a paragraph only when their first marker is `1.` or `1)`.
 - A NUL character is part of the text around it, in both grammars, where upstream's lexers report it as an unexpected
   character in an `ERROR` node.
-- A block that starts with bracketed text holding a backslash escape or a character reference, such as
-  `[\<g> element](/a)` or `[&lt;a&gt;] b`, has an error in both parsers. Upstream's parser reads an `ERROR` that holds the
-  `link_label`, followed by a paragraph. When the rest of the line reads as a single link destination, as in both
-  examples, this parser reads a `link_reference_definition` whose `:` is `MISSING` instead.
+- Bracketed text containing escapes or character references, such as `[\<g> element](/a)` or `[&lt;a&gt;] b`,
+  remains paragraph content when no reference-definition colon follows. Upstream produces a parse error for these forms.
 
 It holds two grammars, as upstream does: `markdown` (in `tree-sitter-markdown/`) parses the block structure of a
 document, and `markdown_inline` (in `tree-sitter-markdown-inline/`) parses the inline content that the block grammar
