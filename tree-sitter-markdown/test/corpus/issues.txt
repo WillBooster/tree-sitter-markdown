@@ -525,6 +525,54 @@ short HTML comment followed by a heading without a final newline
       (inline))))
 
 ================================================================================
+Leading-zero ordered marker 01. interrupts a paragraph
+================================================================================
+paragraph
+01. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph (inline))
+    (list
+      (list_item
+        (list_marker_dot)
+        (paragraph (inline))))))
+
+================================================================================
+Leading-zero ordered marker 001) interrupts a paragraph
+================================================================================
+paragraph
+001) item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph (inline))
+    (list
+      (list_item
+        (list_marker_parenthesis)
+        (paragraph (inline))))))
+
+================================================================================
+Leading-zero ordered marker 000000001. interrupts a paragraph
+================================================================================
+paragraph
+000000001. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph (inline))
+    (list
+      (list_item
+        (list_marker_dot)
+        (paragraph (inline))))))
+
+================================================================================
 Malformed slash in HTML tag <h1/x> remains paragraph text
 ================================================================================
 <h1/x>
@@ -660,3 +708,23 @@ numeric reference labels retain valid definitions
       (link_label
         (numeric_character_reference))
       (link_destination))))
+
+================================================================================
+Leading-zero markers other than one or longer than nine digits do not interrupt
+================================================================================
+paragraph
+02. item
+
+paragraph
+007) item
+
+paragraph
+0000000001. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph (inline))
+    (paragraph (inline))
+    (paragraph (inline))))
