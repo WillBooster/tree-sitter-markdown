@@ -12,6 +12,7 @@
   (atx_h4_marker)
   (atx_h5_marker)
   (atx_h6_marker)
+  (atx_heading_closing_sequence)
   (setext_h1_underline)
   (setext_h2_underline)
 ] @punctuation.special

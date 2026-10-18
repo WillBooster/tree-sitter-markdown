@@ -106,31 +106,37 @@ module.exports = grammar({
         _atx_heading1: $ => prec(1, seq(
             $.atx_h1_marker,
             optional($._atx_heading_content),
+            optional($.atx_heading_closing_sequence),
             choice($._newline, $._eof)
         )),
         _atx_heading2: $ => prec(1, seq(
             $.atx_h2_marker,
             optional($._atx_heading_content),
+            optional($.atx_heading_closing_sequence),
             choice($._newline, $._eof)
         )),
         _atx_heading3: $ => prec(1, seq(
             $.atx_h3_marker,
             optional($._atx_heading_content),
+            optional($.atx_heading_closing_sequence),
             choice($._newline, $._eof)
         )),
         _atx_heading4: $ => prec(1, seq(
             $.atx_h4_marker,
             optional($._atx_heading_content),
+            optional($.atx_heading_closing_sequence),
             choice($._newline, $._eof)
         )),
         _atx_heading5: $ => prec(1, seq(
             $.atx_h5_marker,
             optional($._atx_heading_content),
+            optional($.atx_heading_closing_sequence),
             choice($._newline, $._eof)
         )),
         _atx_heading6: $ => prec(1, seq(
             $.atx_h6_marker,
             optional($._atx_heading_content),
+            optional($.atx_heading_closing_sequence),
             choice($._newline, $._eof)
         )),
         _atx_heading_content: $ => prec(1, seq(
@@ -598,6 +604,7 @@ module.exports = grammar({
         $._pipe_table_start,
         $._pipe_table_line_ending,
         $._code_fence_line,
+        $.atx_heading_closing_sequence,
     ],
     precedences: $ => [
         [$._setext_heading1, $._block],

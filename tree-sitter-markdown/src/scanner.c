@@ -55,6 +55,7 @@ typedef enum {
     PIPE_TABLE_START,
     PIPE_TABLE_LINE_ENDING,
     CODE_FENCE_LINE,
+    ATX_HEADING_CLOSING_SEQUENCE,
 } TokenType;
 
 // Description of a block on the block stack.
@@ -171,7 +172,11 @@ static const bool paragraph_interrupt_symbols[] = {
     true,  // PIPE_TABLE_START,
     false, // PIPE_TABLE_LINE_ENDING,
     false, // CODE_FENCE_LINE,
+    false, // ATX_HEADING_CLOSING_SEQUENCE,
 };
+_Static_assert(sizeof(paragraph_interrupt_symbols) / sizeof(bool) ==
+                   ATX_HEADING_CLOSING_SEQUENCE + 1,
+               "paragraph interruption symbols cover every external token");
 
 // State bitflags used with `Scanner.state`
 
@@ -557,6 +562,15 @@ static bool parse_block_quote(Scanner *s, TSLexer *lexer,
     return false;
 }
 
+static bool parse_atx_heading_closing_sequence(Scanner *s, TSLexer *lexer) {
+    while (lexer->lookahead == '#') advance(s, lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') advance(s, lexer);
+    if (lexer->lookahead != '\n' && lexer->lookahead != '\r' && !lexer->eof(lexer)) return false;
+    mark_end(s, lexer);
+    lexer->result_symbol = ATX_HEADING_CLOSING_SEQUENCE;
+    return true;
+}
+
 static bool parse_atx_heading(Scanner *s, TSLexer *lexer,
                               const bool *valid_symbols) {
     if (valid_symbols[ATX_H1_MARKER] && s->indentation <= 3) {
@@ -700,16 +714,17 @@ static bool parse_ordered_list_marker(Scanner *s, TSLexer *lexer,
         return false;
     }
     size_t digits = 1;
-    bool dont_interrupt = lexer->lookahead != '1';
+    uint32_t start_number = (uint32_t)(lexer->lookahead - '0');
     advance(s, lexer);
     while (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
-        dont_interrupt = true;
-        digits++;
+        if (++digits > 9) return false;
+        start_number = start_number * 10 + (uint32_t)(lexer->lookahead - '0');
         advance(s, lexer);
     }
-    if (digits > 9 || (lexer->lookahead != '.' && lexer->lookahead != ')')) {
+    if (lexer->lookahead != '.' && lexer->lookahead != ')') {
         return false;
     }
+    bool dont_interrupt = start_number != 1;
     bool dot = lexer->lookahead == '.';
     advance(s, lexer);
     uint8_t extra_indentation = 0;
@@ -954,7 +969,9 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
     }
     char name[11];
     size_t name_length = 0;
-    while (iswalpha((wint_t)lexer->lookahead)) {
+    while (('a' <= lexer->lookahead && lexer->lookahead <= 'z') ||
+           ('A' <= lexer->lookahead && lexer->lookahead <= 'Z') ||
+           (name_length > 0 && '0' <= lexer->lookahead && lexer->lookahead <= '9')) {
         if (name_length < 10) {
             name[name_length++] = (char)towlower((wint_t)lexer->lookahead);
         } else {
@@ -991,10 +1008,9 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
         }
         if (!next_symbol_valid && lexer->lookahead == '/') {
             advance(s, lexer);
-            if (lexer->lookahead == '>') {
-                advance(s, lexer);
-                tag_closed = true;
-            }
+            if (lexer->lookahead != '>') return false;
+            advance(s, lexer);
+            tag_closed = true;
         }
         if (next_symbol_valid || tag_closed) {
             // try block 2 names
@@ -1009,7 +1025,7 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
         }
     }
 
-    if (!valid_symbols[HTML_BLOCK_7_START]) {
+    if (!valid_symbols[HTML_BLOCK_7_START] || (starting_slash && tag_closed)) {
         return false;
     }
 
@@ -1277,6 +1293,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         return error(lexer);
     }
 
+    bool heading_closing_candidate = valid_symbols[ATX_HEADING_CLOSING_SEQUENCE] &&
+        (lexer->lookahead == ' ' || lexer->lookahead == '\t');
+
     // Close the inner most block after the next line break as requested. See
     // `$._close_block` in grammar.js
     if (valid_symbols[CLOSE_BLOCK]) {
@@ -1310,6 +1329,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             } else {
                 break;
             }
+        }
+        if (heading_closing_candidate && lexer->lookahead == '#') {
+            return parse_atx_heading_closing_sequence(s, lexer);
         }
         if (lexer->eof(lexer) && valid_symbols[TOKEN_EOF]) {
             lexer->result_symbol = TOKEN_EOF;
