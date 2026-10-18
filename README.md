@@ -19,7 +19,7 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420001`) and load only with that fork's runtime, major version 2: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
-- Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only cells cannot start a table.
+- Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only cells cannot start a table. The delimiter row must also contain a pipe after at least one cell; otherwise it remains ordinary Markdown rather than an erroneous table.
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Trailing horizontal padding is outside nonempty `pipe_table_cell` ranges; spaces between words remain inside the cell.
 - Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
