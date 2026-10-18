@@ -481,7 +481,7 @@ static bool parse_star(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             break;
         }
     }
-    bool line_end = lexer->lookahead == '\n' || lexer->lookahead == '\r';
+    bool line_end = lexer->lookahead == '\n' || lexer->lookahead == '\r' || lexer->eof(lexer);
     bool dont_interrupt = false;
     if (star_count == 1 && line_end) {
         extra_indentation = 1;
@@ -550,7 +550,7 @@ static bool parse_thematic_break_underscore(Scanner *s, TSLexer *lexer,
             break;
         }
     }
-    bool line_end = lexer->lookahead == '\n' || lexer->lookahead == '\r';
+    bool line_end = lexer->lookahead == '\n' || lexer->lookahead == '\r' || lexer->eof(lexer);
     if (underscore_count >= 3 && line_end && valid_symbols[THEMATIC_BREAK]) {
         lexer->result_symbol = THEMATIC_BREAK;
         mark_end(s, lexer);
@@ -587,7 +587,7 @@ static bool parse_atx_heading(Scanner *s, TSLexer *lexer,
         }
         if (level <= 6 &&
             (lexer->lookahead == ' ' || lexer->lookahead == '\t' ||
-             lexer->lookahead == '\n' || lexer->lookahead == '\r')) {
+             lexer->lookahead == '\n' || lexer->lookahead == '\r' || lexer->eof(lexer))) {
             lexer->result_symbol = ATX_H1_MARKER + (level - 1);
             s->indentation = 0;
             mark_end(s, lexer);
@@ -608,7 +608,7 @@ static bool parse_setext_underline(Scanner *s, TSLexer *lexer,
         while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
             advance(s, lexer);
         }
-        if (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+        if (lexer->lookahead == '\n' || lexer->lookahead == '\r' || lexer->eof(lexer)) {
             lexer->result_symbol = SETEXT_H1_UNDERLINE;
             mark_end(s, lexer);
             return true;
@@ -689,7 +689,7 @@ static bool parse_plus(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
                 extra_indentation += advance(s, lexer);
             }
             bool dont_interrupt = false;
-            if (lexer->lookahead == '\r' || lexer->lookahead == '\n') {
+            if (lexer->lookahead == '\r' || lexer->lookahead == '\n' || lexer->eof(lexer)) {
                 extra_indentation = 1;
                 dont_interrupt = true;
             }
@@ -745,7 +745,7 @@ static bool parse_ordered_list_marker(Scanner *s, TSLexer *lexer,
     while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
         extra_indentation += advance(s, lexer);
     }
-    if (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+    if (lexer->lookahead == '\n' || lexer->lookahead == '\r' || lexer->eof(lexer)) {
         extra_indentation = 1;
         dont_interrupt = true;
     }
@@ -804,15 +804,16 @@ static bool parse_minus(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             }
         }
         bool line_end = lexer->lookahead == '\n' || lexer->lookahead == '\r';
+        bool rest_empty = line_end || lexer->eof(lexer);
         bool dont_interrupt = false;
-        if (minus_count == 1 && line_end) {
+        if (minus_count == 1 && rest_empty) {
             extra_indentation = 1;
             dont_interrupt = true;
         }
         dont_interrupt = dont_interrupt && s->matched == s->open_blocks.size;
-        bool thematic_break = minus_count >= 3 && line_end;
+        bool thematic_break = minus_count >= 3 && rest_empty;
         bool underline =
-            minus_count >= 1 && !minus_after_whitespace && line_end &&
+            minus_count >= 1 && !minus_after_whitespace && rest_empty &&
             s->matched ==
                 s->open_blocks
                     .size; // setext heading can not break lazy continuation
