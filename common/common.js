@@ -50,11 +50,11 @@ module.exports.rules = {
 
     _link_destination: $ => choice(
         $.link_destination,
-        seq('<', optional(alias($._angle_link_destination, $.link_destination)), '>'),
+        prec.dynamic(PRECEDENCE_LEVEL_LINK, seq('<', optional(alias($._angle_link_destination, $.link_destination)), '>')),
     ),
-    _angle_link_destination: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, repeat1(choice(
+    _angle_link_destination: $ => repeat1(choice(
         $._text_no_angle, $.backslash_escape, $.entity_reference, $.numeric_character_reference
-    ))),
+    )),
     link_destination: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq(
         choice(
             $._word,
