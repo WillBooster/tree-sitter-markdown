@@ -20,6 +20,7 @@ own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
 - HTML heading tags `h1` through `h6`, including closing and mixed-case forms, start HTML blocks.
+- Malformed HTML tags such as `<hr/x>` and `<div/ x>` remain paragraph text; a slash immediately after the tag name must complete `/>`.
 - HTML declarations end on the first line containing `>`, leaving subsequent Markdown outside the HTML block.
 - Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
