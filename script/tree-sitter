@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 
-# Runs the tree-sitter CLI of WillBooster/tree-sitter at the runtime version that script/runtime-version prints with the
-# given arguments, so that the parser is generated, built, and tested by the generator and runtime this package ships
-# with. The first run downloads that CLI into .tmp/ from the GitHub Release of the version, or builds it when the
-# download fails or the release has no binary that runs here, which takes over 10 minutes on GitHub's Intel macOS
-# runner.
+# Generation and tests must use the generator and runtime version that this package ships with. Bootstrapping from
+# source when a released binary is unavailable takes over 10 minutes on GitHub's Intel macOS runner.
 
 set -euo pipefail
 
