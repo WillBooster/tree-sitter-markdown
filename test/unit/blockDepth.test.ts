@@ -32,6 +32,8 @@ test('deep block containers retain bounded state across edits and undo', () => {
       ['- text', 'list_item'],
       ['```', 'fenced_code_block'],
       ['<!DOCTYPE html>', 'html_block'],
+      ['<!-->', 'html_block'],
+      ['<!--->', 'html_block'],
     ]) {
       const firstLine = `${'> '.repeat(255)}first\n`;
       for (const continuedDepth of [0, 1, 254]) {
