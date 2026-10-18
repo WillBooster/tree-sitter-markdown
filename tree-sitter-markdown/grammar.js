@@ -224,7 +224,7 @@ module.exports = grammar({
         ),
         _html_block_2: $ => build_html_block($, $._html_block_2_start, '-->', true),
         _html_block_3: $ => build_html_block($, $._html_block_3_start, '?>', true),
-        _html_block_4: $ => build_html_block($, $._html_block_4_start, '>', true),
+        _html_block_4: $ => build_html_block($, $._html_block_4_start, '>', true, $._declaration_line),
         _html_block_5: $ => build_html_block($, $._html_block_5_start, ']]>', true),
         _html_block_6: $ => build_html_block(
             $,
@@ -393,6 +393,7 @@ module.exports = grammar({
             optional($.block_continuation)
         ),
         // Some symbols get parsed as single tokens so that html blocks get detected properly
+        _declaration_line: $ => prec.right(repeat1(choice($._word, $._whitespace, common.punctuation_without($, ['>'])))),
         _line: $ => prec.right(repeat1(choice($._word, $._whitespace, common.punctuation_without($, [])))),
         _word: $ => choice(
             new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+'),
@@ -603,11 +604,11 @@ module.exports = grammar({
 // General purpose structure for html blocks. The different kinds mostly work the same but have
 // different openling and closing conditions. Some html blocks may not interrupt a paragraph and
 // have to be marked as such.
-function build_html_block($, open, close, interrupt_paragraph) {
+function build_html_block($, open, close, interrupt_paragraph, line = $._line) {
     return seq(
         open,
         repeat(choice(
-            $._line,
+            line,
             $._newline,
             seq(close, $._close_block),
         )),

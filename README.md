@@ -20,6 +20,7 @@ own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
 - Link reference definitions labelled `[x]` or `[X]` are recognized even with task-list support enabled.
+- HTML declarations end on the first line containing `>`, leaving subsequent Markdown outside the HTML block.
 - Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
 - Final headings, thematic breaks, empty list items, and opening code fences are recognized without a trailing newline.
