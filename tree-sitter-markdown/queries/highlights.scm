@@ -28,6 +28,12 @@
 
 (link_destination) @text.uri
 
+(link_reference_definition
+  [
+    "<"
+    ">"
+  ] @punctuation.delimiter)
+
 (link_label) @text.reference
 
 [
