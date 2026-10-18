@@ -708,3 +708,23 @@ numeric reference labels retain valid definitions
       (link_label
         (numeric_character_reference))
       (link_destination))))
+
+================================================================================
+Leading-zero markers other than one or longer than nine digits do not interrupt
+================================================================================
+paragraph
+02. item
+
+paragraph
+007) item
+
+paragraph
+0000000001. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph (inline))
+    (paragraph (inline))
+    (paragraph (inline))))
