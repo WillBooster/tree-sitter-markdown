@@ -114,7 +114,16 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
-    for (const preceding of [['  ```', '  x', '  ```'], ['  ~~~', '  x', '  ~~~'], ['  > b'], ['  > > b']]) {
+    for (const preceding of [
+      ['  ```', '  x', '  ```'],
+      ['  ~~~', '  x', '  ~~~'],
+      ['  > b'],
+      ['  > > b'],
+      ['', '      code'],
+      ['  <!-- x -->'],
+      ['  <script>x</script>'],
+      ['  <div>', ''],
+    ]) {
       for (const prefix of ['', '> ']) {
         for (const marker of ['-', '+', '*', '1.', '1)']) {
           for (const newline of ['\n', '\r\n']) {
