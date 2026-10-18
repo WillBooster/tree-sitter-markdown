@@ -3429,8 +3429,8 @@ Example 206 - https://github.github.com/gfm/#example-206
       (section
         (atx_heading
           (atx_h1_marker)
-          (inline)
-          (block_continuation))
+          (inline))
+        (block_continuation)
         (paragraph
           (inline
             (block_continuation)))))))
@@ -3451,8 +3451,8 @@ Example 207 - https://github.github.com/gfm/#example-207
       (section
         (atx_heading
           (atx_h1_marker)
-          (inline)
-          (block_continuation))
+          (inline))
+        (block_continuation)
         (paragraph
           (inline
             (block_continuation)))))))
@@ -3473,8 +3473,8 @@ Example 208 - https://github.github.com/gfm/#example-208
       (section
         (atx_heading
           (atx_h1_marker)
-          (inline)
-          (block_continuation))
+          (inline))
+        (block_continuation)
         (paragraph
           (inline
             (block_continuation)))))))
@@ -3510,8 +3510,8 @@ baz
       (section
         (atx_heading
           (atx_h1_marker)
-          (inline)
-          (block_continuation))
+          (inline))
+        (block_continuation)
         (paragraph
           (inline))))))
 
