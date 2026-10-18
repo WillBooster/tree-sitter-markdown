@@ -254,7 +254,9 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
     s->context_pending = lexer->lookahead == '*' || lexer->lookahead == '_' || lexer->lookahead == '~';
     s->num_emphasis_delimiters_left = 0;
     if (!s->no_closing_bracket) {
-        while (!lexer->eof(lexer) && lexer->lookahead != ']') lexer->advance(lexer, false);
+        for (unsigned remaining = 1024; remaining && !lexer->eof(lexer) && lexer->lookahead != ']'; remaining--) {
+            lexer->advance(lexer, false);
+        }
         s->no_closing_bracket = lexer->eof(lexer);
     }
     lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : OPEN_BRACKET;
