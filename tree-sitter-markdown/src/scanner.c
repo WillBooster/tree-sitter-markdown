@@ -1478,8 +1478,14 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
                 }
             }
             bool all_will_be_matched = s->matched == s->open_blocks.size;
-            if (!lexer->eof(lexer) &&
-                !scan(s, lexer, paragraph_interrupt_symbols)) {
+            bool interrupt_symbols[sizeof(paragraph_interrupt_symbols) /
+                                   sizeof(*paragraph_interrupt_symbols)];
+            memcpy(interrupt_symbols, paragraph_interrupt_symbols,
+                   sizeof(interrupt_symbols));
+            if (valid_symbols[PIPE_TABLE_LINE_ENDING]) {
+                interrupt_symbols[PIPE_TABLE_START] = false;
+            }
+            if (!lexer->eof(lexer) && !scan(s, lexer, interrupt_symbols)) {
                 s->matched = matched_temp;
                 // If the last line break ended a paragraph and no new block
                 // opened, the last line break should have been a soft line
