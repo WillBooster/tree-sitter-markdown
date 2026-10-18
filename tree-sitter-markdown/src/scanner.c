@@ -1307,6 +1307,7 @@ static BoundaryResult list_blank_boundary(Scanner *s, TSLexer *lexer,
                                          const bool *valid_symbols, Scanner before_match);
 static bool list_marker_follows(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer);
+static void skip_horizontal_padding(Scanner *s, TSLexer *lexer);
 
 static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     // A normal tree-sitter rule decided that the current branch is invalid and
@@ -1460,6 +1461,7 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
                 break;
             }
         }
+        if (lexer->eof(lexer)) mark_end(s, lexer);
         if (valid_symbols[BLOCK_CLOSE] && partial_success && s->matched < s->open_blocks.size &&
             s->open_blocks.items[s->open_blocks.size - 1] >= LIST_ITEM &&
             s->open_blocks.items[s->open_blocks.size - 1] <= LIST_ITEM_MAX_INDENTATION &&
@@ -1636,11 +1638,18 @@ static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer) {
         probe.indentation = 0;
         probe.column = 0;
         for (size_t i = 0; i < probe.open_blocks.size; i++) {
-            if (!match(&probe, lexer, probe.open_blocks.items[i])) return false;
+            if (!match(&probe, lexer, probe.open_blocks.items[i])) {
+                skip_horizontal_padding(&probe, lexer);
+                return lexer->eof(lexer);
+            }
         }
-        while (lexer->lookahead == ' ' || lexer->lookahead == '\t') advance(&probe, lexer);
+        skip_horizontal_padding(&probe, lexer);
     }
-    return !lexer->eof(lexer);
+    return true;
+}
+
+static void skip_horizontal_padding(Scanner *s, TSLexer *lexer) {
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') advance(s, lexer);
 }
 
 static bool list_marker_follows(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {

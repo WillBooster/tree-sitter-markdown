@@ -73,6 +73,19 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
+    for (const content of ['- a', '> - a', '- a\n  - b']) {
+      for (const blankLines of [1, 2, 3]) {
+        for (const padding of ['', ' ', '  ', '\t', ' \t ']) {
+          const quotePrefix = content.startsWith('>') ? '> ' : '';
+          const source = `${content}\n${`${quotePrefix}\n`.repeat(blankLines)}${quotePrefix}${padding}`;
+          const tree = parse(source);
+          expect(tree, source).not.toMatch(/^    \(paragraph /m);
+          const position = Buffer.byteLength(source);
+          expect(parse(source, [`${position} 0 ` + ' '])).toBe(parse(source + ' '));
+          expect(parse(source, [`${position} 0 ` + ' ', `${position} 1 `])).toBe(tree);
+        }
+      }
+    }
     for (const depth of [1, 3, 16]) {
       for (const blankLines of [1, 2, 32, 1000]) {
         for (const newline of ['\n', '\r\n']) {
