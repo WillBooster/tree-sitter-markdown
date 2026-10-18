@@ -501,19 +501,16 @@ module.exports = grammar({
                 ),
             ),
 
-            pipe_table_cell: $ => prec.right(seq(
-                choice(
-                    $._word,
-                    $._backslash_escape,
-                    common.punctuation_without($, ['|']),
-                ),
-                repeat(choice(
-                    $._word,
-                    $._whitespace,
-                    $._backslash_escape,
-                    common.punctuation_without($, ['|']),
-                )),
-            )),
+            pipe_table_cell: $ => seq(
+                $._pipe_table_cell_content,
+                repeat(seq(optional($._whitespace), $._pipe_table_cell_content)),
+            ),
+
+            _pipe_table_cell_content: $ => choice(
+                $._word,
+                $._backslash_escape,
+                common.punctuation_without($, ['|']),
+            ),
         } : {}),
     },
 
@@ -621,6 +618,7 @@ module.exports = grammar({
         [$.indented_code_block, $._block],
     ],
     conflicts: $ => [
+        ...(common.EXTENSION_PIPE_TABLE ? [[$.pipe_table_cell]] : []),
         [$.link_reference_definition],
         [$.link_label, $._paragraph_line],
         [$.link_label, $._word],
