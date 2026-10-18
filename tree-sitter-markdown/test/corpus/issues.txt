@@ -279,3 +279,108 @@ A paragraph,
           (inline
             (block_continuation)
             (block_continuation)))))))
+
+================================================================================
+#266 - Closing code fence at the end of input without a line ending
+================================================================================
+```sh
+x
+```
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (info_string
+        (language))
+      (block_continuation)
+      (code_fence_content
+        (block_continuation))
+      (fenced_code_block_delimiter))))
+
+================================================================================
+#266 - Closing backtick fence with trailing spaces at EOF
+================================================================================
+```sh
+x
+```   
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (info_string
+        (language))
+      (block_continuation)
+      (code_fence_content
+        (block_continuation))
+      (fenced_code_block_delimiter))))
+
+================================================================================
+#266 - Closing tilde fence with trailing tab at EOF
+================================================================================
+~~~sh
+x
+~~~	
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (info_string
+        (language))
+      (block_continuation)
+      (code_fence_content
+        (block_continuation))
+      (fenced_code_block_delimiter))))
+
+================================================================================
+Over-indented backtick fence at EOF
+================================================================================
+```
+x
+    ```
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (block_continuation)
+      (code_fence_content
+        (block_continuation)))))
+
+================================================================================
+Over-indented tilde fence at EOF
+================================================================================
+~~~
+x
+	~~~
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (block_continuation)
+      (code_fence_content
+        (block_continuation)))))
+
+================================================================================
+Midline fence at EOF
+================================================================================
+```
+x
+text ```
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (block_continuation)
+      (code_fence_content
+        (block_continuation)))))
