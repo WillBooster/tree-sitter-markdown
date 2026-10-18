@@ -11,8 +11,9 @@ grammar=$1
 name=$(node -e 'console.log(require(`./${process.argv[1]}/src/grammar.json`).name)' "$grammar")
 
 mkdir -p .tmp/fuzz
-# Runs in the same checkout may overlap, so each builds the parser into a file of its own.
-parser=$(mktemp ".tmp/fuzz/$name.XXXXXX")
+# Runs in the same checkout may overlap, so each builds the parser into a file of its own. The path is absolute because
+# the fuzzer, and so the trap, runs in the grammar directory.
+parser=$(mktemp "$PWD/.tmp/fuzz/$name.XXXXXX")
 trap 'rm -f "$parser"' EXIT
 script/tree-sitter build -o "$parser" "$grammar"
 
@@ -33,4 +34,4 @@ if [[ $grammar == tree-sitter-markdown-inline ]]; then
   excluded+=(" - Example (373|399|446|447|449|450|458|459|461|462) - [^ ]+\$")
 fi
 cd "$grammar"
-../script/tree-sitter fuzz --lib-path "../$parser" --lang-name "$name" --exclude "$(IFS='|'; echo "${excluded[*]}")"
+../script/tree-sitter fuzz --lib-path "$parser" --lang-name "$name" --exclude "$(IFS='|'; echo "${excluded[*]}")"
