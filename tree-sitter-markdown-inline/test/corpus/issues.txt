@@ -104,3 +104,16 @@ normal text (or even nothing) `[index][]`
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+Empty angle destination retains inline link precedence after bracketed text
+================================================================================
+[ref][lab](<>)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text))
+  (inline_link
+    (link_text)))

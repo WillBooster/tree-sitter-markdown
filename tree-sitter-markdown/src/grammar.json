@@ -125,63 +125,63 @@
           "name": "link_destination"
         },
         {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "STRING",
-              "value": "<"
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_angle_link_destination"
+          "type": "PREC_DYNAMIC",
+          "value": 10,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "STRING",
+                "value": "<"
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_angle_link_destination"
+                    },
+                    "named": true,
+                    "value": "link_destination"
                   },
-                  "named": true,
-                  "value": "link_destination"
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            },
-            {
-              "type": "STRING",
-              "value": ">"
-            }
-          ]
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              },
+              {
+                "type": "STRING",
+                "value": ">"
+              }
+            ]
+          }
         }
       ]
     },
     "_angle_link_destination": {
-      "type": "PREC_DYNAMIC",
-      "value": 10,
+      "type": "REPEAT1",
       "content": {
-        "type": "REPEAT1",
-        "content": {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_text_no_angle"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "backslash_escape"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "entity_reference"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "numeric_character_reference"
-            }
-          ]
-        }
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "_text_no_angle"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "backslash_escape"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "entity_reference"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "numeric_character_reference"
+          }
+        ]
       }
     },
     "link_destination": {
