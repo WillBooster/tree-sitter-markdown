@@ -339,20 +339,52 @@ impl Default for MarkdownParser {
 }
 
 impl MarkdownParser {
-    /// Parse a slice of UTF8 text.
+    /// Parse UTF-8 text supplied in chunks by a callback.
     ///
-    /// # Arguments:
-    /// * `text` The UTF8-encoded text to parse.
-    /// * `old_tree` A previous syntax tree parsed from the same document.
-    ///   If the text of the document has changed since `old_tree` was
-    ///   created, then you must edit `old_tree` to match the new text using
-    ///   [MarkdownTree::edit].
-    /// * `options` The [options][MarkdownParseOptions] used for parsing.
-    ///   Use `MarkdownParseOptions::default()` if you don't need to pass any options.
+    /// Unlike [`Self::parse`], this accepts input stored outside a contiguous slice,
+    /// such as a rope or a seekable reader. The callback receives an absolute byte
+    /// offset and its [`Point`] in the document. Return bytes beginning exactly at
+    /// that offset, or an empty chunk at end of input. Any nonempty chunk length
+    /// is allowed, including a chunk ending inside a UTF-8 character. Use byte
+    /// slices rather than indexing a Rust `str` at arbitrary offsets. Points use
+    /// zero-based rows and byte columns.
     ///
-    /// Returns a [MarkdownTree] if parsing succeeded, or `None` if:
-    ///  * The timeout set with [tree_sitter::Parser::set_timeout_micros] expired
-    ///  * The cancellation flag set with [tree_sitter::Parser::set_cancellation_flag] was flipped
+    /// Requests may revisit earlier offsets: block and inline parsing read the same
+    /// document separately. A streaming reader must therefore support seeking or
+    /// retain previously read input. The document must remain unchanged throughout
+    /// the call. This follows [`Parser::parse_with_options`]'s input contract.
+    ///
+    /// If `old_tree` was parsed before editing the document, first apply the same
+    /// edits with [`MarkdownTree::edit`]. `options` supplies separate progress
+    /// callbacks for block and inline parsing; either may interrupt parsing.
+    /// Returns `None` if parsing cannot complete.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::io::{Cursor, Read, Seek, SeekFrom};
+    /// use tree_sitter_md::{MarkdownParseOptions, MarkdownParser};
+    ///
+    /// let mut input = Cursor::new("# Café\n\nSome *text*.\n".as_bytes());
+    /// let mut parser = MarkdownParser::default();
+    /// let tree = parser.parse_with_options(
+    ///     &mut |offset, _| {
+    ///         input.seek(SeekFrom::Start(offset as u64)).unwrap();
+    ///         let mut chunk = vec![0; 6];
+    ///         let length = input.read(&mut chunk).unwrap();
+    ///         chunk.truncate(length);
+    ///         chunk
+    ///     },
+    ///     None,
+    ///     MarkdownParseOptions::default(),
+    /// ).unwrap();
+    /// assert!(!tree.block_tree().root_node().has_error());
+    /// assert_eq!(tree.inline_trees().len(), 2);
+    /// assert_eq!(
+    ///     tree.inline_trees()[1].root_node().named_child(0).unwrap().kind(),
+    ///     "emphasis",
+    /// );
+    /// ```
     pub fn parse_with_options<T: AsRef<[u8]>, F: FnMut(usize, Point) -> T>(
         &mut self,
         callback: &mut F,
@@ -455,9 +487,7 @@ impl MarkdownParser {
     ///   created, then you must edit `old_tree` to match the new text using
     ///   [MarkdownTree::edit].
     ///
-    /// Returns a [MarkdownTree] if parsing succeeded, or `None` if:
-    ///  * The timeout set with [tree_sitter::Parser::set_timeout_micros] expired
-    ///  * The cancellation flag set with [tree_sitter::Parser::set_cancellation_flag] was flipped
+    /// Returns a [`MarkdownTree`] if parsing completes, or `None` otherwise.
     pub fn parse(&mut self, text: &[u8], old_tree: Option<&MarkdownTree>) -> Option<MarkdownTree> {
         self.parse_with_options(
             &mut |byte, _| &text[byte..],
