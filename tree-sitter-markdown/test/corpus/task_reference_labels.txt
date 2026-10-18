@@ -1,0 +1,48 @@
+================================================================================
+checked task marker spelling is a reference label outside a list
+================================================================================
+[x]: /url
+---
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (link_reference_definition
+      (link_label)
+      (link_destination))
+    (thematic_break)))
+
+================================================================================
+uppercase task marker spelling is a reference label with a title
+================================================================================
+[X]: /url "title"
+
+[X]
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (link_reference_definition
+      (link_label)
+      (link_destination)
+      (link_title))
+    (paragraph
+      (inline))))
+
+================================================================================
+a reference definition inside a list is not a task item
+================================================================================
+- [x]: /url
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (list
+      (list_item
+        (list_marker_minus)
+        (link_reference_definition
+          (link_label)
+          (link_destination))))))

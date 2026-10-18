@@ -68,43 +68,52 @@
       "name": "_numeric_character_reference"
     },
     "link_label": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "STRING",
-          "value": "["
-        },
-        {
-          "type": "REPEAT1",
-          "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "_text_inline_no_link"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "backslash_escape"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "entity_reference"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "numeric_character_reference"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "_soft_line_break"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "["
+            },
+            {
+              "type": "REPEAT1",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "_text_inline_no_link"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "backslash_escape"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "entity_reference"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "numeric_character_reference"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "_soft_line_break"
+                  }
+                ]
               }
-            ]
-          }
+            },
+            {
+              "type": "STRING",
+              "value": "]"
+            }
+          ]
         },
         {
-          "type": "STRING",
-          "value": "]"
+          "type": "PATTERN",
+          "value": "\\[[xX]\\]"
         }
       ]
     },
@@ -5598,6 +5607,10 @@
     [
       "link_label",
       "_paragraph_line"
+    ],
+    [
+      "link_label",
+      "_word"
     ],
     [
       "link_reference_definition",
