@@ -161,6 +161,11 @@
     }
   },
   {
+    "type": "entity_reference",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "fenced_code_block",
     "named": true,
     "fields": {},
@@ -510,6 +515,11 @@
   },
   {
     "type": "list_marker_star",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "numeric_character_reference",
     "named": true,
     "fields": {}
   },
@@ -911,19 +921,11 @@
     "named": true
   },
   {
-    "type": "entity_reference",
-    "named": true
-  },
-  {
     "type": "fenced_code_block_delimiter",
     "named": true
   },
   {
     "type": "minus_metadata",
-    "named": true
-  },
-  {
-    "type": "numeric_character_reference",
     "named": true
   },
   {
