@@ -103,32 +103,32 @@ module.exports = grammar({
         _atx_heading1: $ => prec(1, seq(
             $.atx_h1_marker,
             optional($._atx_heading_content),
-            $._newline
+            choice($._newline, $._eof)
         )),
         _atx_heading2: $ => prec(1, seq(
             $.atx_h2_marker,
             optional($._atx_heading_content),
-            $._newline
+            choice($._newline, $._eof)
         )),
         _atx_heading3: $ => prec(1, seq(
             $.atx_h3_marker,
             optional($._atx_heading_content),
-            $._newline
+            choice($._newline, $._eof)
         )),
         _atx_heading4: $ => prec(1, seq(
             $.atx_h4_marker,
             optional($._atx_heading_content),
-            $._newline
+            choice($._newline, $._eof)
         )),
         _atx_heading5: $ => prec(1, seq(
             $.atx_h5_marker,
             optional($._atx_heading_content),
-            $._newline
+            choice($._newline, $._eof)
         )),
         _atx_heading6: $ => prec(1, seq(
             $.atx_h6_marker,
             optional($._atx_heading_content),
-            $._newline
+            choice($._newline, $._eof)
         )),
         _atx_heading_content: $ => prec(1, seq(
             optional($._whitespace),
@@ -167,7 +167,7 @@ module.exports = grammar({
                 alias($._fenced_code_block_start_backtick, $.fenced_code_block_delimiter),
                 optional($._whitespace),
                 optional($.info_string),
-                $._newline,
+                choice($._newline, $._eof),
                 optional($.code_fence_content),
                 optional(seq(alias($._fenced_code_block_end_backtick, $.fenced_code_block_delimiter), $._close_block, choice($._newline, $._eof))),
                 $._block_close,
@@ -176,7 +176,7 @@ module.exports = grammar({
                 alias($._fenced_code_block_start_tilde, $.fenced_code_block_delimiter),
                 optional($._whitespace),
                 optional($.info_string),
-                $._newline,
+                choice($._newline, $._eof),
                 optional($.code_fence_content),
                 optional(seq(alias($._fenced_code_block_end_tilde, $.fenced_code_block_delimiter), $._close_block, choice($._newline, $._eof))),
                 $._block_close,
@@ -363,6 +363,7 @@ module.exports = grammar({
         ),
         // List items are closed after two consecutive blank lines
         _list_item_content: $ => choice(
+            $._eof,
             prec(1, seq(
                 $._blank_line,
                 $._blank_line,
