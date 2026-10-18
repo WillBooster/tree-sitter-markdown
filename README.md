@@ -19,6 +19,7 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.0.0 or later: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
+- Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Trailing horizontal padding is outside nonempty `pipe_table_cell` ranges; spaces between words remain inside the cell.
 - Empty pipe-table body cells parse without missing nodes. Zero-content cells retain their separators without a named cell node; a line containing only one pipe ends the table.
 - Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
