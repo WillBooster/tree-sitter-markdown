@@ -700,16 +700,17 @@ static bool parse_ordered_list_marker(Scanner *s, TSLexer *lexer,
         return false;
     }
     size_t digits = 1;
-    bool dont_interrupt = lexer->lookahead != '1';
+    uint32_t start_number = (uint32_t)(lexer->lookahead - '0');
     advance(s, lexer);
     while (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
-        dont_interrupt = true;
-        digits++;
+        if (++digits > 9) return false;
+        start_number = start_number * 10 + (uint32_t)(lexer->lookahead - '0');
         advance(s, lexer);
     }
-    if (digits > 9 || (lexer->lookahead != '.' && lexer->lookahead != ')')) {
+    if (lexer->lookahead != '.' && lexer->lookahead != ')') {
         return false;
     }
+    bool dont_interrupt = start_number != 1;
     bool dot = lexer->lookahead == '.';
     advance(s, lexer);
     uint8_t extra_indentation = 0;
