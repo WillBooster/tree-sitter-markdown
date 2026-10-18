@@ -4500,7 +4500,7 @@
     },
     "_digits": {
       "type": "PATTERN",
-      "value": "[0-9]+(_+[0-9]+)*"
+      "value": "[0-9]+(_+[^!-/:-@\\[-`\\{-~ \t\\n\\r]+)*"
     },
     "_soft_line_break": {
       "type": "SEQ",
