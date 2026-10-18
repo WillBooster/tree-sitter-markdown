@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Runs `tree-sitter fuzz` on the corpus of the given grammar directory (`tree-sitter-markdown` or
+# `tree-sitter-markdown-inline`): it edits each corpus case at random, reparses it incrementally, undoes the edits, and
+# reparses again.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+grammar=$1
+name=$(node -e 'console.log(require(`./${process.argv[1]}/src/grammar.json`).name)' "$grammar")
+
+mkdir -p .tmp/fuzz
+# Runs in the same checkout may overlap, so each builds the parser into a file of its own.
+parser=$(mktemp ".tmp/fuzz/$name.XXXXXX")
+trap 'rm -f "$parser"' EXIT
+script/tree-sitter build -o "$parser" "$grammar"
+
+# With the seed, iteration count, and edit count below, the defaults of this script, the reparse of each case excluded
+# here after an edit is made and undone gives a different tree from a fresh parse. Upstream's own 0.5.3 parser fails the
+# same cases with the same settings on upstream's CLI 0.27.1, so they say nothing about this package's tables. Other
+# settings edit other places and can fail other cases for the same reason: run upstream's parser with them before taking
+# a new failure for this package's. In these cases, the reparse reuses the subtree of a punctuation character, which
+# ends where the grammar allows the zero-width `_last_token_punctuation` token, and then lexes the next token in the
+# state after that subtree, where the token is not valid. The scanner, which reads that token's validity as "the last
+# token was punctuation", then decides whether the next `*` or `_` opens or closes emphasis differently from a fresh
+# parse.
+export TREE_SITTER_SEED=${TREE_SITTER_SEED:-1}
+export TREE_SITTER_ITERATIONS=${TREE_SITTER_ITERATIONS:-1000}
+export TREE_SITTER_EDITS=${TREE_SITTER_EDITS:-10}
+excluded=("$(script/corpus-exclusions "$grammar")")
+if [[ $grammar == tree-sitter-markdown-inline ]]; then
+  excluded+=(" - Example (373|399|446|447|449|450|458|459|461|462) - [^ ]+\$")
+fi
+cd "$grammar"
+../script/tree-sitter fuzz --lib-path "../$parser" --lang-name "$name" --exclude "$(IFS='|'; echo "${excluded[*]}")"

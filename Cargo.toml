@@ -1,52 +1,51 @@
 [package]
-name = "tree-sitter-md"
-description = "Markdown grammar for tree-sitter"
-version = "0.5.3"
-authors = ["MDeiml"]
-license = "MIT"
-readme = "README.md"
-keywords = ["incremental", "parsing", "tree-sitter", "markdown"]
-categories = ["parsing", "text-editors"]
-repository = "https://github.com/tree-sitter-grammars/tree-sitter-markdown"
-edition = "2021"
+authors = ["WillBooster Inc."]
 autoexamples = false
+categories = ["parser-implementations", "parsing", "text-editors"]
+description = "Markdown grammar for tree-sitter"
+edition = "2024"
+keywords = ["incremental", "parsing", "tree-sitter", "markdown"]
+license = "MIT"
+name = "willbooster-tree-sitter-md"
+readme = "README.md"
+repository = "https://github.com/WillBooster/tree-sitter-markdown"
+version = "0.0.0"
 
 build = "bindings/rust/build.rs"
 include = [
-  "bindings/rust/*",
-  "tree-sitter-markdown/src/*",
-  "tree-sitter-markdown-inline/src/*",
-  "tree-sitter-markdown/grammar.js",
-  "tree-sitter-markdown-inline/grammar.js",
-  "tree-sitter-markdown/queries/*",
-  "tree-sitter-markdown-inline/queries/*",
-  "common/grammar.js",
-  "common/html_entities.json",
+  "/bindings/rust/*",
+  "/common/common.js",
+  "/common/html_entities.json",
+  "/tree-sitter-markdown/grammar.js",
+  "/tree-sitter-markdown/queries/*",
+  "/tree-sitter-markdown/src/*",
+  "!/tree-sitter-markdown/src/.gitattributes",
+  "!/tree-sitter-markdown/src/.editorconfig",
+  "/tree-sitter-markdown-inline/grammar.js",
+  "/tree-sitter-markdown-inline/queries/*",
+  "/tree-sitter-markdown-inline/src/*",
+  "!/tree-sitter-markdown-inline/src/.gitattributes",
+  "!/tree-sitter-markdown-inline/src/.editorconfig",
+  "/tree-sitter.json",
+  "/LICENSE",
 ]
 
 [features]
 parser = ["dep:tree-sitter"]
 
 [lib]
+name = "tree_sitter_md"
 path = "bindings/rust/lib.rs"
 
 [dependencies]
-tree-sitter-language = "0.1"
-tree-sitter = { version = "0.26", optional = true }
-
-[dev-dependencies]
-tree-sitter = "0.26.3"
+tree-sitter = { package = "willbooster-tree-sitter", version = "2.0.0", optional = true }
+tree-sitter-language = "0.1.6"
 
 [build-dependencies]
 cc = "1.2"
 
-[[bin]]
-name = "benchmark"
-path = "bindings/rust/benchmark.rs"
-required-features = ["parser"]
-
-[profile.release]
-debug = true
+[dev-dependencies]
+tree-sitter = { package = "willbooster-tree-sitter", version = "2.0.0" }
 
 [package.metadata.docs.rs]
 features = ["parser"]

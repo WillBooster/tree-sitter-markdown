@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Runs `tree-sitter test` on the corpus of the given grammar directory (`tree-sitter-markdown` or
+# `tree-sitter-markdown-inline`), which holds a corpus of its own, with the remaining arguments (e.g. `--wasm`).
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+exclude=$(script/corpus-exclusions "$1")
+cd "$1"
+shift
+exec ../script/tree-sitter test --exclude "$exclude" "$@"
