@@ -52,6 +52,24 @@ test('a blank line closes an HTML block within its surrounding container', () =>
               const kind = following === 'after' ? 'paragraph' : 'atx_heading';
               expect([...tree.matchAll(new RegExp(`\\(${kind} \\[`, 'g'))], source).toHaveLength(1);
               expect([...tree.matchAll(/\(html_block \[/g)], source).toHaveLength(1);
+              const ancestors: { depth: number; kind: string }[] = [];
+              for (const line of tree.split('\n')) {
+                const node = line.match(/^( *)(?:\w+: )?\((\w+) \[/);
+                if (!node) continue;
+                const depth = node[1]!.length;
+                while (ancestors.length > 0 && ancestors.at(-1)!.depth >= depth) ancestors.pop();
+                if (node[2] === kind) {
+                  expect(
+                    ancestors.filter((parent) => parent.kind === 'block_quote'),
+                    source
+                  ).toHaveLength([...prefix.matchAll(/>/g)].length);
+                  expect(
+                    ancestors.filter((parent) => parent.kind === 'list_item'),
+                    source
+                  ).toHaveLength(prefix === '- ' ? 1 : 0);
+                }
+                ancestors.push({ depth, kind: node[2]! });
+              }
               const removed = first + rest;
               const fresh = parse(removed);
               expect(fresh, source).not.toMatch(/\((paragraph|atx_heading) \[/);
