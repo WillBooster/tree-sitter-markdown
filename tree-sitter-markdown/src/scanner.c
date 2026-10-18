@@ -1213,7 +1213,6 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
         }
     }
 
-    // check if delimiter row has the same number of cells and at least one pipe
     size_t delimiter_cell_count = 0;
     if (lexer->lookahead == '|') {
         advance(s, lexer);
@@ -1222,48 +1221,36 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
         while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
             advance(s, lexer);
         }
-        if (lexer->lookahead == '|') {
-            delimiter_cell_count++;
-            advance(s, lexer);
-            continue;
-        }
         if (lexer->lookahead == ':') {
             advance(s, lexer);
-            if (lexer->lookahead != '-') {
-                return false;
-            }
         }
-        bool had_one_minus = false;
-        while (lexer->lookahead == '-') {
-            had_one_minus = true;
+        if (lexer->lookahead != '-') {
+            return false;
+        }
+        do {
             advance(s, lexer);
-        }
-        if (had_one_minus) {
-            delimiter_cell_count++;
-        }
+        } while (lexer->lookahead == '-');
+        delimiter_cell_count++;
         if (lexer->lookahead == ':') {
-            if (!had_one_minus) {
-                return false;
-            }
             advance(s, lexer);
         }
         while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
             advance(s, lexer);
         }
         if (lexer->lookahead == '|') {
-            if (!had_one_minus) {
-                delimiter_cell_count++;
-            }
             advance(s, lexer);
-            continue;
+            while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+                advance(s, lexer);
+            }
+            if (lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+                continue;
+            }
         }
         if (lexer->lookahead != '\r' && lexer->lookahead != '\n') {
             return false;
-        } else {
-            break;
         }
+        break;
     }
-    // if the cell counts are not equal then this is not a table
     if (cell_count != delimiter_cell_count) {
         return false;
     }
