@@ -173,7 +173,7 @@ static bool parse_emphasis(Scanner *s, TSLexer *lexer, const bool *valid_symbols
             return true;
         }
     }
-    if (delimiter != '~' && valid_symbols[LITERAL_EMPHASIS_RUN]) {
+    if (valid_symbols[LITERAL_EMPHASIS_RUN]) {
         s->num_emphasis_delimiters_left = 0;
         lexer->mark_end(lexer);
         lexer->result_symbol = LITERAL_EMPHASIS_RUN;
@@ -193,7 +193,7 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     const TokenType contexts[] = {LAST_TOKEN_WHITESPACE, LAST_TOKEN_PUNCTUATION};
     for (unsigned i = 0; i < 2; i++) {
         if ((!s->context_pending || s->context != contexts[i]) &&
-            valid_symbols[contexts[i]] &&
+            valid_symbols[contexts[i]] && valid_symbols[LITERAL_EMPHASIS_RUN] &&
             (lexer->lookahead == '*' || lexer->lookahead == '_' || lexer->lookahead == '~')) {
             s->context = contexts[i];
             s->context_pending = true;

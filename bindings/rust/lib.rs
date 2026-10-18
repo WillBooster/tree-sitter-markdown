@@ -94,6 +94,7 @@ mod tests {
         for source in [
             "a_*_*",
             "a_~_~",
+            "~a ~ b~",
             "*[a **b**](u)*",
             "\\*_a_",
             "`x`_a_",

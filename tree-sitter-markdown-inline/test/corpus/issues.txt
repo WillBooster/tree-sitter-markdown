@@ -128,3 +128,15 @@ a_~_~
   (strikethrough
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+Rejected tildes do not retain whitespace context
+================================================================================
+~a ~ b~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strikethrough
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
