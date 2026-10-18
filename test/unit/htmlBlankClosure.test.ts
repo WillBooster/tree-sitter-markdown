@@ -10,7 +10,11 @@ test('a blank line closes an HTML block within its surrounding container', () =>
   const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/html-blank-close-'));
   const library = path.join(directory, 'markdown.dylib');
   const input = path.join(directory, 'input.md');
-  const cli = path.join(repositoryRoot, 'script/tree-sitter');
+  const cli = execFileSync(path.join(repositoryRoot, 'script/tree-sitter'), ['--print-path'], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+    timeout: 60_000,
+  }).trim();
   const parse = (source: string, edits: string[] = []): string => {
     writeFileSync(input, source);
     const tree = execFileSync(
