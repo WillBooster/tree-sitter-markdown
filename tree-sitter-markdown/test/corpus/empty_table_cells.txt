@@ -42,3 +42,35 @@ An empty quoted table body row can gain cell content
         (pipe_table_row)
         (block_continuation)
         (pipe_table_row (pipe_table_cell))))))
+
+================================================================================
+A table header can contain only empty cells
+================================================================================
+|||||
+|-|-|-|-|
+||
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (pipe_table
+      (pipe_table_header)
+      (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell) (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
+      (pipe_table_row))))
+
+================================================================================
+Empty header cells retain following content
+================================================================================
+||a|
+|-|-|
+||
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (pipe_table
+      (pipe_table_header (pipe_table_cell))
+      (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
+      (pipe_table_row))))

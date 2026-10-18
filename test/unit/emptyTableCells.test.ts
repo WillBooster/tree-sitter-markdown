@@ -66,6 +66,29 @@ test('empty table cells and pipe-only body rows parse and remain editable', () =
         }
       }
     }
+    for (const [header, delimiter, cells] of [
+      ['|||||', '|-|-|-|-|', 0],
+      ['||a|', '|-|-|', 1],
+    ] as const) {
+      for (const [prefix, continuation] of [
+        ['', ''],
+        ['> ', '> '],
+        ['- ', '  '],
+      ]) {
+        for (const newline of ['\n', '\r\n']) {
+          for (const ending of ['', newline]) {
+            const source = `${prefix}${header}${newline}${continuation}${delimiter}${newline}${continuation}||${ending}`;
+            const tree = parse(source);
+            expect([...tree.matchAll(/\(pipe_table_header \[/g)], source).toHaveLength(1);
+            expect([...tree.matchAll(/\(pipe_table_cell \[/g)], source).toHaveLength(cells);
+            const at = Buffer.byteLength(prefix + '|');
+            const changed = source.slice(0, at) + 'v' + source.slice(at);
+            expect(parse(source, [`${at} 0 v`]), source).toBe(parse(changed));
+            expect(parse(source, [`${at} 0 v`, `${at} 1 `]), source).toBe(tree);
+          }
+        }
+      }
+    }
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

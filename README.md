@@ -19,13 +19,13 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420001`) and load only with that fork's runtime, major version 2: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
-- Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only cells cannot start a table.
+- Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only delimiter cells cannot start a table.
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Empty list items followed by multiple blank lines remain in the same list as a following item with the same marker type, matching CommonMark.
 - Fenced code blocks and block quotes end before a following line’s container prefix; that prefix is outside the closing node, including outside lists.
 - Nested `list_item` nodes own their leading container prefixes, so deleting an item does not remove the following item’s indentation.
 - Trailing horizontal padding is outside nonempty `pipe_table_cell` ranges; spaces between words remain inside the cell.
-- Empty pipe-table body cells parse without missing nodes. Zero-content cells retain their separators without a named cell node; a line containing only one pipe ends the table.
+- Empty pipe-table header and body cells parse without missing nodes. Zero-content cells retain their separators without a named cell node, so a header can have no cell children; a body line containing only one pipe ends the table.
 - Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
 - HTML heading tags `h1` through `h6`, including closing and mixed-case forms, start HTML blocks.
 - Malformed HTML tags such as `<hr/x>` and `<div/ x>` remain paragraph text; a slash immediately after the tag name must complete `/>`.
