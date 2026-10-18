@@ -20,6 +20,7 @@ own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
 - Underscore emphasis can end immediately after a digit, as in `_hello1_`.
+- Ordered lists interrupt a paragraph only when their first marker is `1.` or `1)`.
 - A NUL character is part of the text around it, in both grammars, where upstream's lexers report it as an unexpected
   character in an `ERROR` node.
 - A block that starts with bracketed text holding a backslash escape or a character reference, such as
