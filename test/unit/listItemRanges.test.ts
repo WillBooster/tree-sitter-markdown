@@ -54,6 +54,25 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
+    for (const first of ['-', '+', '*', '1.', '1)']) {
+      for (const second of ['-', '+', '*', '1.', '1)']) {
+        for (const container of ['> ', '> > ', '  ']) {
+          const heading = container === '  ' ? '- outer\n' : '';
+          const source = `${heading}${container}${first} a\n${container}${second} b\n`;
+          const tree = parse(source);
+          const expectedLists = (first === second ? 1 : 2) + (heading ? 1 : 0);
+          expect([...tree.matchAll(/\(list \[/g)], source).toHaveLength(expectedLists);
+          const row = heading ? 2 : 1;
+          expect(tree, source).toContain(`(list_item [${row}, 0]`);
+          const position = Buffer.byteLength(`${heading}${container}${first} a\n${container}`);
+          const changed = `${heading}${container}${first} a\n${container}${first} b\n`;
+          expect(parse(source, [`${position} ${second.length} ${first}`])).toBe(parse(changed));
+          expect(
+            parse(source, [`${position} ${second.length} ${first}`, `${position} ${first.length} ${second}`])
+          ).toBe(tree);
+        }
+      }
+    }
     for (const depth of [1, 3, 16]) {
       for (const blankLines of [1, 2, 32, 1000]) {
         for (const newline of ['\n', '\r\n']) {

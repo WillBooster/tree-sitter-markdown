@@ -338,35 +338,35 @@ module.exports = grammar({
         list_marker_dot: $ => choice($._list_marker_dot, $._list_marker_dot_dont_interrupt),
         list_marker_parenthesis: $ => choice($._list_marker_parenthesis, $._list_marker_parenthesis_dont_interrupt),
         _list_item_plus: $ => seq(
-            optional(alias($._list_item_prefix, $.block_continuation)),
+            optional(alias($._list_item_prefix_plus, $.block_continuation)),
             $.list_marker_plus,
             optional($.block_continuation),
             $._list_item_content,
             $._block_close
         ),
         _list_item_minus: $ => seq(
-            optional(alias($._list_item_prefix, $.block_continuation)),
+            optional(alias($._list_item_prefix_minus, $.block_continuation)),
             $.list_marker_minus,
             optional($.block_continuation),
             $._list_item_content,
             $._block_close
         ),
         _list_item_star: $ => seq(
-            optional(alias($._list_item_prefix, $.block_continuation)),
+            optional(alias($._list_item_prefix_star, $.block_continuation)),
             $.list_marker_star,
             optional($.block_continuation),
             $._list_item_content,
             $._block_close
         ),
         _list_item_dot: $ => seq(
-            optional(alias($._list_item_prefix, $.block_continuation)),
+            optional(alias($._list_item_prefix_dot, $.block_continuation)),
             $.list_marker_dot,
             optional($.block_continuation),
             $._list_item_content,
             $._block_close
         ),
         _list_item_parenthesis: $ => seq(
-            optional(alias($._list_item_prefix, $.block_continuation)),
+            optional(alias($._list_item_prefix_parenthesis, $.block_continuation)),
             $.list_marker_parenthesis,
             optional($.block_continuation),
             $._list_item_content,
@@ -609,7 +609,11 @@ module.exports = grammar({
         $.atx_heading_closing_sequence,
         $._list_blank_guard,
         $._list_blank_separator,
-        $._list_item_prefix,
+        $._list_item_prefix_minus,
+        $._list_item_prefix_plus,
+        $._list_item_prefix_star,
+        $._list_item_prefix_parenthesis,
+        $._list_item_prefix_dot,
     ],
     precedences: $ => [
         [$._setext_heading1, $._block],

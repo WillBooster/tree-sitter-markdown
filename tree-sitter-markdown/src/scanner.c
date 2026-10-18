@@ -58,7 +58,11 @@ typedef enum {
     ATX_HEADING_CLOSING_SEQUENCE,
     LIST_BLANK_GUARD,
     LIST_BLANK_SEPARATOR,
-    LIST_ITEM_PREFIX,
+    LIST_ITEM_PREFIX_MINUS,
+    LIST_ITEM_PREFIX_PLUS,
+    LIST_ITEM_PREFIX_STAR,
+    LIST_ITEM_PREFIX_PARENTHESIS,
+    LIST_ITEM_PREFIX_DOT,
 } TokenType;
 
 // Description of a block on the block stack.
@@ -178,10 +182,14 @@ static const bool paragraph_interrupt_symbols[] = {
     false, // ATX_HEADING_CLOSING_SEQUENCE,
     false, // LIST_BLANK_GUARD,
     false, // LIST_BLANK_SEPARATOR,
-    false, // LIST_ITEM_PREFIX,
+    false, // LIST_ITEM_PREFIX_MINUS,
+    false, // LIST_ITEM_PREFIX_PLUS,
+    false, // LIST_ITEM_PREFIX_STAR,
+    false, // LIST_ITEM_PREFIX_PARENTHESIS,
+    false, // LIST_ITEM_PREFIX_DOT,
 };
 _Static_assert(sizeof(paragraph_interrupt_symbols) / sizeof(bool) ==
-                   LIST_ITEM_PREFIX + 1,
+                   LIST_ITEM_PREFIX_DOT + 1,
                "paragraph interruption symbols cover every external token");
 
 // State bitflags used with `Scanner.state`
@@ -1297,7 +1305,7 @@ typedef enum { BOUNDARY_NONE, BOUNDARY_EMITTED, BOUNDARY_REJECTED } BoundaryResu
 
 static BoundaryResult list_blank_boundary(Scanner *s, TSLexer *lexer,
                                          const bool *valid_symbols, Scanner before_match);
-static bool list_marker_follows(Scanner *s, TSLexer *lexer);
+static bool list_marker_follows(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer);
 
 static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
@@ -1470,10 +1478,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             if (s->matched == s->open_blocks.size) {
                 s->state &= (~STATE_MATCHING);
             }
-            if (valid_symbols[LIST_ITEM_PREFIX] && s->matched == s->open_blocks.size &&
+            if (s->matched == s->open_blocks.size &&
                 lexer->get_column(lexer) > prefix_column && !s->simulate &&
-                list_marker_follows(s, lexer)) {
-                lexer->result_symbol = LIST_ITEM_PREFIX;
+                list_marker_follows(s, lexer, valid_symbols)) {
                 return true;
             }
             lexer->result_symbol = BLOCK_CONTINUATION;
@@ -1636,7 +1643,7 @@ static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer) {
     return !lexer->eof(lexer);
 }
 
-static bool list_marker_follows(Scanner *s, TSLexer *lexer) {
+static bool list_marker_follows(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     Scanner matched_state = *s;
     bool marker_symbols[sizeof(paragraph_interrupt_symbols) / sizeof(bool)];
     memcpy(marker_symbols, paragraph_interrupt_symbols, sizeof(marker_symbols));
@@ -1647,6 +1654,12 @@ static bool list_marker_follows(Scanner *s, TSLexer *lexer) {
     bool found = scan(s, lexer, marker_symbols) &&
         lexer->result_symbol >= LIST_MARKER_MINUS &&
         lexer->result_symbol <= LIST_MARKER_DOT_DONT_INTERRUPT;
+    if (found) {
+        unsigned marker = lexer->result_symbol - LIST_MARKER_MINUS;
+        unsigned prefix = LIST_ITEM_PREFIX_MINUS + marker % 5;
+        found = valid_symbols[prefix];
+        if (found) lexer->result_symbol = prefix;
+    }
     *s = matched_state;
     return found;
 }
