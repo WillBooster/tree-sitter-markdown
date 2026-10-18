@@ -401,7 +401,6 @@ static bool match(Scanner *s, TSLexer *lexer, Block block) {
 
 static bool parse_fenced_code_block(Scanner *s, const char delimiter,
                                     TSLexer *lexer, const bool *valid_symbols) {
-    // count the number of backticks
     uint8_t level = 0;
     while (lexer->lookahead == delimiter) {
         advance(s, lexer);
@@ -418,7 +417,13 @@ static bool parse_fenced_code_block(Scanner *s, const char delimiter,
         while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
             advance(s, lexer);
         }
-        if (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+        if (lexer->eof(lexer)) {
+            // A closing fence may end the input without a line ending. Nothing
+            // follows to consume the trailing whitespace, so it joins the token.
+            mark_end(s, lexer);
+        }
+        if (lexer->lookahead == '\n' || lexer->lookahead == '\r' ||
+            lexer->eof(lexer)) {
             s->fenced_code_block_delimiter_length = 0;
             lexer->result_symbol = delimiter == '`'
                                        ? FENCED_CODE_BLOCK_END_BACKTICK
@@ -426,38 +431,28 @@ static bool parse_fenced_code_block(Scanner *s, const char delimiter,
             return true;
         }
     }
-    // If this could be the start of a fenced code block, check if the info
-    // string contains any backticks.
-    if ((delimiter == '`' ? valid_symbols[FENCED_CODE_BLOCK_START_BACKTICK]
-                          : valid_symbols[FENCED_CODE_BLOCK_START_TILDE]) &&
-        level >= 3) {
-        bool info_string_has_backtick = false;
-        if (delimiter == '`') {
-            while (lexer->lookahead != '\n' && lexer->lookahead != '\r' &&
-                   !lexer->eof(lexer)) {
-                if (lexer->lookahead == '`') {
-                    info_string_has_backtick = true;
-                    break;
-                }
-                advance(s, lexer);
+    if (level < 3 ||
+        !(delimiter == '`' ? valid_symbols[FENCED_CODE_BLOCK_START_BACKTICK]
+                          : valid_symbols[FENCED_CODE_BLOCK_START_TILDE])) {
+        return false;
+    }
+    if (delimiter == '`') {
+        while (lexer->lookahead != '\n' && lexer->lookahead != '\r' &&
+               !lexer->eof(lexer)) {
+            if (lexer->lookahead == '`') {
+                return false;
             }
-        }
-        // If it does not then choose to interpret this as the start of a fenced
-        // code block.
-        if (!info_string_has_backtick) {
-            lexer->result_symbol = delimiter == '`'
-                                       ? FENCED_CODE_BLOCK_START_BACKTICK
-                                       : FENCED_CODE_BLOCK_START_TILDE;
-            if (!s->simulate)
-                push_block(s, FENCED_CODE_BLOCK);
-            // Remember the length of the delimiter for later, since we need it
-            // to decide whether a sequence of backticks can close the block.
-            s->fenced_code_block_delimiter_length = level;
-            s->indentation = 0;
-            return true;
+            advance(s, lexer);
         }
     }
-    return false;
+    lexer->result_symbol = delimiter == '`'
+                               ? FENCED_CODE_BLOCK_START_BACKTICK
+                               : FENCED_CODE_BLOCK_START_TILDE;
+    if (!s->simulate)
+        push_block(s, FENCED_CODE_BLOCK);
+    s->fenced_code_block_delimiter_length = level;
+    s->indentation = 0;
+    return true;
 }
 
 static bool parse_star(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {

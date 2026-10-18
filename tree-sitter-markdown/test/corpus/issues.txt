@@ -169,3 +169,22 @@ globalNS.method1(5, 10);
             (list_marker_parenthesis)
             (paragraph
               (inline))))))))
+
+================================================================================
+#266 - Closing code fence at the end of input without a line ending
+================================================================================
+```sh
+x
+```
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (info_string
+        (language))
+      (block_continuation)
+      (code_fence_content
+        (block_continuation))
+      (fenced_code_block_delimiter))))
