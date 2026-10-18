@@ -58,7 +58,8 @@ module.exports = grammar(add_inline_rules({
 
         // Token emmited when encountering opening delimiters for a leaf span
         // e.g. a code span, that does not have a matching closing span
-        $._unclosed_span
+        $._unclosed_span,
+        $._literal_emphasis_run
     ],
     precedences: $ => [
         // [$._strong_emphasis_star, $._inline_element_no_star],
@@ -363,6 +364,7 @@ module.exports = grammar(add_inline_rules({
             $._text_base,
             common.EXTENSION_TAGS ? $.tag : choice(),
             $._unclosed_span,
+            seq($._literal_emphasis_run, optional($._last_token_punctuation)),
         ))),
         _text_base: $ => choice(
             $._word,
@@ -378,6 +380,7 @@ module.exports = grammar(add_inline_rules({
             $._emphasis_open_star,
             $._emphasis_open_underscore,
             $._unclosed_span,
+            seq($._literal_emphasis_run, optional($._last_token_punctuation)),
         ),
 
         ...(common.EXTENSION_TAGS ? {

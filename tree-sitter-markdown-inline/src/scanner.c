@@ -22,7 +22,8 @@ typedef enum {
     STRIKETHROUGH_CLOSE,
     LATEX_SPAN_START,
     LATEX_SPAN_CLOSE,
-    UNCLOSED_SPAN
+    UNCLOSED_SPAN,
+    LITERAL_EMPHASIS_RUN
 } TokenType;
 
 // Determines if a character is punctuation as defined by the markdown spec.
@@ -321,10 +322,10 @@ static bool parse_underscore(Scanner *s, TSLexer *lexer,
             return true;
         }
     }
-    if (valid_symbols[UNCLOSED_SPAN]) {
+    if (valid_symbols[LITERAL_EMPHASIS_RUN]) {
         s->num_emphasis_delimiters_left = 0;
         lexer->mark_end(lexer);
-        lexer->result_symbol = UNCLOSED_SPAN;
+        lexer->result_symbol = LITERAL_EMPHASIS_RUN;
         return true;
     }
     return false;
