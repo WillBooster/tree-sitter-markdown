@@ -1,3 +1,0 @@
-examples/book/nostarch/chapter05.md
-examples/book/src/ch05-01-defining-structs.md
-examples/content/files/en-us/web/api/canvas_api/tutorial/transformations/index.md

@@ -38,7 +38,9 @@ test('deep block containers retain bounded state across edits and undo', () => {
       const firstLine = `${'> '.repeat(255)}first\n`;
       for (const continuedDepth of [0, 1, 254]) {
         const source = `${firstLine}${'> '.repeat(continuedDepth)}${payload}\n`;
-        expect(parse(library, input, source)).toContain(`(${node} [1, ${continuedDepth * 2}]`);
+        expect(parse(library, input, source)).toContain(
+          `(${node} [1, ${node === 'list_item' ? 0 : continuedDepth * 2}]`
+        );
       }
       const boundedSource = `${firstLine}${'> '.repeat(255)}${payload}\n`;
       const shallowerSource = `${firstLine}${'> '.repeat(254)}${payload}\n`;

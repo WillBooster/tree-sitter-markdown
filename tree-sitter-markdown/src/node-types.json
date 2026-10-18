@@ -45,10 +45,6 @@
         {
           "type": "atx_heading_closing_sequence",
           "named": true
-        },
-        {
-          "type": "block_continuation",
-          "named": true
         }
       ]
     }
@@ -400,6 +396,10 @@
       "required": false,
       "types": [
         {
+          "type": "block_continuation",
+          "named": true
+        },
+        {
           "type": "list_item",
           "named": true
         }
@@ -717,13 +717,9 @@
       }
     },
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": true,
       "types": [
-        {
-          "type": "block_continuation",
-          "named": true
-        },
         {
           "type": "setext_h1_underline",
           "named": true
@@ -748,17 +744,7 @@
   {
     "type": "thematic_break",
     "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": false,
-      "types": [
-        {
-          "type": "block_continuation",
-          "named": true
-        }
-      ]
-    }
+    "fields": {}
   },
   {
     "type": "!",

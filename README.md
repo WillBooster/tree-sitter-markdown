@@ -20,6 +20,9 @@ own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
+- Empty list items followed by multiple blank lines remain in the same list as a following item with the same marker type, matching CommonMark.
+- Fenced code blocks and block quotes end before a following line’s container prefix; that prefix is outside the closing node, including outside lists.
+- Nested `list_item` nodes own their leading container prefixes, so deleting an item does not remove the following item’s indentation.
 - Trailing horizontal padding is outside nonempty `pipe_table_cell` ranges; spaces between words remain inside the cell.
 - Empty pipe-table body cells parse without missing nodes. Zero-content cells retain their separators without a named cell node; a line containing only one pipe ends the table.
 - Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
@@ -30,6 +33,9 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
 - Final headings, thematic breaks, empty list items, and opening code fences are recognized without a trailing newline.
+- A final line containing only spaces or tabs is blank, even without a trailing newline.
+- Type-6 and type-7 HTML blocks inside quotes and lists close correctly at a blank line, leaving subsequent Markdown in its surrounding container.
+- ATX headings, setext headings, and thematic breaks inside quotes or lists end before the following line’s container prefix.
 - A closing code fence at the end of a file is recognized even without a trailing line ending.
 - Trailing spaces and tabs at EOF are excluded from the preceding block’s inline range, as they are before a line ending.
 - Ordered lists interrupt a paragraph only when the first marker has numeric value 1, including leading-zero forms such as `01.`.
