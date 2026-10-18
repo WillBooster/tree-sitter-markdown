@@ -43,8 +43,7 @@ module.exports = grammar(add_inline_rules({
         $._emphasis_close_star,
         $._emphasis_close_underscore,
 
-        // For emphasis we need to tell the parser if the last character was a whitespace (or the
-        // beginning of a line) or a punctuation. These tokens never actually get emitted.
+        // Context is emitted only immediately before a delimiter, preserving alternate parses elsewhere.
         $._last_token_whitespace,
         $._last_token_punctuation,
 
@@ -58,7 +57,8 @@ module.exports = grammar(add_inline_rules({
 
         // Token emmited when encountering opening delimiters for a leaf span
         // e.g. a code span, that does not have a matching closing span
-        $._unclosed_span
+        $._unclosed_span,
+        $._literal_emphasis_run
     ],
     precedences: $ => [
         // [$._strong_emphasis_star, $._inline_element_no_star],
@@ -145,7 +145,7 @@ module.exports = grammar(add_inline_rules({
             $._link_text_non_empty,
             seq('[', ']')
         )),
-        _link_text_non_empty: $ => seq('[', alias($._inline_no_link, $.link_text), ']'),
+        _link_text_non_empty: $ => seq('[', optional($._last_token_punctuation), alias($._inline_no_link, $.link_text), ']'),
         shortcut_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, $._link_text_non_empty),
         full_reference_link: $ => prec.dynamic(2 * PRECEDENCE_LEVEL_LINK, seq(
             $._link_text,
@@ -231,7 +231,7 @@ module.exports = grammar(add_inline_rules({
         _image_full_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq($._image_description, $.link_label)),
         _image_collapsed_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq($._image_description, '[', ']')),
         _image_description: $ => prec.dynamic(3 * PRECEDENCE_LEVEL_LINK, choice($._image_description_non_empty, seq('!', '[', prec(1, ']')))),
-        _image_description_non_empty: $ => seq('!', '[', alias($._inline, $.image_description), prec(1, ']')),
+        _image_description_non_empty: $ => seq('!', '[', optional($._last_token_punctuation), alias($._inline, $.image_description), prec(1, ']')),
 
         // Autolinks. Uri autolinks actually accept protocolls of arbitrary length which does not
         // align with the spec. This is because the binary for the grammar gets to large if done
@@ -361,6 +361,7 @@ module.exports = grammar(add_inline_rules({
             $._text_base,
             common.EXTENSION_TAGS ? $.tag : choice(),
             $._unclosed_span,
+            seq($._literal_emphasis_run, optional($._last_token_punctuation)),
         ))),
         _text_base: $ => choice(
             $._word,
@@ -376,6 +377,7 @@ module.exports = grammar(add_inline_rules({
             $._emphasis_open_star,
             $._emphasis_open_underscore,
             $._unclosed_span,
+            seq($._literal_emphasis_run, optional($._last_token_punctuation)),
         ),
 
         ...(common.EXTENSION_TAGS ? {
@@ -408,13 +410,13 @@ function add_inline_rules(grammar) {
                     elements.push(alias($['_strikethrough' + suffix_link], $.strikethrough));
                 }
                 if (delimiter !== "star") {
-                    elements.push($._emphasis_open_star);
+                    elements.push(seq($._emphasis_open_star, optional($._last_token_punctuation)));
                 }
                 if (delimiter !== "underscore") {
-                    elements.push($._emphasis_open_underscore);
+                    elements.push(seq($._emphasis_open_underscore, optional($._last_token_punctuation)));
                 }
                 if (delimiter !== "tilde") {
-                    elements.push($._strikethrough_open);
+                    elements.push(seq($._strikethrough_open, optional($._last_token_punctuation)));
                 }
                 if (link) {
                     elements = elements.concat([
@@ -452,10 +454,12 @@ function add_inline_rules(grammar) {
             grammar.rules['_strikethrough' + suffix_link] = $ => prec.dynamic(PRECEDENCE_LEVEL_EMPHASIS, seq(alias($._strikethrough_open, $.emphasis_delimiter), optional($._last_token_punctuation), $['_inline' + '_no_tilde' + suffix_link], alias($._strikethrough_close, $.emphasis_delimiter)));
         }
         grammar.rules['_emphasis_star' + suffix_link] = $ => prec.dynamic(PRECEDENCE_LEVEL_EMPHASIS, seq(alias($._emphasis_open_star, $.emphasis_delimiter), optional($._last_token_punctuation), $['_inline' + '_no_star' + suffix_link], alias($._emphasis_close_star, $.emphasis_delimiter)));
-        grammar.rules['_strong_emphasis_star' + suffix_link] = $ => prec.dynamic(2 * PRECEDENCE_LEVEL_EMPHASIS, seq(alias($._emphasis_open_star, $.emphasis_delimiter), $['_emphasis_star' + suffix_link], alias($._emphasis_close_star, $.emphasis_delimiter)));
+        grammar.rules['_strong_emphasis_star' + suffix_link] = $ => prec.dynamic(2 * PRECEDENCE_LEVEL_EMPHASIS, seq(alias($._emphasis_open_star, $.emphasis_delimiter), optional($._last_token_punctuation), $['_emphasis_star' + suffix_link], alias($._emphasis_close_star, $.emphasis_delimiter)));
         grammar.rules['_emphasis_underscore' + suffix_link] = $ => prec.dynamic(PRECEDENCE_LEVEL_EMPHASIS, seq(alias($._emphasis_open_underscore, $.emphasis_delimiter), optional($._last_token_punctuation), $['_inline' + '_no_underscore' + suffix_link], alias($._emphasis_close_underscore, $.emphasis_delimiter)));
-        grammar.rules['_strong_emphasis_underscore' + suffix_link] = $ => prec.dynamic(2 * PRECEDENCE_LEVEL_EMPHASIS, seq(alias($._emphasis_open_underscore, $.emphasis_delimiter), $['_emphasis_underscore' + suffix_link], alias($._emphasis_close_underscore, $.emphasis_delimiter)));
+        grammar.rules['_strong_emphasis_underscore' + suffix_link] = $ => prec.dynamic(2 * PRECEDENCE_LEVEL_EMPHASIS, seq(alias($._emphasis_open_underscore, $.emphasis_delimiter), optional($._last_token_punctuation), $['_emphasis_underscore' + suffix_link], alias($._emphasis_close_underscore, $.emphasis_delimiter)));
     }
+
+    add_context_rules(grammar);
 
     let old = grammar.conflicts
     grammar.conflicts = $ => {
@@ -471,4 +475,27 @@ function add_inline_rules(grammar) {
     }
 
     return grammar;
+}
+
+function add_context_rules(grammar) {
+    for (const name of ['image', 'code_span', 'latex_block', 'inline_link', 'shortcut_link',
+        'full_reference_link', 'collapsed_reference_link', 'wiki_link', 'backslash_escape',
+        'entity_reference', 'numeric_character_reference', 'uri_autolink', 'email_autolink', '_html_tag']) {
+        grammar.rules[name] = with_context(grammar.rules[name]);
+    }
+
+
+    for (const name of Object.keys(grammar.rules).filter(name => /^_(strong_emphasis|emphasis|strikethrough)_/.test(name))) {
+        grammar.rules[name] = with_context(grammar.rules[name]);
+    }
+
+}
+
+function with_context(rule) {
+    return $ => {
+        const definition = rule($);
+        return definition.type === 'PREC_DYNAMIC'
+            ? prec.dynamic(definition.value, seq(definition.content, optional($._last_token_punctuation)))
+            : seq(definition, optional($._last_token_punctuation));
+    };
 }

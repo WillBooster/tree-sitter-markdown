@@ -88,4 +88,85 @@ mod tests {
             .set_language(&INLINE_LANGUAGE.into())
             .expect("Error loading Markdown inline grammar");
     }
+
+    #[test]
+    fn inline_context_survives_boundary_edits() {
+        for source in [
+            "a_*_*",
+            "a_~_~",
+            "*[a **b**](u)*",
+            "\\*_a_",
+            "`x`_a_",
+            "<b>_a_",
+            "[x](u)_a_",
+        ] {
+            for included in [false, true] {
+                let prefix = usize::from(included);
+                let input = if included {
+                    format!("x{source}z")
+                } else {
+                    source.to_owned()
+                };
+                let mut parser = tree_sitter::Parser::new();
+                parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+                set_inline_range(&mut parser, prefix, source.len(), included);
+                let original = parser.parse(&input, None).unwrap();
+                assert!(!original.root_node().has_error(), "{source}");
+                for offset in 0..=source.len() {
+                    let start = prefix + offset;
+                    let mut edited_input = input.clone();
+                    edited_input.insert(start, 'x');
+                    let mut old_tree = original.clone();
+                    old_tree.edit(&inline_edit(start, 0, 1));
+                    set_inline_range(&mut parser, prefix, source.len() + 1, included);
+                    let mut edited = parser.parse(&edited_input, Some(&old_tree)).unwrap();
+                    let fresh = parser.parse(&edited_input, None).unwrap();
+                    assert_eq!(
+                        edited.root_node().to_sexp(),
+                        fresh.root_node().to_sexp(),
+                        "insert {source} at {offset}, included={included}"
+                    );
+                    edited.edit(&inline_edit(start, 1, 0));
+                    set_inline_range(&mut parser, prefix, source.len(), included);
+                    let restored = parser.parse(&input, Some(&edited)).unwrap();
+                    assert_eq!(
+                        restored.root_node().to_sexp(),
+                        original.root_node().to_sexp(),
+                        "undo {source} at {offset}, included={included}"
+                    );
+                    assert_eq!(restored.root_node().range(), original.root_node().range());
+                }
+            }
+        }
+    }
+
+    fn set_inline_range(
+        parser: &mut tree_sitter::Parser,
+        start: usize,
+        length: usize,
+        included: bool,
+    ) {
+        let ranges = if included {
+            vec![tree_sitter::Range {
+                start_byte: start,
+                end_byte: start + length,
+                start_point: tree_sitter::Point::new(0, start),
+                end_point: tree_sitter::Point::new(0, start + length),
+            }]
+        } else {
+            vec![]
+        };
+        parser.set_included_ranges(&ranges).unwrap();
+    }
+
+    fn inline_edit(start: usize, removed: usize, inserted: usize) -> tree_sitter::InputEdit {
+        tree_sitter::InputEdit {
+            start_byte: start,
+            old_end_byte: start + removed,
+            new_end_byte: start + inserted,
+            start_position: tree_sitter::Point::new(0, start),
+            old_end_position: tree_sitter::Point::new(0, start + removed),
+            new_end_position: tree_sitter::Point::new(0, start + inserted),
+        }
+    }
 }

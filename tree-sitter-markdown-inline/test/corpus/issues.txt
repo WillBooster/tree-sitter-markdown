@@ -104,3 +104,27 @@ normal text (or even nothing) `[index][]`
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+Emphasis after a punctuation run survives edits
+================================================================================
+a_*_*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Strikethrough after a punctuation run survives edits
+================================================================================
+a_~_~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strikethrough
+    (emphasis_delimiter)
+    (emphasis_delimiter)))

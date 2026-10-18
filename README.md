@@ -19,6 +19,8 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.0.0 or later: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
+- Inline emphasis and strikethrough retain preceding punctuation and whitespace across incremental edits, including
+  boundaries after links, code spans, HTML tags, and escapes.
 - Ordered lists interrupt a paragraph only when their first marker is `1.` or `1)`.
 - A NUL character is part of the text around it, in both grammars, where upstream's lexers report it as an unexpected
   character in an `ERROR` node.

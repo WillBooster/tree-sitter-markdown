@@ -35,6 +35,11 @@
     }
   },
   {
+    "type": "email_autolink",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "emphasis",
     "named": true,
     "fields": {},
@@ -116,6 +121,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "entity_reference",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "full_reference_link",
@@ -507,6 +517,11 @@
     }
   },
   {
+    "type": "numeric_character_reference",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "shortcut_link",
     "named": true,
     "fields": {},
@@ -688,6 +703,11 @@
     }
   },
   {
+    "type": "uri_autolink",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "!",
     "named": false
   },
@@ -828,27 +848,11 @@
     "named": true
   },
   {
-    "type": "email_autolink",
-    "named": true
-  },
-  {
     "type": "emphasis_delimiter",
     "named": true
   },
   {
-    "type": "entity_reference",
-    "named": true
-  },
-  {
     "type": "latex_span_delimiter",
-    "named": true
-  },
-  {
-    "type": "numeric_character_reference",
-    "named": true
-  },
-  {
-    "type": "uri_autolink",
     "named": true
   },
   {
