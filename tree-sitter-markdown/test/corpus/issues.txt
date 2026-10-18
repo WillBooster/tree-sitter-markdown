@@ -16,18 +16,16 @@
       (list_item
         (list_marker_star)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_star)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
-            (list_marker_star)
             (block_continuation)
-            (block_continuation))))))
+            (list_marker_star))))))
   (section
     (atx_heading
       (atx_h1_marker)
@@ -137,8 +135,7 @@ globalNS.method1(5, 10);
       (list_item
         (list_marker_parenthesis)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (list
       (list_item
         (list_marker_dot)
@@ -174,36 +171,35 @@ globalNS.method1(5, 10);
         (paragraph
           (inline)
           (block_continuation))
-        (block_continuation)
         (list
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))))
+              (inline)))))
       (list_item
         (list_marker_star)
         (paragraph
           (inline)
           (block_continuation))
-        (block_continuation)
         (list
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
               (inline))))))))
@@ -231,8 +227,7 @@ A paragraph,
       (list_item
         (list_marker_dot)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (paragraph
       (inline))
     (paragraph
@@ -260,19 +255,18 @@ A paragraph,
         (list_marker_star)
         (paragraph
           (inline
-            (block_continuation))
-          (block_continuation))
+            (block_continuation)))
         (list
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))))
+              (inline)))))
       (list_item
         (list_marker_star)
         (paragraph
@@ -534,11 +528,13 @@ paragraph
 
 (document
   (section
-    (paragraph (inline))
+    (paragraph
+      (inline))
     (list
       (list_item
         (list_marker_dot)
-        (paragraph (inline))))))
+        (paragraph
+          (inline))))))
 
 ================================================================================
 Leading-zero ordered marker 001) interrupts a paragraph
@@ -550,11 +546,13 @@ paragraph
 
 (document
   (section
-    (paragraph (inline))
+    (paragraph
+      (inline))
     (list
       (list_item
         (list_marker_parenthesis)
-        (paragraph (inline))))))
+        (paragraph
+          (inline))))))
 
 ================================================================================
 Leading-zero ordered marker 000000001. interrupts a paragraph
@@ -566,11 +564,13 @@ paragraph
 
 (document
   (section
-    (paragraph (inline))
+    (paragraph
+      (inline))
     (list
       (list_item
         (list_marker_dot)
-        (paragraph (inline))))))
+        (paragraph
+          (inline))))))
 
 ================================================================================
 Malformed slash in HTML tag <h1/x> remains paragraph text
@@ -582,7 +582,8 @@ text
 
 (document
   (section
-    (paragraph (inline))))
+    (paragraph
+      (inline))))
 
 ================================================================================
 Malformed slash in HTML tag </h1/x> remains paragraph text
@@ -594,7 +595,8 @@ text
 
 (document
   (section
-    (paragraph (inline))))
+    (paragraph
+      (inline))))
 
 ================================================================================
 Malformed slash in HTML tag <h10/x> remains paragraph text
@@ -606,7 +608,8 @@ text
 
 (document
   (section
-    (paragraph (inline))))
+    (paragraph
+      (inline))))
 
 ================================================================================
 Malformed slash in HTML tag <hr/x> remains paragraph text
@@ -618,7 +621,8 @@ text
 
 (document
   (section
-    (paragraph (inline))))
+    (paragraph
+      (inline))))
 
 ================================================================================
 Self-closing custom end tag </h1x/> remains paragraph text
@@ -630,7 +634,8 @@ text
 
 (document
   (section
-    (paragraph (inline))))
+    (paragraph
+      (inline))))
 
 ================================================================================
 Self-closing custom end tag </h10/> remains paragraph text
@@ -642,7 +647,8 @@ text
 
 (document
   (section
-    (paragraph (inline))))
+    (paragraph
+      (inline))))
 
 ================================================================================
 Escaped bracket text without a definition colon
@@ -725,6 +731,9 @@ paragraph
 
 (document
   (section
-    (paragraph (inline))
-    (paragraph (inline))
-    (paragraph (inline))))
+    (paragraph
+      (inline))
+    (paragraph
+      (inline))
+    (paragraph
+      (inline))))
