@@ -16,7 +16,9 @@ typedef enum {
     LATEX_SPAN_START,
     LATEX_SPAN_CLOSE,
     UNCLOSED_SPAN,
-    LITERAL_EMPHASIS_RUN
+    LITERAL_EMPHASIS_RUN,
+    OPEN_BRACKET,
+    UNCLOSED_OPEN_BRACKET
 } TokenType;
 
 static bool is_punctuation(int32_t chr) {
@@ -36,6 +38,8 @@ typedef struct {
     uint8_t state;
     uint8_t context;
     bool context_pending;
+    char run_delimiter;
+    bool no_closing_bracket;
     uint8_t code_span_delimiter_length;
     uint8_t latex_span_delimiter_length;
     uint8_t num_emphasis_delimiters_left;
@@ -49,17 +53,21 @@ static unsigned serialize(Scanner *s, char *buffer) {
     buffer[size++] = (char)s->num_emphasis_delimiters_left;
     buffer[size++] = (char)s->context;
     buffer[size++] = s->context_pending;
+    buffer[size++] = s->run_delimiter;
+    buffer[size++] = s->no_closing_bracket;
     return size;
 }
 
 static void deserialize(Scanner *s, const char *buffer, unsigned length) {
     s->context = LAST_TOKEN_WHITESPACE;
     s->context_pending = false;
+    s->run_delimiter = 0;
+    s->no_closing_bracket = false;
     s->state = 0;
     s->code_span_delimiter_length = 0;
     s->latex_span_delimiter_length = 0;
     s->num_emphasis_delimiters_left = 0;
-    if (length >= 6) {
+    if (length >= 8) {
         size_t size = 0;
         s->state = (uint8_t)buffer[size++];
         s->code_span_delimiter_length = (uint8_t)buffer[size++];
@@ -67,6 +75,8 @@ static void deserialize(Scanner *s, const char *buffer, unsigned length) {
         s->num_emphasis_delimiters_left = (uint8_t)buffer[size++];
         s->context = (uint8_t)buffer[size++];
         s->context_pending = buffer[size++];
+        s->run_delimiter = buffer[size++];
+        s->no_closing_bracket = buffer[size++];
     }
 }
 
@@ -129,6 +139,8 @@ static bool parse_dollar(Scanner *s, TSLexer *lexer,
 static bool parse_emphasis(Scanner *s, TSLexer *lexer, const bool *valid_symbols,
                            char delimiter, TokenType open_token, TokenType close_token) {
     lexer->advance(lexer, false);
+    if (s->run_delimiter != delimiter) s->num_emphasis_delimiters_left = 0;
+    s->run_delimiter = delimiter;
     if (s->num_emphasis_delimiters_left > 0) {
         if ((s->state & STATE_EMPHASIS_DELIMITER_IS_OPEN) &&
             valid_symbols[open_token]) {
@@ -182,6 +194,8 @@ static bool parse_emphasis(Scanner *s, TSLexer *lexer, const bool *valid_symbols
     return false;
 }
 
+static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
+
 static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     if (valid_symbols[TRIGGER_ERROR]) {
         return error(lexer);
@@ -192,7 +206,7 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     }
     const TokenType contexts[] = {LAST_TOKEN_WHITESPACE, LAST_TOKEN_PUNCTUATION};
     for (unsigned i = 0; i < 2; i++) {
-        if ((!s->context_pending || s->context != contexts[i]) &&
+        if (!s->context_pending &&
             valid_symbols[contexts[i]] && valid_symbols[LITERAL_EMPHASIS_RUN] &&
             (lexer->lookahead == '*' || lexer->lookahead == '_' || lexer->lookahead == '~')) {
             s->context = contexts[i];
@@ -204,7 +218,10 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     }
 
     bool result = false;
-    switch (lexer->lookahead) {
+    int32_t delimiter = lexer->lookahead;
+    switch (delimiter) {
+        case '[':
+            return parse_bracket(s, lexer, valid_symbols);
         case '`':
             result = parse_backtick(s, lexer, valid_symbols);
             break;
@@ -222,9 +239,26 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             break;
     }
     if (result) {
-        s->context_pending = false;
+        s->context = LAST_TOKEN_PUNCTUATION;
+        s->context_pending = (delimiter == '*' || delimiter == '_' || delimiter == '~') &&
+            (s->num_emphasis_delimiters_left || lexer->lookahead == '*' || lexer->lookahead == '_' || lexer->lookahead == '~');
     }
     return result;
+}
+
+static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
+    if (!valid_symbols[OPEN_BRACKET] && !valid_symbols[UNCLOSED_OPEN_BRACKET]) return false;
+    lexer->advance(lexer, false);
+    lexer->mark_end(lexer);
+    s->context = LAST_TOKEN_PUNCTUATION;
+    s->context_pending = lexer->lookahead == '*' || lexer->lookahead == '_' || lexer->lookahead == '~';
+    s->num_emphasis_delimiters_left = 0;
+    if (!s->no_closing_bracket) {
+        while (!lexer->eof(lexer) && lexer->lookahead != ']') lexer->advance(lexer, false);
+        s->no_closing_bracket = lexer->eof(lexer);
+    }
+    lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : OPEN_BRACKET;
+    return valid_symbols[lexer->result_symbol];
 }
 
 void *tree_sitter_markdown_inline_external_scanner_create() {

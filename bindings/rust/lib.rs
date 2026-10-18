@@ -100,6 +100,11 @@ mod tests {
             "`x`_a_",
             "<b>_a_",
             "[x](u)_a_",
+            "[*_a_",
+            "[_*<a",
+            "[[*_a_",
+            "[*_a_]",
+            "[x] [*_a_",
         ] {
             for included in [false, true] {
                 let prefix = usize::from(included);
@@ -113,29 +118,39 @@ mod tests {
                 set_inline_range(&mut parser, prefix, source.len(), included);
                 let original = parser.parse(&input, None).unwrap();
                 assert!(!original.root_node().has_error(), "{source}");
-                for offset in 0..=source.len() {
-                    let start = prefix + offset;
-                    let mut edited_input = input.clone();
-                    edited_input.insert(start, 'x');
-                    let mut old_tree = original.clone();
-                    old_tree.edit(&inline_edit(start, 0, 1));
-                    set_inline_range(&mut parser, prefix, source.len() + 1, included);
-                    let mut edited = parser.parse(&edited_input, Some(&old_tree)).unwrap();
-                    let fresh = parser.parse(&edited_input, None).unwrap();
-                    assert_eq!(
-                        edited.root_node().to_sexp(),
-                        fresh.root_node().to_sexp(),
-                        "insert {source} at {offset}, included={included}"
-                    );
-                    edited.edit(&inline_edit(start, 1, 0));
-                    set_inline_range(&mut parser, prefix, source.len(), included);
-                    let restored = parser.parse(&input, Some(&edited)).unwrap();
-                    assert_eq!(
-                        restored.root_node().to_sexp(),
-                        original.root_node().to_sexp(),
-                        "undo {source} at {offset}, included={included}"
-                    );
-                    assert_eq!(restored.root_node().range(), original.root_node().range());
+                for (inserted, removed) in [("x", 0), ("]", 0), ("", 1), ("*", 1)] {
+                    for offset in 0..=source.len() {
+                        if offset + removed > source.len() {
+                            continue;
+                        }
+                        let start = prefix + offset;
+                        let mut edited_input = input.clone();
+                        edited_input.replace_range(start..start + removed, inserted);
+                        let mut old_tree = original.clone();
+                        old_tree.edit(&inline_edit(start, removed, inserted.len()));
+                        set_inline_range(
+                            &mut parser,
+                            prefix,
+                            source.len() + inserted.len() - removed,
+                            included,
+                        );
+                        let mut edited = parser.parse(&edited_input, Some(&old_tree)).unwrap();
+                        let fresh = parser.parse(&edited_input, None).unwrap();
+                        assert_eq!(
+                            edited.root_node().to_sexp(),
+                            fresh.root_node().to_sexp(),
+                            "edit {source} at {offset}: insert {inserted:?}, remove {removed}, included={included}"
+                        );
+                        edited.edit(&inline_edit(start, inserted.len(), removed));
+                        set_inline_range(&mut parser, prefix, source.len(), included);
+                        let restored = parser.parse(&input, Some(&edited)).unwrap();
+                        assert_eq!(
+                            restored.root_node().to_sexp(),
+                            original.root_node().to_sexp(),
+                            "undo {source} at {offset}, included={included}"
+                        );
+                        assert_eq!(restored.root_node().range(), original.root_node().range());
+                    }
                 }
             }
         }
