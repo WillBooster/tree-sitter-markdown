@@ -16,9 +16,10 @@ This fork builds on the grammars, external scanners, and queries of upstream's v
 with the [WillBooster/tree-sitter](https://github.com/WillBooster/tree-sitter) generator. The block scanner compares the
 digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigit`, which the C headers for
 `wasm32-unknown-unknown` do not declare; both accept the ASCII digits only. The parsers carry that fork's
-own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.0.0 or later: upstream's tree-sitter
+own ABI number (`0x57420001`) and load only with that fork's runtime, major version 2: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
+- Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only cells cannot start a table.
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Empty list items followed by multiple blank lines remain in the same list as a following item with the same marker type, matching CommonMark.
 - Fenced code blocks and block quotes end before a following line’s container prefix; that prefix is outside the closing node, including outside lists.
@@ -33,6 +34,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
 - Final headings, thematic breaks, empty list items, and opening code fences are recognized without a trailing newline.
 - ATX headings, setext headings, and thematic breaks inside quotes or lists end before the following line’s container prefix.
+- A block following a closed container can start at its line’s indentation. That whitespace belongs to the following block and may be included in its first marker or inline node, rather than in the closing container.
 - A closing code fence at the end of a file is recognized even without a trailing line ending.
 - Trailing spaces and tabs at EOF are excluded from the preceding block’s inline range, as they are before a line ending.
 - Ordered lists interrupt a paragraph only when the first marker has numeric value 1, including leading-zero forms such as `01.`.
@@ -51,7 +53,7 @@ included, as they are not in upstream's packages.
 ## Usage
 
 The npm package ships `tree-sitter-markdown.wasm` and `tree-sitter-markdown_inline.wasm` for
-[@willbooster/web-tree-sitter](https://www.npmjs.com/package/@willbooster/web-tree-sitter) version 2.0.0 or later, which
+[@willbooster/web-tree-sitter](https://www.npmjs.com/package/@willbooster/web-tree-sitter) major version 2, which
 runs in Node.js, Bun, browsers, and Cloudflare Workers. Parse a document with the block grammar, then parse the inline
 content of each `inline` or `pipe_table_cell` node with the inline grammar, limited to the node's range without its
 named children (block continuations such as the `>` of a block quote). In Node.js and Bun, load the grammars from their
