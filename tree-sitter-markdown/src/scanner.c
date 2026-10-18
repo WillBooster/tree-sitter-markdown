@@ -714,16 +714,17 @@ static bool parse_ordered_list_marker(Scanner *s, TSLexer *lexer,
         return false;
     }
     size_t digits = 1;
-    bool dont_interrupt = lexer->lookahead != '1';
+    uint32_t start_number = (uint32_t)(lexer->lookahead - '0');
     advance(s, lexer);
     while (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
-        dont_interrupt = true;
-        digits++;
+        if (++digits > 9) return false;
+        start_number = start_number * 10 + (uint32_t)(lexer->lookahead - '0');
         advance(s, lexer);
     }
-    if (digits > 9 || (lexer->lookahead != '.' && lexer->lookahead != ')')) {
+    if (lexer->lookahead != '.' && lexer->lookahead != ')') {
         return false;
     }
+    bool dont_interrupt = start_number != 1;
     bool dot = lexer->lookahead == '.';
     advance(s, lexer);
     uint8_t extra_indentation = 0;
@@ -968,7 +969,9 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
     }
     char name[11];
     size_t name_length = 0;
-    while (iswalpha((wint_t)lexer->lookahead)) {
+    while (('a' <= lexer->lookahead && lexer->lookahead <= 'z') ||
+           ('A' <= lexer->lookahead && lexer->lookahead <= 'Z') ||
+           (name_length > 0 && '0' <= lexer->lookahead && lexer->lookahead <= '9')) {
         if (name_length < 10) {
             name[name_length++] = (char)towlower((wint_t)lexer->lookahead);
         } else {
@@ -1005,10 +1008,9 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
         }
         if (!next_symbol_valid && lexer->lookahead == '/') {
             advance(s, lexer);
-            if (lexer->lookahead == '>') {
-                advance(s, lexer);
-                tag_closed = true;
-            }
+            if (lexer->lookahead != '>') return false;
+            advance(s, lexer);
+            tag_closed = true;
         }
         if (next_symbol_valid || tag_closed) {
             // try block 2 names
@@ -1023,7 +1025,7 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
         }
     }
 
-    if (!valid_symbols[HTML_BLOCK_7_START]) {
+    if (!valid_symbols[HTML_BLOCK_7_START] || (starting_slash && tag_closed)) {
         return false;
     }
 
