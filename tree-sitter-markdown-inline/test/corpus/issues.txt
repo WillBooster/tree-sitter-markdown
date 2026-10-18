@@ -140,3 +140,18 @@ Rejected tildes do not retain whitespace context
   (strikethrough
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+Emphasis after completed strikethrough receives punctuation context
+================================================================================
+~del~_(bar)_
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strikethrough
+    (emphasis_delimiter)
+    (emphasis_delimiter))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))

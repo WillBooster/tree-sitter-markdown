@@ -485,7 +485,7 @@ function add_context_rules(grammar) {
     }
 
 
-    for (const name of Object.keys(grammar.rules).filter(name => /^_(strong_emphasis|emphasis|strikethrough)_/.test(name))) {
+    for (const name of Object.keys(grammar.rules).filter(name => /^_(strong_emphasis|emphasis|strikethrough)(_|$)/.test(name))) {
         grammar.rules[name] = with_context(grammar.rules[name]);
     }
 
