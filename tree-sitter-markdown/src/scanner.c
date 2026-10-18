@@ -54,6 +54,7 @@ typedef enum {
     PLUS_METADATA,
     PIPE_TABLE_START,
     PIPE_TABLE_LINE_ENDING,
+    CODE_FENCE_LINE,
 } TokenType;
 
 // Description of a block on the block stack.
@@ -169,6 +170,7 @@ static const bool paragraph_interrupt_symbols[] = {
     false, // PLUS_METADATA,
     true,  // PIPE_TABLE_START,
     false, // PIPE_TABLE_LINE_ENDING,
+    false, // CODE_FENCE_LINE,
 };
 
 // State bitflags used with `Scanner.state`
@@ -401,7 +403,6 @@ static bool match(Scanner *s, TSLexer *lexer, Block block) {
 
 static bool parse_fenced_code_block(Scanner *s, const char delimiter,
                                     TSLexer *lexer, const bool *valid_symbols) {
-    // count the number of backticks
     uint8_t level = 0;
     while (lexer->lookahead == delimiter) {
         advance(s, lexer);
@@ -418,7 +419,8 @@ static bool parse_fenced_code_block(Scanner *s, const char delimiter,
         while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
             advance(s, lexer);
         }
-        if (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+        if (lexer->lookahead == '\n' || lexer->lookahead == '\r' ||
+            lexer->eof(lexer)) {
             s->fenced_code_block_delimiter_length = 0;
             lexer->result_symbol = delimiter == '`'
                                        ? FENCED_CODE_BLOCK_END_BACKTICK
@@ -426,38 +428,28 @@ static bool parse_fenced_code_block(Scanner *s, const char delimiter,
             return true;
         }
     }
-    // If this could be the start of a fenced code block, check if the info
-    // string contains any backticks.
-    if ((delimiter == '`' ? valid_symbols[FENCED_CODE_BLOCK_START_BACKTICK]
-                          : valid_symbols[FENCED_CODE_BLOCK_START_TILDE]) &&
-        level >= 3) {
-        bool info_string_has_backtick = false;
-        if (delimiter == '`') {
-            while (lexer->lookahead != '\n' && lexer->lookahead != '\r' &&
-                   !lexer->eof(lexer)) {
-                if (lexer->lookahead == '`') {
-                    info_string_has_backtick = true;
-                    break;
-                }
-                advance(s, lexer);
+    if (level < 3 ||
+        !(delimiter == '`' ? valid_symbols[FENCED_CODE_BLOCK_START_BACKTICK]
+                          : valid_symbols[FENCED_CODE_BLOCK_START_TILDE])) {
+        return false;
+    }
+    if (delimiter == '`') {
+        while (lexer->lookahead != '\n' && lexer->lookahead != '\r' &&
+               !lexer->eof(lexer)) {
+            if (lexer->lookahead == '`') {
+                return false;
             }
-        }
-        // If it does not then choose to interpret this as the start of a fenced
-        // code block.
-        if (!info_string_has_backtick) {
-            lexer->result_symbol = delimiter == '`'
-                                       ? FENCED_CODE_BLOCK_START_BACKTICK
-                                       : FENCED_CODE_BLOCK_START_TILDE;
-            if (!s->simulate)
-                push_block(s, FENCED_CODE_BLOCK);
-            // Remember the length of the delimiter for later, since we need it
-            // to decide whether a sequence of backticks can close the block.
-            s->fenced_code_block_delimiter_length = level;
-            s->indentation = 0;
-            return true;
+            advance(s, lexer);
         }
     }
-    return false;
+    lexer->result_symbol = delimiter == '`'
+                               ? FENCED_CODE_BLOCK_START_BACKTICK
+                               : FENCED_CODE_BLOCK_START_TILDE;
+    if (!s->simulate)
+        push_block(s, FENCED_CODE_BLOCK);
+    s->fenced_code_block_delimiter_length = level;
+    s->indentation = 0;
+    return true;
 }
 
 static bool parse_star(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
@@ -1296,6 +1288,20 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
     return true;
 }
 
+static bool parse_code_fence_line(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
+    if ((lexer->lookahead == '`' || lexer->lookahead == '~') &&
+        parse_fenced_code_block(s, lexer->lookahead, lexer, valid_symbols)) {
+        return true;
+    }
+    while (!lexer->eof(lexer) && lexer->lookahead != '\n' && lexer->lookahead != '\r') {
+        advance(s, lexer);
+    }
+    mark_end(s, lexer);
+    s->indentation = 0;
+    lexer->result_symbol = CODE_FENCE_LINE;
+    return true;
+}
+
 static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     // A normal tree-sitter rule decided that the current branch is invalid and
     // now "requests" an error to stop the branch
@@ -1336,6 +1342,13 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             } else {
                 break;
             }
+        }
+        if (lexer->eof(lexer) && valid_symbols[TOKEN_EOF]) {
+            lexer->result_symbol = TOKEN_EOF;
+            return true;
+        }
+        if (valid_symbols[CODE_FENCE_LINE] && lexer->lookahead != '\n' && lexer->lookahead != '\r') {
+            return parse_code_fence_line(s, lexer, valid_symbols);
         }
         // We are not matching. This is where the parsing logic for most
         // "normal" token is. Most importantly parsing logic for the start of

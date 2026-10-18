@@ -19,6 +19,8 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.0.0 or later: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
+- A closing code fence at the end of a file is recognized even without a trailing line ending.
+- Trailing spaces and tabs at EOF are excluded from the preceding block’s inline range, as they are before a line ending.
 - Ordered lists interrupt a paragraph only when their first marker is `1.` or `1)`.
 - A NUL character is part of the text around it, in both grammars, where upstream's lexers report it as an unexpected
   character in an `ERROR` node.
