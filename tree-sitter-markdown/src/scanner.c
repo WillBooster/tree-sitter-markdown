@@ -223,8 +223,8 @@ typedef struct {
 _Static_assert(5 + 2 * UINT8_MAX <= TREE_SITTER_SERIALIZATION_BUFFER_SIZE, "block state must fit");
 
 static bool push_block(Scanner *s, Block b) {
+    if (s->simulate) return s->matched < UINT8_MAX;
     if (s->open_blocks.size >= UINT8_MAX) return false;
-    if (s->simulate) return true;
     if (s->open_blocks.size == s->open_blocks.capacity) {
         s->open_blocks.capacity =
             s->open_blocks.capacity ? s->open_blocks.capacity << 1 : 8;
