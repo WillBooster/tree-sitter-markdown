@@ -19,6 +19,7 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.0.0 or later: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
+- Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
 - HTML declarations end on the first line containing `>`, leaving subsequent Markdown outside the HTML block.
 - Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
