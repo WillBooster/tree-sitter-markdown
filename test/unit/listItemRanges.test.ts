@@ -58,6 +58,25 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
+    for (const marker of ['-', '+', '*', '1.', '1)']) {
+      for (const prefix of ['', '> ', '> > ']) {
+        for (const padding of ['', ' ', '\t']) {
+          for (const newline of ['\n', '\r\n']) {
+            const lines = ['- a', `  ${marker} b`, `  ${marker}${padding}`, `  ${marker} c`].map(
+              (line) => prefix + line
+            );
+            const source = lines.join(newline) + newline;
+            const tree = parse(source);
+            expect(tree, source).toContain('(list_item [2, 0] - [3, 0]');
+            const at = Buffer.byteLength(lines.slice(0, 2).join(newline) + newline);
+            const length = Buffer.byteLength(lines[2] + newline);
+            const removed = lines.filter((_, index) => index !== 2).join(newline) + newline;
+            expect(parse(source, [`${at} ${length} `])).toBe(parse(removed));
+            expect(parse(source, [`${at} ${length} `, `${at} 0 ${lines[2] + newline}`])).toBe(tree);
+          }
+        }
+      }
+    }
     for (const first of ['-', '+', '*', '1.', '1)']) {
       for (const second of ['-', '+', '*', '1.', '1)']) {
         for (const container of ['> ', '> > ', '  ']) {
