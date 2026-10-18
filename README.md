@@ -25,7 +25,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - Final headings, thematic breaks, empty list items, and opening code fences are recognized without a trailing newline.
 - A closing code fence at the end of a file is recognized even without a trailing line ending.
 - Trailing spaces and tabs at EOF are excluded from the preceding block’s inline range, as they are before a line ending.
-- Ordered lists interrupt a paragraph only when their first marker is `1.` or `1)`.
+- Ordered lists interrupt a paragraph only when the first marker has numeric value 1, including leading-zero forms such as `01.`. Markers contain at most nine digits.
 - A NUL character is part of the text around it, in both grammars, where upstream's lexers report it as an unexpected
   character in an `ERROR` node.
 - A block that starts with bracketed text holding a backslash escape or a character reference, such as

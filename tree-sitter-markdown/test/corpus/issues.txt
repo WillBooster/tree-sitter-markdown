@@ -523,3 +523,51 @@ short HTML comment followed by a heading without a final newline
     (atx_heading
       (atx_h1_marker)
       (inline))))
+
+================================================================================
+Leading-zero ordered marker 01. interrupts a paragraph
+================================================================================
+paragraph
+01. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph (inline))
+    (list
+      (list_item
+        (list_marker_dot)
+        (paragraph (inline))))))
+
+================================================================================
+Leading-zero ordered marker 001) interrupts a paragraph
+================================================================================
+paragraph
+001) item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph (inline))
+    (list
+      (list_item
+        (list_marker_parenthesis)
+        (paragraph (inline))))))
+
+================================================================================
+Leading-zero ordered marker 000000001. interrupts a paragraph
+================================================================================
+paragraph
+000000001. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph (inline))
+    (list
+      (list_item
+        (list_marker_dot)
+        (paragraph (inline))))))
