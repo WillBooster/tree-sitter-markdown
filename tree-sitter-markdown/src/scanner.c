@@ -724,71 +724,55 @@ static bool parse_plus(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
 
 static bool parse_ordered_list_marker(Scanner *s, TSLexer *lexer,
                                       const bool *valid_symbols) {
-    if (s->indentation <= 3 &&
-        (valid_symbols[LIST_MARKER_PARENTHESIS] ||
-         valid_symbols[LIST_MARKER_DOT] ||
-         valid_symbols[LIST_MARKER_PARENTHESIS_DONT_INTERRUPT] ||
-         valid_symbols[LIST_MARKER_DOT_DONT_INTERRUPT])) {
-        size_t digits = 1;
-        bool dont_interrupt =
-            !(lexer->lookahead >= '0' && lexer->lookahead <= '9');
-        advance(s, lexer);
-        while (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
-            dont_interrupt = true;
-            digits++;
-            advance(s, lexer);
-        }
-        if (digits >= 1 && digits <= 9) {
-            bool dot = false;
-            bool parenthesis = false;
-            if (lexer->lookahead == '.') {
-                advance(s, lexer);
-                dot = true;
-            } else if (lexer->lookahead == ')') {
-                advance(s, lexer);
-                parenthesis = true;
-            }
-            if (dot || parenthesis) {
-                uint8_t extra_indentation = 0;
-                while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
-                    extra_indentation += advance(s, lexer);
-                }
-                bool line_end =
-                    lexer->lookahead == '\n' || lexer->lookahead == '\r';
-                if (line_end) {
-                    extra_indentation = 1;
-                    dont_interrupt = true;
-                }
-                dont_interrupt =
-                    dont_interrupt && s->matched == s->open_blocks.size;
-                if (extra_indentation >= 1 &&
-                    (dot ? (dont_interrupt
-                                ? valid_symbols[LIST_MARKER_DOT_DONT_INTERRUPT]
-                                : valid_symbols[LIST_MARKER_DOT])
-                         : (dont_interrupt
-                                ? valid_symbols
-                                      [LIST_MARKER_PARENTHESIS_DONT_INTERRUPT]
-                                : valid_symbols[LIST_MARKER_PARENTHESIS]))) {
-                    lexer->result_symbol =
-                        dot ? LIST_MARKER_DOT : LIST_MARKER_PARENTHESIS;
-                    extra_indentation--;
-                    if (extra_indentation <= 3) {
-                        extra_indentation += s->indentation;
-                        s->indentation = 0;
-                    } else {
-                        uint8_t temp = s->indentation;
-                        s->indentation = extra_indentation;
-                        extra_indentation = temp;
-                    }
-                    if (!s->simulate)
-                        push_block(
-                            s, (Block)(LIST_ITEM + extra_indentation + digits));
-                    return true;
-                }
-            }
-        }
+    if (s->indentation > 3 ||
+        !(valid_symbols[LIST_MARKER_PARENTHESIS] ||
+          valid_symbols[LIST_MARKER_DOT] ||
+          valid_symbols[LIST_MARKER_PARENTHESIS_DONT_INTERRUPT] ||
+          valid_symbols[LIST_MARKER_DOT_DONT_INTERRUPT])) {
+        return false;
     }
-    return false;
+    size_t digits = 1;
+    bool dont_interrupt = lexer->lookahead != '1';
+    advance(s, lexer);
+    while (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
+        dont_interrupt = true;
+        digits++;
+        advance(s, lexer);
+    }
+    if (digits > 9 || (lexer->lookahead != '.' && lexer->lookahead != ')')) {
+        return false;
+    }
+    bool dot = lexer->lookahead == '.';
+    advance(s, lexer);
+    uint8_t extra_indentation = 0;
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        extra_indentation += advance(s, lexer);
+    }
+    if (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+        extra_indentation = 1;
+        dont_interrupt = true;
+    }
+    dont_interrupt = dont_interrupt && s->matched == s->open_blocks.size;
+    int marker = dot ? LIST_MARKER_DOT : LIST_MARKER_PARENTHESIS;
+    int non_interrupting_marker = dot ? LIST_MARKER_DOT_DONT_INTERRUPT
+                                                : LIST_MARKER_PARENTHESIS_DONT_INTERRUPT;
+    if (extra_indentation < 1 ||
+        !valid_symbols[dont_interrupt ? non_interrupting_marker : marker]) {
+        return false;
+    }
+    lexer->result_symbol = marker;
+    extra_indentation--;
+    if (extra_indentation <= 3) {
+        extra_indentation += s->indentation;
+        s->indentation = 0;
+    } else {
+        uint8_t temp = s->indentation;
+        s->indentation = extra_indentation;
+        extra_indentation = temp;
+    }
+    if (!s->simulate)
+        push_block(s, (Block)(LIST_ITEM + extra_indentation + digits));
+    return true;
 }
 
 static bool parse_minus(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
