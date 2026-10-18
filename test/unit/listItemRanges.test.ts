@@ -94,6 +94,24 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
+    for (const preceding of [['  ```', '  x', '  ```'], ['  ~~~', '  x', '  ~~~'], ['  > b'], ['  > > b']]) {
+      for (const prefix of ['', '> ']) {
+        for (const marker of ['-', '+', '*', '1.', '1)']) {
+          for (const newline of ['\n', '\r\n']) {
+            const lines = ['- a', ...preceding, `  ${marker} c`, `  ${marker} d`].map((line) => prefix + line);
+            const source = lines.join(newline) + newline;
+            const tree = parse(source);
+            const row = preceding.length + 1;
+            expect(tree, source).toContain(`(list_item [${row}, 0] - [${row + 1}, 0]`);
+            const position = Buffer.byteLength(lines.slice(0, row).join(newline) + newline);
+            const length = Buffer.byteLength(lines[row] + newline);
+            const deleted = lines.filter((_, index) => index !== row).join(newline) + newline;
+            expect(parse(source, [`${position} ${length} `])).toBe(parse(deleted));
+            expect(parse(source, [`${position} ${length} `, `${position} 0 ${lines[row] + newline}`])).toBe(tree);
+          }
+        }
+      }
+    }
     for (const child of [
       ['  - b', '    > q'],
       ['  - b', '    > > q'],
