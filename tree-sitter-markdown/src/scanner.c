@@ -1356,8 +1356,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         if (heading_closing_candidate && lexer->lookahead == '#') {
             return parse_atx_heading_closing_sequence(s, lexer);
         }
-        if (lexer->eof(lexer) && valid_symbols[TOKEN_EOF]) {
-            lexer->result_symbol = TOKEN_EOF;
+        if (lexer->eof(lexer) &&
+            (valid_symbols[TOKEN_EOF] || valid_symbols[BLANK_LINE_START])) {
+            lexer->result_symbol = valid_symbols[TOKEN_EOF] ? TOKEN_EOF : BLANK_LINE_START;
             return true;
         }
         if (valid_symbols[CODE_FENCE_LINE] && lexer->lookahead != '\n' && lexer->lookahead != '\r') {
