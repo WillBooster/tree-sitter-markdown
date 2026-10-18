@@ -298,3 +298,41 @@ x
       (code_fence_content
         (block_continuation))
       (fenced_code_block_delimiter))))
+
+================================================================================
+#266 - Closing backtick fence with trailing spaces at EOF
+================================================================================
+```sh
+x
+```   
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (info_string
+        (language))
+      (block_continuation)
+      (code_fence_content
+        (block_continuation))
+      (fenced_code_block_delimiter))))
+
+================================================================================
+#266 - Closing tilde fence with trailing tab at EOF
+================================================================================
+~~~sh
+x
+~~~	
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (info_string
+        (language))
+      (block_continuation)
+      (code_fence_content
+        (block_continuation))
+      (fenced_code_block_delimiter))))
