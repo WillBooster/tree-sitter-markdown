@@ -33,10 +33,12 @@ test('deep block containers retain bounded state across edits and undo', () => {
       ['```', 'fenced_code_block'],
       ['<!DOCTYPE html>', 'html_block'],
     ]) {
-      expect(parse(library, input, `${'> '.repeat(254)}${payload}\n\noutside\n`)).toContain(`(${node} `);
-      const bounded = parse(library, input, `${'> '.repeat(255)}${payload}\n\noutside\n`);
-      expect(bounded).not.toContain(`(${node} `);
-      expect(bounded).toContain('(inline [0, 510]');
+      for (const ending of ['\n\noutside\n', '']) {
+        expect(parse(library, input, `${'> '.repeat(254)}${payload}${ending}`)).toContain(`(${node} `);
+        const bounded = parse(library, input, `${'> '.repeat(255)}${payload}${ending}`);
+        expect(bounded).not.toContain(`(${node} `);
+        expect(bounded).toContain('(inline [0, 510]');
+      }
     }
   } finally {
     rmSync(directory, { recursive: true, force: true });
