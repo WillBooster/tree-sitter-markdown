@@ -10,7 +10,7 @@
 #define LANGUAGE_VERSION 0x57420001
 #define STATE_COUNT 1161
 #define LARGE_STATE_COUNT 63
-#define LEX_STATE_COUNT 2249
+#define LEX_STATE_COUNT 2250
 #define SYMBOL_COUNT 149
 #define ALIAS_COUNT 4
 #define TOKEN_COUNT 67
@@ -4220,44 +4220,44 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
     case 0:
       if (eof) ADVANCE(2184);
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_0);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 1:
       if (eof) ADVANCE(2184);
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_1);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 2:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_2);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 3:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_3);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 4:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_4);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 5:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_5);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 6:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_6);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof &&
           (lookahead < '[' || '`' < lookahead)) ADVANCE(2246);
       END_STATE();
     case 7:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_7);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 8:
@@ -4282,60 +4282,60 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 10:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_8);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 11:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_9);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 12:
       if (eof) ADVANCE(2184);
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_10);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 13:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_11);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 14:
       if (eof) ADVANCE(2184);
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_12);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 15:
       if (eof) ADVANCE(2184);
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_13);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 16:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_14);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 17:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_15);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 18:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_16);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 19:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_17);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 20:
       TS_LEX_ADVANCE_MAP_SORTED(ts_lex_advance_map_18);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2247);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(2248);
       if (!eof) ADVANCE(2246);
       END_STATE();
     case 21:
@@ -6909,7 +6909,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
           (lookahead < ' ' || '/' < lookahead) &&
           (lookahead < ':' || '@' < lookahead) &&
           (lookahead < '[' || '`' < lookahead) &&
-          (lookahead < '{' || '~' < lookahead)) ADVANCE(2248);
+          (lookahead < '{' || '~' < lookahead)) ADVANCE(2249);
       END_STATE();
     case 527:
       ts_lex_state_527:
@@ -6918,9 +6918,10 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
           lookahead != '\t' &&
           lookahead != '\n' &&
           lookahead != '\r' &&
-          (lookahead < ' ' || '@' < lookahead) &&
+          (lookahead < ' ' || '/' < lookahead) &&
+          (lookahead < ':' || '@' < lookahead) &&
           (lookahead < '[' || '`' < lookahead) &&
-          (lookahead < '{' || '~' < lookahead)) ADVANCE(2246);
+          (lookahead < '{' || '~' < lookahead)) ADVANCE(2247);
       END_STATE();
     case 528:
       TS_LEX_ADVANCE_MAP_DENSE(97, ts_lex_advance_map_60);
@@ -12741,12 +12742,25 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 2247:
       ts_lex_state_2247:
-      ACCEPT_TOKEN(sym__digits);
-      if (lookahead == '_') ADVANCE(526);
-      if (('0' <= lookahead && lookahead <= '9')) TS_LEX_REPEAT(false, ts_lex_state_2247);
+      ACCEPT_TOKEN(sym__word_no_digit);
+      if (lookahead == '_') ADVANCE(527);
+      if (!eof &&
+          lookahead != '\t' &&
+          lookahead != '\n' &&
+          lookahead != '\r' &&
+          (lookahead < ' ' || '/' < lookahead) &&
+          (lookahead < ':' || '@' < lookahead) &&
+          (lookahead < '[' || '`' < lookahead) &&
+          (lookahead < '{' || '~' < lookahead)) TS_LEX_REPEAT(false, ts_lex_state_2247);
       END_STATE();
     case 2248:
       ts_lex_state_2248:
+      ACCEPT_TOKEN(sym__digits);
+      if (lookahead == '_') ADVANCE(526);
+      if (('0' <= lookahead && lookahead <= '9')) TS_LEX_REPEAT(false, ts_lex_state_2248);
+      END_STATE();
+    case 2249:
+      ts_lex_state_2249:
       ACCEPT_TOKEN(sym__digits);
       if (lookahead == '_') ADVANCE(526);
       if (!eof &&
@@ -12756,7 +12770,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
           (lookahead < ' ' || '/' < lookahead) &&
           (lookahead < ':' || '@' < lookahead) &&
           (lookahead < '[' || '`' < lookahead) &&
-          (lookahead < '{' || '~' < lookahead)) TS_LEX_REPEAT(false, ts_lex_state_2248);
+          (lookahead < '{' || '~' < lookahead)) TS_LEX_REPEAT(false, ts_lex_state_2249);
       END_STATE();
     default:
       return false;
