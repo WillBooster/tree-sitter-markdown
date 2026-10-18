@@ -138,6 +138,7 @@ parser.set_language(&tree_sitter_md::LANGUAGE.into())?;
 
 The crate keeps the API of upstream's `tree-sitter-md` crate: `tree_sitter_md::INLINE_LANGUAGE` is the inline grammar,
 and the `parser` feature adds `MarkdownParser`, which parses a document with both grammars into a `MarkdownTree`.
+The `parser` feature requires runtime version 2.0.18 or later, which supports UTF-8 characters split across short input chunks.
 `MarkdownCursor::field_name` returns a name that borrows from the tree (`Option<&'tree str>`), since the
 willbooster-tree-sitter runtime returns field names with that lifetime, where upstream's returns `Option<&'static str>`.
 
