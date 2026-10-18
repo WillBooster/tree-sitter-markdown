@@ -4122,8 +4122,8 @@ Example 241 - https://github.github.com/gfm/#example-241
           (block_continuation)
           (code_fence_content
             (block_continuation))
-          (fenced_code_block_delimiter)
-          (block_continuation))
+          (fenced_code_block_delimiter))
+        (block_continuation)
         (block_continuation)
         (paragraph
           (inline)
@@ -5533,8 +5533,8 @@ Example 301 - https://github.github.com/gfm/#example-301
         (block_quote
           (block_quote_marker)
           (paragraph
-            (inline)
-            (block_continuation)))
+            (inline)))
+        (block_continuation)
         (fenced_code_block
           (fenced_code_block_delimiter)
           (block_continuation)
@@ -5604,8 +5604,8 @@ Example 304 - https://github.github.com/gfm/#example-304
           (block_continuation)
           (code_fence_content
             (block_continuation))
-          (fenced_code_block_delimiter)
-          (block_continuation))
+          (fenced_code_block_delimiter))
+        (block_continuation)
         (block_continuation)
         (paragraph
           (inline))))))

@@ -94,6 +94,53 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
+    for (const marker of ['-', '+', '*', '1.', '1)']) {
+      for (const prefix of ['', '> ']) {
+        for (const blanks of [1, 2, 3]) {
+          for (const newline of ['\n', '\r\n']) {
+            const start = `${prefix}${marker}${newline}`;
+            const separator = `${prefix}${newline}`;
+            const source = start + separator.repeat(blanks) + `${prefix}${marker} b${newline}`;
+            const tree = parse(source);
+            expect([...tree.matchAll(/\(list \[/g)], source).toHaveLength(1);
+            expect([...tree.matchAll(/\(list_item \[/g)], source).toHaveLength(2);
+            const position = Buffer.byteLength(start);
+            const added = start + separator.repeat(blanks + 1) + `${prefix}${marker} b${newline}`;
+            expect(parse(source, [`${position} 0 ${separator}`])).toBe(parse(added));
+            expect(parse(source, [`${position} 0 ${separator}`, `${position} ${Buffer.byteLength(separator)} `])).toBe(
+              tree
+            );
+          }
+        }
+      }
+    }
+    for (const preceding of [
+      ['  ```', '  x', '  ```'],
+      ['  ~~~', '  x', '  ~~~'],
+      ['  > b'],
+      ['  > > b'],
+      ['', '      code'],
+      ['  <!-- x -->'],
+      ['  <script>x</script>'],
+      ['  <div>', ''],
+    ]) {
+      for (const prefix of ['', '> ']) {
+        for (const marker of ['-', '+', '*', '1.', '1)']) {
+          for (const newline of ['\n', '\r\n']) {
+            const lines = ['- a', ...preceding, `  ${marker} c`, `  ${marker} d`].map((line) => prefix + line);
+            const source = lines.join(newline) + newline;
+            const tree = parse(source);
+            const row = preceding.length + 1;
+            expect(tree, source).toContain(`(list_item [${row}, 0] - [${row + 1}, 0]`);
+            const position = Buffer.byteLength(lines.slice(0, row).join(newline) + newline);
+            const length = Buffer.byteLength(lines[row] + newline);
+            const deleted = lines.filter((_, index) => index !== row).join(newline) + newline;
+            expect(parse(source, [`${position} ${length} `])).toBe(parse(deleted));
+            expect(parse(source, [`${position} ${length} `, `${position} 0 ${lines[row] + newline}`])).toBe(tree);
+          }
+        }
+      }
+    }
     for (const child of [
       ['  - b', '    > q'],
       ['  - b', '    > > q'],
