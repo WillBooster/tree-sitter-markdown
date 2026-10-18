@@ -336,3 +336,51 @@ x
       (code_fence_content
         (block_continuation))
       (fenced_code_block_delimiter))))
+
+================================================================================
+Over-indented backtick fence at EOF
+================================================================================
+```
+x
+    ```
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (block_continuation)
+      (code_fence_content
+        (block_continuation)))))
+
+================================================================================
+Over-indented tilde fence at EOF
+================================================================================
+~~~
+x
+	~~~
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (block_continuation)
+      (code_fence_content
+        (block_continuation)))))
+
+================================================================================
+Midline fence at EOF
+================================================================================
+```
+x
+text ```
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (fenced_code_block
+      (fenced_code_block_delimiter)
+      (block_continuation)
+      (code_fence_content
+        (block_continuation)))))

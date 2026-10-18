@@ -33,6 +33,25 @@ test('closing fence ranges exclude trailing whitespace with and without a final 
         }
       }
     }
+    for (const fence of ['```', '~~~']) {
+      for (const prefix of ['    ', '     ', '\t', 'text ']) {
+        for (const newline of ['', '\n']) {
+          for (const nested of [false, true]) {
+            const indent = nested ? '  ' : '';
+            const contentPrefix = nested && prefix === '\t' ? '\t\t' : prefix;
+            const source = `${nested ? '- ' : ''}${fence}\n${indent}x\n${indent}${contentPrefix}${fence}${newline}`;
+            writeFileSync(input, source);
+            const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+              cwd: repositoryRoot,
+              encoding: 'utf8',
+              timeout: 10_000,
+            });
+            expect(tree, source).not.toContain('ERROR');
+            expect(tree.match(/\(fenced_code_block_delimiter /g), source).toHaveLength(1);
+          }
+        }
+      }
+    }
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

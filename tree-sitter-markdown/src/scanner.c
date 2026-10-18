@@ -54,6 +54,7 @@ typedef enum {
     PLUS_METADATA,
     PIPE_TABLE_START,
     PIPE_TABLE_LINE_ENDING,
+    CODE_FENCE_LINE,
 } TokenType;
 
 // Description of a block on the block stack.
@@ -169,6 +170,7 @@ static const bool paragraph_interrupt_symbols[] = {
     false, // PLUS_METADATA,
     true,  // PIPE_TABLE_START,
     false, // PIPE_TABLE_LINE_ENDING,
+    false, // CODE_FENCE_LINE,
 };
 
 // State bitflags used with `Scanner.state`
@@ -1286,6 +1288,20 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
     return true;
 }
 
+static bool parse_code_fence_line(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
+    if ((lexer->lookahead == '`' || lexer->lookahead == '~') &&
+        parse_fenced_code_block(s, lexer->lookahead, lexer, valid_symbols)) {
+        return true;
+    }
+    while (!lexer->eof(lexer) && lexer->lookahead != '\n' && lexer->lookahead != '\r') {
+        advance(s, lexer);
+    }
+    mark_end(s, lexer);
+    s->indentation = 0;
+    lexer->result_symbol = CODE_FENCE_LINE;
+    return true;
+}
+
 static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     // A normal tree-sitter rule decided that the current branch is invalid and
     // now "requests" an error to stop the branch
@@ -1330,6 +1346,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         if (lexer->eof(lexer) && valid_symbols[TOKEN_EOF]) {
             lexer->result_symbol = TOKEN_EOF;
             return true;
+        }
+        if (valid_symbols[CODE_FENCE_LINE] && lexer->lookahead != '\n' && lexer->lookahead != '\r' && !lexer->eof(lexer)) {
+            return parse_code_fence_line(s, lexer, valid_symbols);
         }
         // We are not matching. This is where the parsing logic for most
         // "normal" token is. Most importantly parsing logic for the start of

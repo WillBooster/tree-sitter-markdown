@@ -182,7 +182,7 @@ module.exports = grammar({
                 $._block_close,
             ),
         )),
-        code_fence_content: $ => repeat1(choice($._newline, $._line)),
+        code_fence_content: $ => repeat1(choice($._newline, $._code_fence_line)),
         info_string: $ => choice(
             seq($.language, repeat(choice($._line, $.backslash_escape, $.entity_reference, $.numeric_character_reference))),
             seq(
@@ -580,6 +580,7 @@ module.exports = grammar({
 
         $._pipe_table_start,
         $._pipe_table_line_ending,
+        $._code_fence_line,
     ],
     precedences: $ => [
         [$._setext_heading1, $._block],

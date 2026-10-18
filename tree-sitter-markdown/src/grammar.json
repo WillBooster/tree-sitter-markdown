@@ -2449,7 +2449,7 @@
           },
           {
             "type": "SYMBOL",
-            "name": "_line"
+            "name": "_code_fence_line"
           }
         ]
       }
@@ -5392,6 +5392,10 @@
     {
       "type": "SYMBOL",
       "name": "_pipe_table_line_ending"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_code_fence_line"
     }
   ],
   "inline": [],
