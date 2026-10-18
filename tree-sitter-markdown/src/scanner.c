@@ -1463,8 +1463,8 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         }
         if (lexer->eof(lexer)) mark_end(s, lexer);
         if (valid_symbols[BLOCK_CLOSE] && partial_success && s->matched < s->open_blocks.size &&
-            s->open_blocks.items[s->open_blocks.size - 1] >= LIST_ITEM &&
-            s->open_blocks.items[s->open_blocks.size - 1] <= LIST_ITEM_MAX_INDENTATION &&
+            s->open_blocks.items[s->matched] >= LIST_ITEM &&
+            s->open_blocks.items[s->matched] <= LIST_ITEM_MAX_INDENTATION &&
             !(s->state & STATE_WAS_SOFT_LINE_BREAK)) {
             *s = before_match;
             s->state &= ~STATE_CLOSE_BLOCK;

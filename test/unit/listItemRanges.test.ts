@@ -90,6 +90,33 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
+    for (const child of [
+      ['  - b', '    > q'],
+      ['  - b', '    > > q'],
+      ['  - ```', '    x', '    ```'],
+      ['  - ```', '    x'],
+      ['  - b', '', '        code'],
+      ['  - <div>'],
+      ['  - <script>', '    x'],
+    ]) {
+      for (const prefix of ['', '> ']) {
+        for (const newline of ['\n', '\r\n']) {
+          const lines = ['- a', ...child, '  - d'].map((line) => prefix + line);
+          const source = lines.join(newline) + newline;
+          const tree = parse(source);
+          const nextRow = lines.length - 1;
+          expect(tree, source).toContain(`(list_item [1, 0] - [${nextRow}, 0]`);
+          expect(tree, source).toContain(`(list_item [${nextRow}, 0]`);
+          const start = Buffer.byteLength(lines[0] + newline);
+          const removed = child.map((line) => prefix + line + newline).join('');
+          const deleted = `${lines[0]}${newline}${lines[nextRow]}${newline}`;
+          const deletion = `${start} ${Buffer.byteLength(removed)} `;
+          expect(parse(source, [deletion])).toBe(parse(deleted));
+          expect(parse(source, [deletion, `${start} 0 ${removed}`])).toBe(tree);
+          expect([...parse(deleted).matchAll(/\(list_item /g)], source).toHaveLength(2);
+        }
+      }
+    }
     for (const content of ['- a', '> - a', '- a\n  - b']) {
       for (const blankLines of [1, 2, 3]) {
         for (const padding of ['', ' ', '  ', '\t', ' \t ']) {
