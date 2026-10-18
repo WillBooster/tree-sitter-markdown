@@ -115,6 +115,26 @@ test('heading ranges exclude closing syntax and following container prefixes', (
         expect(parse(source, [`0,0 ${level} text`, `0,0 4 ${marker}`])).toBe(tree);
       }
     }
+    const boundarySource = '>     foo\n    bar\n';
+    writeFileSync(input, boundarySource);
+    const boundaryTree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
+    expect(boundaryTree).not.toMatch(/ERROR|MISSING/);
+    expect(boundaryTree).toContain('(block_quote [0, 0] - [1, 0]');
+    expect(boundaryTree).toContain('(indented_code_block [1, 0] - [2, 0]');
+    const listSource = '- foo\n - bar\n  - baz\n   - boo\n';
+    writeFileSync(input, listSource);
+    const listTree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
+    expect(listTree).not.toMatch(/ERROR|MISSING/);
+    expect(listTree).toContain('(list_item [1, 0] - [2, 0]');
+    expect(listTree).toContain('(list_marker_minus [1, 0] - [1, 3]');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
