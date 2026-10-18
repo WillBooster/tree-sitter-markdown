@@ -37,12 +37,12 @@ module.exports = grammar({
             $.section,
         ),
         _block_not_section: $ => choice(
-            alias($._setext_heading1, $.setext_heading),
-            alias($._setext_heading2, $.setext_heading),
+            seq(alias($._setext_heading1, $.setext_heading), optional($.block_continuation)),
+            seq(alias($._setext_heading2, $.setext_heading), optional($.block_continuation)),
             $.paragraph,
             $.indented_code_block,
             $.block_quote,
-            $.thematic_break,
+            seq($.thematic_break, optional($.block_continuation)),
             $.list,
             $.fenced_code_block,
             $._blank_line,
@@ -99,11 +99,7 @@ module.exports = grammar({
 
         // LEAF BLOCKS
 
-        // A thematic break. This is currently handled by the external scanner but maybe could be
-        // parsed using normal tree-sitter rules.
-        //
-        // https://github.github.com/gfm/#thematic-breaks
-        thematic_break: $ => seq($._thematic_break, choice($._newline, $._eof)),
+        thematic_break: $ => seq($._thematic_break, choice($._line_ending, $._eof)),
 
         _atx_heading1: $ => prec(1, seq(
             $.atx_h1_marker,
@@ -146,19 +142,15 @@ module.exports = grammar({
             field('heading_content', alias($._line, $.inline))
         )),
 
-        // A setext heading. The underlines are currently handled by the external scanner but maybe
-        // could be parsed using normal tree-sitter rules.
-        //
-        // https://github.github.com/gfm/#setext-headings
         _setext_heading1: $ => seq(
             field('heading_content', $.paragraph),
             $.setext_h1_underline,
-            choice($._newline, $._eof),
+            choice($._line_ending, $._eof),
         ),
         _setext_heading2: $ => seq(
             field('heading_content', $.paragraph),
             $.setext_h2_underline,
-            choice($._newline, $._eof),
+            choice($._line_ending, $._eof),
         ),
 
         // An indented code block. An indented code block is made up of indented chunks and blank
