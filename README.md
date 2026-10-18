@@ -30,6 +30,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
 - Final headings, thematic breaks, empty list items, and opening code fences are recognized without a trailing newline.
 - A final line containing only spaces or tabs is blank, even without a trailing newline.
+- HTML blocks inside quotes and lists close correctly at a blank line, leaving subsequent Markdown in its surrounding container.
 - ATX headings, setext headings, and thematic breaks inside quotes or lists end before the following line’s container prefix.
 - A closing code fence at the end of a file is recognized even without a trailing line ending.
 - Trailing spaces and tabs at EOF are excluded from the preceding block’s inline range, as they are before a line ending.

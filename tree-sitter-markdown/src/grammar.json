@@ -3415,7 +3415,7 @@
                       },
                       {
                         "type": "SYMBOL",
-                        "name": "_blank_line"
+                        "name": "_blank_line_start"
                       }
                     ]
                   },
@@ -3478,7 +3478,7 @@
                       },
                       {
                         "type": "SYMBOL",
-                        "name": "_blank_line"
+                        "name": "_blank_line_start"
                       }
                     ]
                   },

@@ -1,0 +1,38 @@
+================================================================================
+Blank lines close custom HTML blocks inside quotes
+================================================================================
+> <custom>
+>
+> after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (block_quote
+      (block_quote_marker)
+      (html_block
+        (block_continuation)
+        (block_continuation))
+      (paragraph (inline)))))
+
+================================================================================
+Blank lines close HTML blocks inside list items
+================================================================================
+- before
+
+  <div>
+
+  after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (list
+      (list_item
+        (list_marker_minus)
+        (paragraph (inline) (block_continuation))
+        (block_continuation)
+        (html_block (block_continuation) (block_continuation))
+        (paragraph (inline))))))

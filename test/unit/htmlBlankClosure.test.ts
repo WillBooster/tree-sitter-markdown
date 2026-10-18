@@ -1,0 +1,66 @@
+import { expect, test } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+
+const repositoryRoot = path.resolve(import.meta.dirname, '../..');
+
+test('a blank line closes an HTML block within its surrounding container', () => {
+  mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
+  const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/html-blank-close-'));
+  const library = path.join(directory, 'markdown.dylib');
+  const input = path.join(directory, 'input.md');
+  const cli = path.join(repositoryRoot, 'script/tree-sitter');
+  const parse = (source: string, edits: string[] = []): string => {
+    writeFileSync(input, source);
+    const tree = execFileSync(
+      cli,
+      ['parse', '-l', library, '--lang-name', 'markdown', input, ...(edits.length > 0 ? ['--edits', ...edits] : [])],
+      {
+        cwd: repositoryRoot,
+        encoding: 'utf8',
+        timeout: 10_000,
+      }
+    );
+    expect(tree, source).not.toMatch(/ERROR|MISSING/);
+    return tree;
+  };
+  try {
+    execFileSync(cli, ['build', 'tree-sitter-markdown', '-o', library], {
+      cwd: repositoryRoot,
+      timeout: 60_000,
+    });
+    for (const tag of ['div', 'custom']) {
+      for (const [prefix, continuation] of [
+        ['', ''],
+        ['> ', '> '],
+        ['> > ', '> > '],
+        ['- ', '  '],
+      ] as const) {
+        for (const padding of ['', ' ', '\t']) {
+          for (const newline of ['\n', '\r\n']) {
+            for (const following of ['after', '# heading']) {
+              const first = `${prefix}<${tag}>${newline}`;
+              const blank = `${continuation}${padding}${newline}`;
+              const rest = `${continuation}${following}${newline}`;
+              const source = first + blank + rest;
+              const tree = parse(source);
+              const kind = following === 'after' ? 'paragraph' : 'atx_heading';
+              expect([...tree.matchAll(new RegExp(`\\(${kind} \\[`, 'g'))], source).toHaveLength(1);
+              expect([...tree.matchAll(/\(html_block \[/g)], source).toHaveLength(1);
+              const removed = first + rest;
+              const fresh = parse(removed);
+              expect(fresh, source).not.toMatch(/\((paragraph|atx_heading) \[/);
+              const at = Buffer.byteLength(first);
+              const length = Buffer.byteLength(blank);
+              expect(parse(source, [`${at} ${length} `]), source).toBe(fresh);
+              expect(parse(source, [`${at} ${length} `, `${at} 0 ${blank}`]), source).toBe(tree);
+            }
+          }
+        }
+      }
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}, 90_000);

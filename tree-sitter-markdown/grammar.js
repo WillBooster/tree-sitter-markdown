@@ -229,13 +229,13 @@ module.exports = grammar({
         _html_block_6: $ => build_html_block(
             $,
             $._html_block_6_start,
-            seq($._newline, $._blank_line),
+            seq($._newline, $._blank_line_start),
             true
         ),
         _html_block_7: $ => build_html_block(
             $,
             $._html_block_7_start,
-            seq($._newline, $._blank_line),
+            seq($._newline, $._blank_line_start),
             false
         ),
 
