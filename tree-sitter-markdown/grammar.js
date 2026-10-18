@@ -41,10 +41,10 @@ module.exports = grammar({
             seq(alias($._setext_heading2, $.setext_heading), optional($.block_continuation)),
             $.paragraph,
             $.indented_code_block,
-            $.block_quote,
+            seq($.block_quote, optional($.block_continuation)),
             seq($.thematic_break, optional($.block_continuation)),
             $.list,
-            $.fenced_code_block,
+            seq($.fenced_code_block, optional($.block_continuation)),
             $._blank_line,
             $.html_block,
             $.link_reference_definition,
@@ -172,7 +172,7 @@ module.exports = grammar({
                 optional($.info_string),
                 choice($._newline, $._eof),
                 optional($.code_fence_content),
-                optional(seq(alias($._fenced_code_block_end_backtick, $.fenced_code_block_delimiter), $._close_block, choice($._newline, $._eof))),
+                optional(seq(alias($._fenced_code_block_end_backtick, $.fenced_code_block_delimiter), $._close_block, choice($._line_ending, $._eof))),
                 $._block_close,
             ),
             seq(
@@ -181,7 +181,7 @@ module.exports = grammar({
                 optional($.info_string),
                 choice($._newline, $._eof),
                 optional($.code_fence_content),
-                optional(seq(alias($._fenced_code_block_end_tilde, $.fenced_code_block_delimiter), $._close_block, choice($._newline, $._eof))),
+                optional(seq(alias($._fenced_code_block_end_tilde, $.fenced_code_block_delimiter), $._close_block, choice($._line_ending, $._eof))),
                 $._block_close,
             ),
         )),
@@ -300,7 +300,6 @@ module.exports = grammar({
             optional($.block_continuation),
             repeat($._block),
             $._block_close,
-            optional($.block_continuation)
         ),
 
         // A list. This grammar does not differentiate between loose and tight lists for efficiency

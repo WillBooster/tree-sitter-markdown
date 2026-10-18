@@ -1601,8 +1601,25 @@
           "name": "indented_code_block"
         },
         {
-          "type": "SYMBOL",
-          "name": "block_quote"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "block_quote"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "block_continuation"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
         },
         {
           "type": "SEQ",
@@ -1630,8 +1647,25 @@
           "name": "list"
         },
         {
-          "type": "SYMBOL",
-          "name": "fenced_code_block"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "fenced_code_block"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "block_continuation"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
         },
         {
           "type": "SYMBOL",
@@ -2609,7 +2643,7 @@
                         "members": [
                           {
                             "type": "SYMBOL",
-                            "name": "_newline"
+                            "name": "_line_ending"
                           },
                           {
                             "type": "SYMBOL",
@@ -2715,7 +2749,7 @@
                         "members": [
                           {
                             "type": "SYMBOL",
-                            "name": "_newline"
+                            "name": "_line_ending"
                           },
                           {
                             "type": "SYMBOL",
@@ -3960,18 +3994,6 @@
         {
           "type": "SYMBOL",
           "name": "_block_close"
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "block_continuation"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
         }
       ]
     },
