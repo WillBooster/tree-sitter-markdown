@@ -629,11 +629,13 @@ Example 41 - https://github.github.com/gfm/#example-41
   (section
     (atx_heading
       (atx_h2_marker)
-      (inline))
+      (inline)
+      (atx_heading_closing_sequence))
     (section
       (atx_heading
         (atx_h3_marker)
-        (inline)))))
+        (inline)
+        (atx_heading_closing_sequence)))))
 
 ================================================================================
 Example 42 - https://github.github.com/gfm/#example-42
@@ -647,11 +649,13 @@ Example 42 - https://github.github.com/gfm/#example-42
   (section
     (atx_heading
       (atx_h1_marker)
-      (inline))
+      (inline)
+      (atx_heading_closing_sequence))
     (section
       (atx_heading
         (atx_h5_marker)
-        (inline)))))
+        (inline)
+        (atx_heading_closing_sequence)))))
 
 ================================================================================
 Example 43 - https://github.github.com/gfm/#example-43
@@ -664,7 +668,8 @@ Example 43 - https://github.github.com/gfm/#example-43
   (section
     (atx_heading
       (atx_h3_marker)
-      (inline))))
+      (inline)
+      (atx_heading_closing_sequence))))
 
 ================================================================================
 Example 44 - https://github.github.com/gfm/#example-44
@@ -772,7 +777,7 @@ Example 49 - https://github.github.com/gfm/#example-49
     (section
       (atx_heading
         (atx_h3_marker)
-        (inline)))))
+        (atx_heading_closing_sequence)))))
 
 ================================================================================
 Example 50 - https://github.github.com/gfm/#example-50

@@ -55,6 +55,7 @@ typedef enum {
     PIPE_TABLE_START,
     PIPE_TABLE_LINE_ENDING,
     CODE_FENCE_LINE,
+    ATX_HEADING_CLOSING_SEQUENCE,
 } TokenType;
 
 // Description of a block on the block stack.
@@ -171,7 +172,11 @@ static const bool paragraph_interrupt_symbols[] = {
     true,  // PIPE_TABLE_START,
     false, // PIPE_TABLE_LINE_ENDING,
     false, // CODE_FENCE_LINE,
+    false, // ATX_HEADING_CLOSING_SEQUENCE,
 };
+_Static_assert(sizeof(paragraph_interrupt_symbols) / sizeof(bool) ==
+                   ATX_HEADING_CLOSING_SEQUENCE + 1,
+               "paragraph interruption symbols cover every external token");
 
 // State bitflags used with `Scanner.state`
 
@@ -555,6 +560,15 @@ static bool parse_block_quote(Scanner *s, TSLexer *lexer,
         return true;
     }
     return false;
+}
+
+static bool parse_atx_heading_closing_sequence(Scanner *s, TSLexer *lexer) {
+    while (lexer->lookahead == '#') advance(s, lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') advance(s, lexer);
+    if (lexer->lookahead != '\n' && lexer->lookahead != '\r' && !lexer->eof(lexer)) return false;
+    mark_end(s, lexer);
+    lexer->result_symbol = ATX_HEADING_CLOSING_SEQUENCE;
+    return true;
 }
 
 static bool parse_atx_heading(Scanner *s, TSLexer *lexer,
@@ -1279,6 +1293,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         return error(lexer);
     }
 
+    bool heading_closing_candidate = valid_symbols[ATX_HEADING_CLOSING_SEQUENCE] &&
+        (lexer->lookahead == ' ' || lexer->lookahead == '\t');
+
     // Close the inner most block after the next line break as requested. See
     // `$._close_block` in grammar.js
     if (valid_symbols[CLOSE_BLOCK]) {
@@ -1312,6 +1329,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             } else {
                 break;
             }
+        }
+        if (heading_closing_candidate && lexer->lookahead == '#') {
+            return parse_atx_heading_closing_sequence(s, lexer);
         }
         if (lexer->eof(lexer) && valid_symbols[TOKEN_EOF]) {
             lexer->result_symbol = TOKEN_EOF;
