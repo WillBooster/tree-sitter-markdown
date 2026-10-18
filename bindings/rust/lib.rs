@@ -27,10 +27,10 @@ unsafe extern "C" {
     fn tree_sitter_markdown_inline() -> *const ();
 }
 
-/// The tree-sitter [`LanguageFn`][LanguageFn] for the block grammar.
+/// The tree-sitter [`LanguageFn`] for the block grammar.
 pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_markdown) };
 
-/// The tree-sitter [`LanguageFn`][LanguageFn] for the inline grammar.
+/// The tree-sitter [`LanguageFn`] for the inline grammar.
 pub const INLINE_LANGUAGE: LanguageFn =
     unsafe { LanguageFn::from_raw(tree_sitter_markdown_inline) };
 
