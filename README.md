@@ -21,6 +21,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Empty list items followed by multiple blank lines remain in the same list as a following item with the same marker type, matching CommonMark.
+- Fenced code blocks and block quotes end before a following line’s container prefix; that prefix is outside the closing node, including outside lists.
 - Nested `list_item` nodes own their leading container prefixes, so deleting an item does not remove the following item’s indentation.
 - Trailing horizontal padding is outside nonempty `pipe_table_cell` ranges; spaces between words remain inside the cell.
 - Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
