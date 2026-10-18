@@ -29,7 +29,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - HTML declarations end on the first line containing `>`, leaving subsequent Markdown outside the HTML block.
 - Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
-- Final headings, thematic breaks, empty list items, and opening code fences are recognized without a trailing newline.
+- Final headings, thematic breaks, empty list items, opening code fences, and pipe-table delimiter rows are recognized without a trailing newline.
 - A closing code fence at the end of a file is recognized even without a trailing line ending.
 - Trailing spaces and tabs at EOF are excluded from the preceding block’s inline range, as they are before a line ending.
 - Ordered lists interrupt a paragraph only when the first marker has numeric value 1, including leading-zero forms such as `01.`.
