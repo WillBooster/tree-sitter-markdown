@@ -3,14 +3,11 @@
   "grammars": [
     {
       "name": "markdown",
+      "camelcase": "Markdown",
       "scope": "text.markdown",
       "path": "tree-sitter-markdown",
-      "external-files": [
-        "common/common.js"
-      ],
-      "file-types": [
-        "md"
-      ],
+      "external-files": ["common/common.js"],
+      "file-types": ["md"],
       "highlights": "tree-sitter-markdown/queries/highlights.scm",
       "injections": "tree-sitter-markdown/queries/injections.scm",
       "injection-regex": "^(markdown|md)$"
@@ -20,9 +17,7 @@
       "camelcase": "MarkdownInline",
       "scope": "text.markdown_inline",
       "path": "tree-sitter-markdown-inline",
-      "external-files": [
-        "common/common.js"
-      ],
+      "external-files": ["common/common.js"],
       "file-types": null,
       "highlights": "tree-sitter-markdown-inline/queries/highlights.scm",
       "injections": "tree-sitter-markdown-inline/queries/injections.scm"
@@ -34,21 +29,21 @@
     "description": "Markdown grammar for tree-sitter",
     "authors": [
       {
-        "name": "MDeiml"
+        "name": "WillBooster Inc."
       }
     ],
     "links": {
-      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-markdown"
+      "repository": "https://github.com/WillBooster/tree-sitter-markdown"
     }
   },
   "bindings": {
-    "c": true,
+    "c": false,
     "go": false,
     "java": false,
-    "node": true,
-    "python": true,
+    "node": false,
+    "python": false,
     "rust": true,
-    "swift": true,
+    "swift": false,
     "zig": false
   }
 }

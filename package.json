@@ -1,55 +1,79 @@
 {
-  "name": "@tree-sitter-grammars/tree-sitter-markdown",
-  "version": "0.5.3",
+  "name": "@willbooster/tree-sitter-markdown",
+  "version": "0.0.0-semantically-released",
   "description": "Markdown grammar for tree-sitter",
-  "repository": "github:tree-sitter-grammars/tree-sitter-markdown",
-  "license": "MIT",
-  "main": "bindings/node",
-  "types": "bindings/node",
-  "author": {
-    "name": "MDeiml"
-  },
   "keywords": [
     "incremental",
     "parsing",
     "tree-sitter",
     "markdown"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WillBooster/tree-sitter-markdown.git"
+  },
+  "license": "MIT",
+  "author": "WillBooster Inc.",
   "files": [
-    "binding.gyp",
-    "prebuilds/**",
-    "bindings/node/*",
-    "tree-sitter.json",
-    "tree-sitter-*/grammar.js",
-    "tree-sitter-*/queries/*",
-    "tree-sitter-*/src/**",
     "common/common.js",
-    "common/html_entities.json"
+    "common/html_entities.json",
+    "tree-sitter-markdown/grammar.js",
+    "tree-sitter-markdown-inline/grammar.js",
+    "tree-sitter-markdown/queries/*.scm",
+    "tree-sitter-markdown-inline/queries/*.scm",
+    "tree-sitter-markdown/src/node-types.json",
+    "tree-sitter-markdown-inline/src/node-types.json",
+    "tree-sitter.json",
+    "*.wasm"
   ],
-  "dependencies": {
-    "node-addon-api": "^8.2.1",
-    "node-gyp-build": "^4.8.2"
+  "scripts": {
+    "build-wasm": "script/generate --build-wasm",
+    "build/ci": "bun run build-wasm",
+    "cleanup": "bun wb lint --fix --format",
+    "format": "bun wb lint --format",
+    "generate": "script/generate",
+    "lint": "bun wb lint",
+    "lint-fix": "bun wb lint --fix",
+    "prepare": "(bun lefthook install || true) && (test ! -f .lefthook/normalize-bun-lockfile.sh || bash .lefthook/normalize-bun-lockfile.sh)",
+    "release": "wb release",
+    "prestart": "bun run build-wasm",
+    "start": "script/tree-sitter playground",
+    "test": "bun wb test",
+    "test/ci": "bun wb test-on-ci",
+    "test/ci-setup": "playwright install --with-deps chromium",
+    "typecheck": "bun wb typecheck",
+    "verify": "bun wb verify",
+    "verify-full": "bun wb verify --full"
   },
   "devDependencies": {
-    "prebuildify": "^6.0.1",
-    "tree-sitter-cli": "^0.24.3"
+    "@tsconfig/bun": "1.0.11",
+    "@types/bun": "1.4.2",
+    "@vitest/browser-playwright": "5.0.3",
+    "@willbooster/oxfmt-config": "1.2.2",
+    "@willbooster/oxlint-config": "1.4.8",
+    "@willbooster/wb": "22.26.1",
+    "@willbooster/web-tree-sitter": "2.0.28",
+    "conventional-changelog-conventionalcommits": "10.4.0",
+    "lefthook": "2.2.1",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0",
+    "oxlint-tsgolint": "7.0.2004",
+    "playwright": "1.63.0",
+    "semantic-release": "25.0.9",
+    "sort-package-json": "4.0.0",
+    "vitest": "5.0.3",
+    "wrangler": "4.147.0"
   },
   "peerDependencies": {
-    "tree-sitter": "^0.21.1"
+    "@willbooster/web-tree-sitter": "^2.0.0"
   },
   "peerDependenciesMeta": {
-    "tree_sitter": {
+    "@willbooster/web-tree-sitter": {
       "optional": true
     }
   },
-  "scripts": {
-    "build": "node scripts/build.js",
-    "install": "node-gyp-build",
-    "prestart": "tree-sitter build --wasm",
-    "start": "tree-sitter playground",
-    "test": "node --test bindings/node/*_test.js"
-  },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

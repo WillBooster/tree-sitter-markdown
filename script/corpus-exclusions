@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Prints a regex for `tree-sitter test --exclude` and `tree-sitter fuzz --exclude` that matches the corpus cases of the
+# given grammar directory that the published parser cannot pass: upstream's corpus expects every extension in
+# common/common.js, while the parser is generated with the default ones, which leave out tags and wiki links.
+
+set -euo pipefail
+
+case $1 in
+  tree-sitter-markdown) echo '^$' ;;
+  tree-sitter-markdown-inline)
+    # `tree-sitter test` matches the case name alone, `tree-sitter fuzz` the name after the language and file names.
+    cases='Basic Wiki-link parsing\.|Wiki-link to a file|Wiki-link to a heading in a note|Wiki-link with title'
+    cases+='|Wiki-link version of Example 556|Example 324 - [^ ]+|Example 638 - [^ ]+|Tags are working'
+    echo "(^| - )($cases)\$"
+    ;;
+  *)
+    echo "Unknown grammar directory: $1" >&2
+    exit 1
+    ;;
+esac
