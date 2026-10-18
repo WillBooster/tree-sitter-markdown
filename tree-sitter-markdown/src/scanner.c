@@ -1417,6 +1417,8 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             return parse_pipe_table(s, lexer, valid_symbols);
         }
     } else { // we are in the state of trying to match all currently open blocks
+        Scanner before_match = *s;
+        mark_end(s, lexer);
         bool partial_success = false;
         while (s->matched < (uint8_t)s->open_blocks.size) {
             if (s->matched == (uint8_t)s->open_blocks.size - 1 &&
@@ -1435,7 +1437,19 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
                 break;
             }
         }
+        if (lexer->eof(lexer)) mark_end(s, lexer);
+        if (valid_symbols[BLOCK_CLOSE] && !valid_symbols[BLOCK_CONTINUATION] &&
+            partial_success && s->matched < s->open_blocks.size &&
+            !(s->state & STATE_WAS_SOFT_LINE_BREAK)) {
+            *s = before_match;
+            s->state &= ~STATE_CLOSE_BLOCK;
+            if (!s->simulate) pop_block(s);
+            if (!s->open_blocks.size) s->state &= ~STATE_MATCHING;
+            lexer->result_symbol = BLOCK_CLOSE;
+            return true;
+        }
         if (partial_success) {
+            mark_end(s, lexer);
             if (s->matched == s->open_blocks.size) {
                 s->state &= (~STATE_MATCHING);
             }
@@ -1444,6 +1458,8 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         }
 
         if (!(s->state & STATE_WAS_SOFT_LINE_BREAK)) {
+            *s = before_match;
+            s->state &= ~STATE_CLOSE_BLOCK;
             lexer->result_symbol = BLOCK_CLOSE;
             pop_block(s);
             if (s->matched == s->open_blocks.size) {
