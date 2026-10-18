@@ -19,7 +19,9 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.0.0 or later: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
-- Underscore emphasis can end immediately after a digit, as in `_hello1_`.
+- Underscore emphasis can end immediately after a digit, as in `_hello1_`. Intraword underscores around digits,
+  such as `a_1_b_`, stay plain text instead of producing emphasis. Underscore runs that cannot open or close emphasis
+  stay together as text, so punctuation after a digit does not open false emphasis in `1__-_`.
 - Ordered lists interrupt a paragraph only when their first marker is `1.` or `1)`.
 - A NUL character is part of the text around it, in both grammars, where upstream's lexers report it as an unexpected
   character in an `ERROR` node.
