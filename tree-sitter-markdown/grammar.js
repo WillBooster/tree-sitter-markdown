@@ -25,6 +25,9 @@ module.exports = grammar({
 
         ...common.rules,
         _last_token_punctuation: $ => choice(), // needed for compatability with common rules
+        link_label: $ => common.EXTENSION_TASK_LIST
+            ? choice(common.rules.link_label($), /\[[xX]\]/)
+            : common.rules.link_label($),
 
         // BLOCK STRUCTURE
 
@@ -592,6 +595,7 @@ module.exports = grammar({
     conflicts: $ => [
         [$.link_reference_definition],
         [$.link_label, $._line],
+        [$.link_label, $._word],
         [$.link_reference_definition, $._line],
     ],
     extras: $ => [],
