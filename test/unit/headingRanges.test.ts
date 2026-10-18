@@ -72,6 +72,49 @@ test('heading ranges exclude closing syntax and following container prefixes', (
         }
       }
     }
+    for (let level = 1; level <= 6; level++) {
+      for (const newline of ['\n', '\r\n']) {
+        const marker = '#'.repeat(level);
+        const source = [
+          `${marker} H`,
+          '> <Listing file-name="main.rs">',
+          '>',
+          '> </Listing>',
+          '>',
+          '> The compiler will complain.',
+          '',
+        ].join(newline);
+        const parse = (text: string, edits: string[] = []): string => {
+          writeFileSync(input, text);
+          return execFileSync(
+            cli,
+            [
+              'parse',
+              '-l',
+              library,
+              '--lang-name',
+              'markdown',
+              input,
+              ...(edits.length > 0 ? ['--edits', ...edits] : []),
+            ],
+            {
+              cwd: repositoryRoot,
+              encoding: 'utf8',
+              timeout: 10_000,
+            }
+          );
+        };
+        const tree = parse(source);
+        expect(tree, source).not.toMatch(/ERROR|MISSING/);
+        expect(tree).toContain('(section [0, 0] - [6, 0]');
+        expect(tree).toContain('(atx_heading [0, 0] - [1, 0]');
+        expect(tree.match(/\(html_block /g)).toHaveLength(2);
+        expect(tree).toContain('(paragraph [5, 2] - [6, 0]');
+        const changed = source.replace(marker, 'text');
+        expect(parse(source, [`0,0 ${level} text`])).toBe(parse(changed));
+        expect(parse(source, [`0,0 ${level} text`, `0,0 4 ${marker}`])).toBe(tree);
+      }
+    }
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
