@@ -737,3 +737,23 @@ paragraph
       (inline))
     (paragraph
       (inline))))
+
+================================================================================
+List-like text in nested indented code retains code precedence
+================================================================================
+1. a
+
+       * b
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (list
+      (list_item
+        (list_marker_dot)
+        (paragraph
+          (inline)
+          (block_continuation))
+        (block_continuation)
+        (indented_code_block)))))

@@ -73,6 +73,23 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
+    for (const outer of ['-', '1.']) {
+      for (const inner of ['-', '+', '*', '1.', '1)']) {
+        for (const container of ['', '> ']) {
+          for (const extra of [3, 4, 5]) {
+            const prefix = `${container}${outer} a\n${container}\n${container}`;
+            const indentation = ' '.repeat(outer.length + 1 + extra);
+            const source = `${prefix}${indentation}${inner} b\n`;
+            const tree = parse(source);
+            expect([...tree.matchAll(/\(indented_code_block /g)], source).toHaveLength(extra >= 4 ? 1 : 0);
+            expect([...tree.matchAll(/\(list_item /g)], source).toHaveLength(extra >= 4 ? 1 : 2);
+            const position = Buffer.byteLength(prefix);
+            expect(parse(source, [`${position} 0 ` + ' '])).toBe(parse(`${prefix} ${indentation}${inner} b\n`));
+            expect(parse(source, [`${position} 0 ` + ' ', `${position} 1 `])).toBe(tree);
+          }
+        }
+      }
+    }
     for (const content of ['- a', '> - a', '- a\n  - b']) {
       for (const blankLines of [1, 2, 3]) {
         for (const padding of ['', ' ', '  ', '\t', ' \t ']) {
