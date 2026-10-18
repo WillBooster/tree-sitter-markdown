@@ -2534,7 +2534,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_word_no_digit"
+          "name": "_tag_letters"
         },
         {
           "type": "REPEAT",
@@ -2543,11 +2543,11 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_word_no_digit"
+                "name": "_tag_letters"
               },
               {
                 "type": "SYMBOL",
-                "name": "_digits"
+                "name": "_tag_digits"
               },
               {
                 "type": "STRING",
@@ -2557,6 +2557,14 @@
           }
         }
       ]
+    },
+    "_tag_letters": {
+      "type": "PATTERN",
+      "value": "[A-Za-z]+"
+    },
+    "_tag_digits": {
+      "type": "PATTERN",
+      "value": "[0-9]+"
     },
     "_attribute": {
       "type": "SEQ",
@@ -4491,6 +4499,14 @@
         {
           "type": "SYMBOL",
           "name": "_digits"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_tag_letters"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_tag_digits"
         }
       ]
     },
