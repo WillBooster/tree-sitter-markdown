@@ -563,9 +563,6 @@ static bool parse_block_quote(Scanner *s, TSLexer *lexer,
 }
 
 static bool parse_atx_heading_closing_sequence(Scanner *s, TSLexer *lexer) {
-    if (lexer->lookahead != ' ' && lexer->lookahead != '\t') return false;
-    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') advance(s, lexer);
-    if (lexer->lookahead != '#') return false;
     while (lexer->lookahead == '#') advance(s, lexer);
     while (lexer->lookahead == ' ' || lexer->lookahead == '\t') advance(s, lexer);
     if (lexer->lookahead != '\n' && lexer->lookahead != '\r' && !lexer->eof(lexer)) return false;
@@ -1294,10 +1291,8 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         return error(lexer);
     }
 
-    if (valid_symbols[ATX_HEADING_CLOSING_SEQUENCE] &&
-        (lexer->lookahead == ' ' || lexer->lookahead == '\t')) {
-        return parse_atx_heading_closing_sequence(s, lexer);
-    }
+    bool heading_closing_candidate = valid_symbols[ATX_HEADING_CLOSING_SEQUENCE] &&
+        (lexer->lookahead == ' ' || lexer->lookahead == '\t');
 
     // Close the inner most block after the next line break as requested. See
     // `$._close_block` in grammar.js
@@ -1332,6 +1327,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             } else {
                 break;
             }
+        }
+        if (heading_closing_candidate && lexer->lookahead == '#') {
+            return parse_atx_heading_closing_sequence(s, lexer);
         }
         if (lexer->eof(lexer) && valid_symbols[TOKEN_EOF]) {
             lexer->result_symbol = TOKEN_EOF;

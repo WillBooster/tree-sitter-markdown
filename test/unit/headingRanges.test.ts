@@ -13,6 +13,10 @@ test('heading inline ranges exclude only valid closing hash sequences', () => {
   const cli = path.join(repositoryRoot, 'script/tree-sitter');
   const cases = [
     { heading: '## go ##', content: 'go' },
+    { heading: '# foo   ', content: 'foo' },
+    { heading: '# foo\t ', content: 'foo' },
+    { heading: '#   ', content: undefined },
+    { heading: '# \t', content: undefined },
     { heading: '## go#', content: 'go#' },
     { heading: '### foo ### b', content: 'foo ### b' },
     { heading: '# foo # ##', content: 'foo #' },
