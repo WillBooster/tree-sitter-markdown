@@ -417,11 +417,6 @@ static bool parse_fenced_code_block(Scanner *s, const char delimiter,
         while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
             advance(s, lexer);
         }
-        if (lexer->eof(lexer)) {
-            // A closing fence may end the input without a line ending. Nothing
-            // follows to consume the trailing whitespace, so it joins the token.
-            mark_end(s, lexer);
-        }
         if (lexer->lookahead == '\n' || lexer->lookahead == '\r' ||
             lexer->eof(lexer)) {
             s->fenced_code_block_delimiter_length = 0;
@@ -1331,6 +1326,10 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             } else {
                 break;
             }
+        }
+        if (lexer->eof(lexer) && valid_symbols[TOKEN_EOF]) {
+            lexer->result_symbol = TOKEN_EOF;
+            return true;
         }
         // We are not matching. This is where the parsing logic for most
         // "normal" token is. Most importantly parsing logic for the start of
