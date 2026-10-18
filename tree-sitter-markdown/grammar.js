@@ -278,7 +278,7 @@ module.exports = grammar({
         // related to paragraphs ending does not grow.
         //
         // https://github.github.com/gfm/#paragraphs
-        paragraph: $ => seq(alias(repeat1(choice($._line, $._soft_line_break)), $.inline), choice($._newline, $._eof)),
+        paragraph: $ => seq(alias(repeat1(choice($._paragraph_line, $._soft_line_break)), $.inline), choice($._newline, $._eof)),
 
         // A blank line including the following newline.
         //
@@ -392,6 +392,18 @@ module.exports = grammar({
         // Some symbols get parsed as single tokens so that html blocks get detected properly
         _declaration_line: $ => prec.right(repeat1(choice($._word, $._whitespace, common.punctuation_without($, ['>'])))),
         _line: $ => prec.right(repeat1(choice($._word, $._whitespace, common.punctuation_without($, [])))),
+        entity_reference: $ => $._entity_reference,
+        _entity_reference: common.rules.entity_reference,
+        numeric_character_reference: $ => $._numeric_character_reference,
+        _numeric_character_reference: common.rules.numeric_character_reference,
+        _paragraph_line: $ => prec.right(repeat1(choice(
+            $._word,
+            $._whitespace,
+            common.punctuation_without($, []),
+            $._backslash_escape,
+            $._entity_reference,
+            $._numeric_character_reference,
+        ))),
         _word: $ => choice(
             new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+'),
             common.EXTENSION_TASK_LIST ? choice(
@@ -591,8 +603,8 @@ module.exports = grammar({
     ],
     conflicts: $ => [
         [$.link_reference_definition],
-        [$.link_label, $._line],
-        [$.link_reference_definition, $._line],
+        [$.link_label, $._paragraph_line],
+        [$.link_reference_definition, $._paragraph_line],
     ],
     extras: $ => [],
 });
