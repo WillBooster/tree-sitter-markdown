@@ -36,6 +36,8 @@
     "]"
     "("
     ")"
+    "<"
+    ">"
   ] @punctuation.delimiter)
 
 (inline_link
@@ -44,6 +46,8 @@
     "]"
     "("
     ")"
+    "<"
+    ">"
   ] @punctuation.delimiter)
 
 (shortcut_link
