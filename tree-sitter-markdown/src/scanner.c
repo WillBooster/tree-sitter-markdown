@@ -993,10 +993,9 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
         }
         if (!next_symbol_valid && lexer->lookahead == '/') {
             advance(s, lexer);
-            if (lexer->lookahead == '>') {
-                advance(s, lexer);
-                tag_closed = true;
-            }
+            if (lexer->lookahead != '>') return false;
+            advance(s, lexer);
+            tag_closed = true;
         }
         if (next_symbol_valid || tag_closed) {
             // try block 2 names
@@ -1011,7 +1010,7 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
         }
     }
 
-    if (!valid_symbols[HTML_BLOCK_7_START]) {
+    if (!valid_symbols[HTML_BLOCK_7_START] || (starting_slash && tag_closed)) {
         return false;
     }
 
