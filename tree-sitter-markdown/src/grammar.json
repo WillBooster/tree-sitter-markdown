@@ -1645,6 +1645,18 @@
             "value": "atx_heading"
           },
           {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "block_continuation"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
             "type": "REPEAT",
             "content": {
               "type": "CHOICE",
@@ -1705,6 +1717,18 @@
             "value": "atx_heading"
           },
           {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "block_continuation"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
             "type": "REPEAT",
             "content": {
               "type": "CHOICE",
@@ -1761,6 +1785,18 @@
             "value": "atx_heading"
           },
           {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "block_continuation"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
             "type": "REPEAT",
             "content": {
               "type": "CHOICE",
@@ -1813,6 +1849,18 @@
             "value": "atx_heading"
           },
           {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "block_continuation"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
             "type": "REPEAT",
             "content": {
               "type": "CHOICE",
@@ -1861,6 +1909,18 @@
             "value": "atx_heading"
           },
           {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "block_continuation"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
             "type": "REPEAT",
             "content": {
               "type": "CHOICE",
@@ -1898,6 +1958,18 @@
             },
             "named": true,
             "value": "atx_heading"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "block_continuation"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
           },
           {
             "type": "REPEAT",
@@ -1970,7 +2042,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_newline"
+                "name": "_line_ending"
               },
               {
                 "type": "SYMBOL",
@@ -2020,7 +2092,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_newline"
+                "name": "_line_ending"
               },
               {
                 "type": "SYMBOL",
@@ -2070,7 +2142,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_newline"
+                "name": "_line_ending"
               },
               {
                 "type": "SYMBOL",
@@ -2120,7 +2192,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_newline"
+                "name": "_line_ending"
               },
               {
                 "type": "SYMBOL",
@@ -2170,7 +2242,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_newline"
+                "name": "_line_ending"
               },
               {
                 "type": "SYMBOL",
@@ -2220,7 +2292,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_newline"
+                "name": "_line_ending"
               },
               {
                 "type": "SYMBOL",

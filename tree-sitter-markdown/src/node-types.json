@@ -45,10 +45,6 @@
         {
           "type": "atx_heading_closing_sequence",
           "named": true
-        },
-        {
-          "type": "block_continuation",
-          "named": true
         }
       ]
     }
