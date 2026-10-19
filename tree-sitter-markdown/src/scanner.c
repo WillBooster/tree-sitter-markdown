@@ -1616,6 +1616,7 @@ static BoundaryResult list_blank_boundary(Scanner *s, TSLexer *lexer,
         (s->state & STATE_WAS_SOFT_LINE_BREAK)) return BOUNDARY_NONE;
     Block last = s->open_blocks.items[s->open_blocks.size - 1];
     if (last < LIST_ITEM || last > LIST_ITEM_MAX_INDENTATION) return BOUNDARY_NONE;
+    if (lexer->lookahead == ' ' || lexer->lookahead == '\t') return BOUNDARY_NONE;
     if (lexer->lookahead != '\n' && lexer->lookahead != '\r') {
         s->state &= ~(STATE_BLANK_CONTINUES | STATE_BLANK_CLOSES);
         s->blank_failed_block = 0;
@@ -1667,6 +1668,13 @@ static void skip_horizontal_padding(Scanner *s, TSLexer *lexer) {
 
 static bool list_marker_follows(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     Scanner matched_state = *s;
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        s->indentation += advance(s, lexer);
+    }
+    if (lexer->lookahead != '\n' && lexer->lookahead != '\r' && !lexer->eof(lexer)) {
+        matched_state.state &= ~(STATE_BLANK_CONTINUES | STATE_BLANK_CLOSES);
+        matched_state.blank_failed_block = 0;
+    }
     bool marker_symbols[sizeof(paragraph_interrupt_symbols) / sizeof(bool)];
     memcpy(marker_symbols, paragraph_interrupt_symbols, sizeof(marker_symbols));
     marker_symbols[SETEXT_H1_UNDERLINE] = valid_symbols[SETEXT_H1_UNDERLINE];
