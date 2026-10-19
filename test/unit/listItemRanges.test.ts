@@ -4,34 +4,12 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
+type ParseSource = (source: string, edits?: string[]) => string;
+
 const repositoryRoot = path.resolve(import.meta.dirname, '../..');
 
 test('list item selections own their leading prefixes and leave following lines intact', () => {
-  mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
-  const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/list-item-ranges-'));
-  const library = path.join(directory, 'markdown.dylib');
-  const input = path.join(directory, 'input.md');
-  const cli = execFileSync(path.join(repositoryRoot, 'script/tree-sitter'), ['--print-path'], {
-    cwd: repositoryRoot,
-    encoding: 'utf8',
-    timeout: 60_000,
-  }).trim();
-  const parse = (source: string, edits: string[] = []): string => {
-    writeFileSync(input, source);
-    const tree = execFileSync(
-      cli,
-      ['parse', '-l', library, '--lang-name', 'markdown', input, ...(edits.length > 0 ? ['--edits', ...edits] : [])],
-      {
-        cwd: repositoryRoot,
-        encoding: 'utf8',
-        timeout: 10_000,
-      }
-    );
-    expect(tree, source).not.toMatch(/ERROR|MISSING/);
-    return tree;
-  };
-  try {
-    execFileSync(cli, ['build', 'tree-sitter-markdown', '-o', library], { cwd: repositoryRoot, timeout: 60_000 });
+  withBlockParser((parse) => {
     for (const prefix of ['', '> ', '> > ']) {
       for (const marker of ['-', '+', '*', '1.', '1)']) {
         for (const newline of ['\n', '\r\n']) {
@@ -234,7 +212,68 @@ test('list item selections own their leading prefixes and leave following lines 
         }
       }
     }
+  });
+}, 90_000);
+
+test('blank-run decisions remain valid after edits to deep list suffixes', () => {
+  withBlockParser((parse) => {
+    for (const [depth, quote] of [
+      [32, '> '],
+      [254, '> '],
+      [250, ''],
+      [255, ''],
+    ] as const) {
+      for (const survivingDepth of [0, Math.floor(depth / 2), depth]) {
+        for (const newline of ['\n', '\r\n']) {
+          const items = Array.from({ length: depth }, (_, index) => `${quote}${'  '.repeat(index)}- a${newline}`).join(
+            ''
+          );
+          const blanks = `${quote}${newline}`.repeat(1000);
+          const tail = `${quote}${'  '.repeat(survivingDepth)}tail${newline}`;
+          const source = items + blanks + tail;
+          const tree = parse(source);
+          for (const offset of [items.length + 500 * (quote.length + newline.length), items.length + blanks.length]) {
+            const insertion = `${quote}${'  '.repeat(Math.floor(depth / 3))}changed${newline}`;
+            const changed = source.slice(0, offset) + insertion + source.slice(offset);
+            expect(parse(source, [`${offset} 0 ${insertion}`])).toBe(parse(changed));
+            expect(parse(source, [`${offset} 0 ${insertion}`, `${offset} ${insertion.length} `])).toBe(tree);
+            expect(parse(changed, [`${offset} ${insertion.length} `])).toBe(tree);
+          }
+        }
+      }
+    }
+  });
+}, 90_000);
+
+function withBlockParser(run: (parse: ParseSource) => void): void {
+  mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
+  const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/list-item-ranges-'));
+  const library = path.join(directory, 'markdown.dylib');
+  const input = path.join(directory, 'input.md');
+  const cli = execFileSync(path.join(repositoryRoot, 'script/tree-sitter'), ['--print-path'], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+    timeout: 60_000,
+  }).trim();
+  const parse = (source: string, edits: string[] = []): string => {
+    writeFileSync(input, source);
+    const tree = execFileSync(
+      cli,
+      ['parse', '-l', library, '--lang-name', 'markdown', input, ...(edits.length > 0 ? ['--edits', ...edits] : [])],
+      {
+        cwd: repositoryRoot,
+        encoding: 'utf8',
+        timeout: 10_000,
+        maxBuffer: 4 * 1024 * 1024,
+      }
+    );
+    expect(tree, source).not.toMatch(/ERROR|MISSING/);
+    return tree;
+  };
+  try {
+    execFileSync(cli, ['build', 'tree-sitter-markdown', '-o', library], { cwd: repositoryRoot, timeout: 60_000 });
+    run(parse);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
-}, 90_000);
+}
