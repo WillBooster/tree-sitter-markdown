@@ -41,10 +41,10 @@ module.exports = grammar({
             alias($._setext_heading2, $.setext_heading),
             $.paragraph,
             $.indented_code_block,
-            $.block_quote,
+            seq($.block_quote, optional($.block_continuation)),
             $.thematic_break,
             $.list,
-            $.fenced_code_block,
+            seq($.fenced_code_block, optional($.block_continuation)),
             $._blank_line,
             $.html_block,
             $.link_reference_definition,
@@ -180,7 +180,7 @@ module.exports = grammar({
                 optional($.info_string),
                 choice($._newline, $._eof),
                 optional($.code_fence_content),
-                optional(seq(alias($._fenced_code_block_end_backtick, $.fenced_code_block_delimiter), $._close_block, choice($._newline, $._eof))),
+                optional(seq(alias($._fenced_code_block_end_backtick, $.fenced_code_block_delimiter), $._close_block, choice($._line_ending, $._eof))),
                 $._block_close,
             ),
             seq(
@@ -189,7 +189,7 @@ module.exports = grammar({
                 optional($.info_string),
                 choice($._newline, $._eof),
                 optional($.code_fence_content),
-                optional(seq(alias($._fenced_code_block_end_tilde, $.fenced_code_block_delimiter), $._close_block, choice($._newline, $._eof))),
+                optional(seq(alias($._fenced_code_block_end_tilde, $.fenced_code_block_delimiter), $._close_block, choice($._line_ending, $._eof))),
                 $._block_close,
             ),
         )),
@@ -308,7 +308,6 @@ module.exports = grammar({
             optional($.block_continuation),
             repeat($._block),
             $._block_close,
-            optional($.block_continuation)
         ),
 
         // A list. This grammar does not differentiate between loose and tight lists for efficiency
@@ -325,11 +324,11 @@ module.exports = grammar({
             $._list_dot,
             $._list_parenthesis
         )),
-        _list_plus: $ => prec.right(repeat1(alias($._list_item_plus, $.list_item))),
-        _list_minus: $ => prec.right(repeat1(alias($._list_item_minus, $.list_item))),
-        _list_star: $ => prec.right(repeat1(alias($._list_item_star, $.list_item))),
-        _list_dot: $ => prec.right(repeat1(alias($._list_item_dot, $.list_item))),
-        _list_parenthesis: $ => prec.right(repeat1(alias($._list_item_parenthesis, $.list_item))),
+        _list_plus: $ => build_list($, $._list_item_plus),
+        _list_minus: $ => build_list($, $._list_item_minus),
+        _list_star: $ => build_list($, $._list_item_star),
+        _list_dot: $ => build_list($, $._list_item_dot),
+        _list_parenthesis: $ => build_list($, $._list_item_parenthesis),
         // Some list items can not interrupt a paragraph and are marked as such by the external
         // scanner.
         list_marker_plus: $ => choice($._list_marker_plus, $._list_marker_plus_dont_interrupt),
@@ -338,39 +337,39 @@ module.exports = grammar({
         list_marker_dot: $ => choice($._list_marker_dot, $._list_marker_dot_dont_interrupt),
         list_marker_parenthesis: $ => choice($._list_marker_parenthesis, $._list_marker_parenthesis_dont_interrupt),
         _list_item_plus: $ => seq(
+            optional(alias($._list_item_prefix_plus, $.block_continuation)),
             $.list_marker_plus,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         _list_item_minus: $ => seq(
+            optional(alias($._list_item_prefix_minus, $.block_continuation)),
             $.list_marker_minus,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         _list_item_star: $ => seq(
+            optional(alias($._list_item_prefix_star, $.block_continuation)),
             $.list_marker_star,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         _list_item_dot: $ => seq(
+            optional(alias($._list_item_prefix_dot, $.block_continuation)),
             $.list_marker_dot,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         _list_item_parenthesis: $ => seq(
+            optional(alias($._list_item_prefix_parenthesis, $.block_continuation)),
             $.list_marker_parenthesis,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         // List items are closed after two consecutive blank lines
         _list_item_content: $ => choice(
@@ -604,6 +603,13 @@ module.exports = grammar({
         $._pipe_table_line_ending,
         $._code_fence_line,
         $.atx_heading_closing_sequence,
+        $._list_blank_guard,
+        $._list_blank_separator,
+        $._list_item_prefix_minus,
+        $._list_item_prefix_plus,
+        $._list_item_prefix_star,
+        $._list_item_prefix_parenthesis,
+        $._list_item_prefix_dot,
     ],
     precedences: $ => [
         [$._setext_heading1, $._block],
@@ -617,8 +623,16 @@ module.exports = grammar({
         [$.link_label, $._word],
         [$.link_reference_definition, $._paragraph_line],
     ],
-    extras: $ => [],
+    extras: $ => [$._list_blank_guard],
 });
+
+function build_list($, item) {
+    return prec.right(repeat1(seq(
+        alias(item, $.list_item),
+        optional($.block_continuation),
+        repeat(seq($._list_blank_separator, optional($.block_continuation)))
+    )));
+}
 
 // General purpose structure for html blocks. The different kinds mostly work the same but have
 // different openling and closing conditions. Some html blocks may not interrupt a paragraph and

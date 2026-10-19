@@ -396,6 +396,10 @@
       "required": false,
       "types": [
         {
+          "type": "block_continuation",
+          "named": true
+        },
+        {
           "type": "list_item",
           "named": true
         }
