@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-# Runs the tree-sitter CLI of WillBooster/tree-sitter at the runtime version that script/runtime-version prints with the
-# given arguments, so that the parser is generated, built, and tested by the generator and runtime this package ships
-# with. The first run downloads that CLI into .tmp/ from the GitHub Release of the version, or builds it when the
-# download fails or the release has no binary that runs here, which takes over 10 minutes on GitHub's Intel macOS
-# runner.
+# Parser generation and tests must use the runtime version shipped by this package.
+# The first run downloads that CLI into .tmp/ from its GitHub Release, or builds it when the download fails or the
+# release has no binary that runs here, which takes over 10 minutes on GitHub's Intel macOS runner.
 
 set -euo pipefail
 
@@ -43,4 +41,8 @@ if [[ ! -x $cli/bin/tree-sitter ]]; then
   rm -rf "$staging"
   trap - EXIT
 fi
-exec "$cli/bin/tree-sitter" "$@"
+if [[ $# == 1 && $1 == --print-path ]]; then
+  printf '%s\n' "$cli/bin/tree-sitter"
+else
+  exec "$cli/bin/tree-sitter" "$@"
+fi

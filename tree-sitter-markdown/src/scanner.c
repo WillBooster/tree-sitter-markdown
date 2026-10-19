@@ -1214,6 +1214,7 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
     }
 
     size_t delimiter_cell_count = 0;
+    bool delimiter_separator = false;
     if (lexer->lookahead == '|') {
         advance(s, lexer);
     }
@@ -1238,20 +1239,23 @@ static bool parse_pipe_table(Scanner *s, TSLexer *lexer,
             advance(s, lexer);
         }
         if (lexer->lookahead == '|') {
+            delimiter_separator = true;
             advance(s, lexer);
             while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
                 advance(s, lexer);
             }
-            if (lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+            if (lexer->lookahead != '\r' && lexer->lookahead != '\n' &&
+                !lexer->eof(lexer)) {
                 continue;
             }
         }
-        if (lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+        if (lexer->lookahead != '\r' && lexer->lookahead != '\n' &&
+            !lexer->eof(lexer)) {
             return false;
         }
         break;
     }
-    if (cell_count != delimiter_cell_count) {
+    if (cell_count != delimiter_cell_count || !delimiter_separator) {
         return false;
     }
 
