@@ -4930,8 +4930,8 @@ Example 278 - https://github.github.com/gfm/#example-278
           (paragraph
             (inline)
             (block_continuation))
-          (setext_h2_underline)
-          (block_continuation))
+          (setext_h2_underline))
+        (block_continuation)
         (paragraph
           (inline))))))
 
