@@ -33,6 +33,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
 - Final headings, thematic breaks, empty list items, opening code fences, and pipe-table delimiter rows are recognized without a trailing newline.
+- A final line containing only spaces or tabs is blank, even without a trailing newline.
 - ATX headings, setext headings, and thematic breaks inside quotes or lists end before the following line’s container prefix.
 - A block following a closed container can start at its line’s indentation. That whitespace belongs to the following block and may be included in its first marker or inline node, rather than in the closing container.
 - A closing code fence at the end of a file is recognized even without a trailing line ending.
