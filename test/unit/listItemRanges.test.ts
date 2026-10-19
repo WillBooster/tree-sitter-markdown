@@ -268,6 +268,39 @@ test('blank-run decisions remain valid after edits to deep list suffixes', () =>
   });
 }, 90_000);
 
+test('padded blank-run decisions reset at content and survive edits', () => {
+  withBlockParser((parse) => {
+    for (const [depth, quote] of [
+      [1, ''],
+      [2, ''],
+      [2, '> '],
+    ] as const) {
+      for (const padding of ['   ', '      ', '\t ']) {
+        for (const newline of ['\n', '\r\n']) {
+          for (const continued of [false, true]) {
+            const items = Array.from(
+              { length: depth },
+              (_, index) => `${quote}${'  '.repeat(index)}- a${newline}`
+            ).join('');
+            const pair = `${quote}${newline}${quote}${'  '.repeat(depth)}${padding}${newline}`;
+            const blanks = pair.repeat(16);
+            const tail = `${quote}${continued ? '  '.repeat(depth) : ''}tail${newline}${quote}${newline}${quote}outside${newline}`;
+            const source = items + blanks + tail;
+            const tree = parse(source);
+            for (const offset of [items.length + pair.length * 8, items.length + blanks.length]) {
+              const insertion = `${quote}${'  '.repeat(depth)}changed${newline}`;
+              const changed = source.slice(0, offset) + insertion + source.slice(offset);
+              expect(parse(source, [`${offset} 0 ${insertion}`])).toBe(parse(changed));
+              expect(parse(source, [`${offset} 0 ${insertion}`, `${offset} ${insertion.length} `])).toBe(tree);
+              expect(parse(changed, [`${offset} ${insertion.length} `])).toBe(tree);
+            }
+          }
+        }
+      }
+    }
+  });
+}, 90_000);
+
 function withBlockParser(run: (parse: ParseSource) => void): void {
   mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
   const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/list-item-ranges-'));
