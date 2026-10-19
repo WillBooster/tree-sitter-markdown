@@ -270,6 +270,15 @@ test('blank-run decisions remain valid after edits to deep list suffixes', () =>
 
 test('padded blank-run decisions reset at content and survive edits', () => {
   withBlockParser((parse) => {
+    for (const marker of ['-', '+', '*', '1.', '1)']) {
+      for (const prefix of ['', '> ', '> > ']) {
+        for (const newline of ['\n', '\r\n']) {
+          const source = `${prefix}${marker} b${newline}${prefix}${newline}${prefix}${' '.repeat(marker.length + 3)}c${newline}${prefix}${' '.repeat(marker.length + 1)}${newline}${prefix}${marker} b${newline}`;
+          const tree = parse(source);
+          expect(tree.match(/\(list_item \[[^\]]+\] - \[([^\]]+)\]/)?.[1], source).toBe('3, 0');
+        }
+      }
+    }
     for (const [depth, quote] of [
       [1, ''],
       [2, ''],
