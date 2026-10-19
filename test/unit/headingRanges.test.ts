@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const repositoryRoot = path.resolve(import.meta.dirname, '../..');
 
-test('heading inline ranges exclude only valid closing hash sequences', () => {
+test('heading ranges exclude closing syntax and following container prefixes', () => {
   mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
   const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/heading-ranges-'));
   const library = path.join(directory, 'markdown.dylib');
@@ -49,6 +49,106 @@ test('heading inline ranges exclude only valid closing hash sequences', () => {
         }
       }
     }
+    for (let level = 1; level <= 6; level++) {
+      for (const [prefix, continuation] of [
+        ['> ', '> '],
+        ['> > ', '> > '],
+        ['- ', '  '],
+      ]) {
+        for (const newline of ['\n', '\r\n']) {
+          for (const following of ['text', '# next']) {
+            const source = `${prefix}${'#'.repeat(level)} heading${newline}${continuation}${following}${newline}`;
+            writeFileSync(input, source);
+            const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+              cwd: repositoryRoot,
+              encoding: 'utf8',
+              timeout: 10_000,
+            });
+            expect(tree, source).not.toMatch(/ERROR|MISSING/);
+            const heading = /\(atx_heading \[0, \d+\] - \[(\d+), (\d+)\]/.exec(tree);
+            expect(heading, source).not.toBeNull();
+            expect(heading?.slice(1), source).toEqual(['1', '0']);
+          }
+        }
+      }
+    }
+    for (let level = 1; level <= 6; level++) {
+      for (const newline of ['\n', '\r\n']) {
+        const marker = '#'.repeat(level);
+        const source = [
+          `${marker} H`,
+          '> <Listing file-name="main.rs">',
+          '>',
+          '> </Listing>',
+          '>',
+          '> The compiler will complain.',
+          '',
+        ].join(newline);
+        const parse = (text: string, edits: string[] = []): string => {
+          writeFileSync(input, text);
+          return execFileSync(
+            cli,
+            [
+              'parse',
+              '-l',
+              library,
+              '--lang-name',
+              'markdown',
+              input,
+              ...(edits.length > 0 ? ['--edits', ...edits] : []),
+            ],
+            {
+              cwd: repositoryRoot,
+              encoding: 'utf8',
+              timeout: 10_000,
+            }
+          );
+        };
+        const tree = parse(source);
+        expect(tree, source).not.toMatch(/ERROR|MISSING/);
+        expect(tree).toContain('(section [0, 0] - [6, 0]');
+        expect(tree).toContain('(atx_heading [0, 0] - [1, 0]');
+        expect(tree.match(/\(html_block /g)).toHaveLength(2);
+        expect(tree).toContain('(paragraph [5, 2] - [6, 0]');
+        const changed = source.replace(marker, 'text');
+        expect(parse(source, [`0,0 ${level} text`])).toBe(parse(changed));
+        expect(parse(source, [`0,0 ${level} text`, `0,0 4 ${marker}`])).toBe(tree);
+      }
+    }
+    for (const [source, closingNode] of [
+      ['# h\n    code\n   ', '(indented_code_block [1, 0] - [2, 3]'],
+      ['    ---\n  ', '(indented_code_block [0, 0] - [1, 2]'],
+      ['> <div>\n\t', '(block_quote [0, 0] - [1, 1]'],
+    ] as const) {
+      writeFileSync(input, source);
+      const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+        cwd: repositoryRoot,
+        encoding: 'utf8',
+        timeout: 10_000,
+      });
+      expect(tree, source).not.toMatch(/ERROR|MISSING|\(paragraph /);
+      expect(tree, source).toContain(closingNode);
+    }
+    const boundarySource = '>     foo\n    bar\n';
+    writeFileSync(input, boundarySource);
+    const boundaryTree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
+    expect(boundaryTree).not.toMatch(/ERROR|MISSING/);
+    expect(boundaryTree).toContain('(block_quote [0, 0] - [1, 0]');
+    expect(boundaryTree).toContain('(indented_code_block [1, 0] - [2, 0]');
+    const listSource = '- foo\n - bar\n  - baz\n   - boo\n';
+    writeFileSync(input, listSource);
+    const listTree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
+    expect(listTree).not.toMatch(/ERROR|MISSING/);
+    expect(listTree).toContain('(list_item [1, 0] - [2, 0]');
+    expect(listTree).toContain('(list_marker_minus [1, 0] - [1, 3]');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

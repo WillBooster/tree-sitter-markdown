@@ -53,6 +53,7 @@ module.exports = grammar({
         section: $ => choice($._section1, $._section2, $._section3, $._section4, $._section5, $._section6),
         _section1: $ => prec.right(seq(
             alias($._atx_heading1, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias(choice($._section6, $._section5, $._section4, $._section3, $._section2), $.section),
                 $._block_not_section
@@ -60,6 +61,7 @@ module.exports = grammar({
         )),
         _section2: $ => prec.right(seq(
             alias($._atx_heading2, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias(choice($._section6, $._section5, $._section4, $._section3), $.section),
                 $._block_not_section
@@ -67,6 +69,7 @@ module.exports = grammar({
         )),
         _section3: $ => prec.right(seq(
             alias($._atx_heading3, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias(choice($._section6, $._section5, $._section4), $.section),
                 $._block_not_section
@@ -74,6 +77,7 @@ module.exports = grammar({
         )),
         _section4: $ => prec.right(seq(
             alias($._atx_heading4, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias(choice($._section6, $._section5), $.section),
                 $._block_not_section
@@ -81,6 +85,7 @@ module.exports = grammar({
         )),
         _section5: $ => prec.right(seq(
             alias($._atx_heading5, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias($._section6, $.section),
                 $._block_not_section
@@ -88,6 +93,7 @@ module.exports = grammar({
         )),
         _section6: $ => prec.right(seq(
             alias($._atx_heading6, $.atx_heading),
+            optional($.block_continuation),
             repeat($._block_not_section)
         )),
 
@@ -99,45 +105,41 @@ module.exports = grammar({
         // https://github.github.com/gfm/#thematic-breaks
         thematic_break: $ => seq($._thematic_break, choice($._newline, $._eof)),
 
-        // An ATX heading. This is currently handled by the external scanner but maybe could be
-        // parsed using normal tree-sitter rules.
-        //
-        // https://github.github.com/gfm/#atx-headings
         _atx_heading1: $ => prec(1, seq(
             $.atx_h1_marker,
             optional($._atx_heading_content),
             optional($.atx_heading_closing_sequence),
-            choice($._newline, $._eof)
+            choice($._line_ending, $._eof)
         )),
         _atx_heading2: $ => prec(1, seq(
             $.atx_h2_marker,
             optional($._atx_heading_content),
             optional($.atx_heading_closing_sequence),
-            choice($._newline, $._eof)
+            choice($._line_ending, $._eof)
         )),
         _atx_heading3: $ => prec(1, seq(
             $.atx_h3_marker,
             optional($._atx_heading_content),
             optional($.atx_heading_closing_sequence),
-            choice($._newline, $._eof)
+            choice($._line_ending, $._eof)
         )),
         _atx_heading4: $ => prec(1, seq(
             $.atx_h4_marker,
             optional($._atx_heading_content),
             optional($.atx_heading_closing_sequence),
-            choice($._newline, $._eof)
+            choice($._line_ending, $._eof)
         )),
         _atx_heading5: $ => prec(1, seq(
             $.atx_h5_marker,
             optional($._atx_heading_content),
             optional($.atx_heading_closing_sequence),
-            choice($._newline, $._eof)
+            choice($._line_ending, $._eof)
         )),
         _atx_heading6: $ => prec(1, seq(
             $.atx_h6_marker,
             optional($._atx_heading_content),
             optional($.atx_heading_closing_sequence),
-            choice($._newline, $._eof)
+            choice($._line_ending, $._eof)
         )),
         _atx_heading_content: $ => prec(1, seq(
             optional($._whitespace),
