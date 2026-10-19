@@ -6,15 +6,15 @@ import path from 'node:path';
 const repositoryRoot = path.resolve(import.meta.dirname, '../..');
 
 test('a blank line closes an HTML block within its surrounding container', () => {
-  mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
-  const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/html-blank-close-'));
-  const library = path.join(directory, 'markdown.dylib');
-  const input = path.join(directory, 'input.md');
   const cli = execFileSync(path.join(repositoryRoot, 'script/tree-sitter'), ['--print-path'], {
     cwd: repositoryRoot,
     encoding: 'utf8',
     timeout: 60_000,
   }).trim();
+  mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
+  const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/html-blank-close-'));
+  const library = path.join(directory, 'markdown.dylib');
+  const input = path.join(directory, 'input.md');
   const parse = (source: string, edits: string[] = []): string => {
     writeFileSync(input, source);
     const tree = execFileSync(
@@ -52,6 +52,8 @@ test('a blank line closes an HTML block within its surrounding container', () =>
               const kind = following === 'after' ? 'paragraph' : 'atx_heading';
               expect([...tree.matchAll(new RegExp(`\\(${kind} \\[`, 'g'))], source).toHaveLength(1);
               expect([...tree.matchAll(/\(html_block \[/g)], source).toHaveLength(1);
+              expect([...tree.matchAll(/\(block_quote \[/g)], source).toHaveLength([...prefix.matchAll(/>/g)].length);
+              expect([...tree.matchAll(/\(list_item \[/g)], source).toHaveLength(prefix === '- ' ? 1 : 0);
               const ancestors: { depth: number; kind: string }[] = [];
               for (const line of tree.split('\n')) {
                 const node = line.match(/^( *)(?:\w+: )?\((\w+) \[/);
