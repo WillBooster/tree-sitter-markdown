@@ -10,6 +10,29 @@ const repositoryRoot = path.resolve(import.meta.dirname, '../..');
 
 test('list item selections own their leading prefixes and leave following lines intact', () => {
   withBlockParser((parse) => {
+    for (const lines of [
+      ['> - a', '> - b', '> - c'],
+      ['> > - a', '> > - b', '> > - c'],
+      ['- outer', '  > - a', '  > - b', '  > - c'],
+      ['> intro', '>', '> - a', '> - b', '> - c'],
+    ]) {
+      for (const newline of ['\n', '\r\n']) {
+        const source = lines.join(newline) + newline;
+        const tree = parse(source);
+        for (let row = lines.length - 3; row < lines.length; row++) {
+          const at = Buffer.byteLength(
+            lines
+              .slice(0, row)
+              .map((line) => line + newline)
+              .join('')
+          );
+          const removed = lines[row] + newline;
+          const edited = lines.filter((_, index) => index !== row).join(newline) + newline;
+          expect(parse(source, [`${at} ${Buffer.byteLength(removed)} `]), source).toBe(parse(edited));
+          expect(parse(source, [`${at} ${Buffer.byteLength(removed)} `, `${at} 0 ${removed}`]), source).toBe(tree);
+        }
+      }
+    }
     for (const prefix of ['', '> ', '> > ']) {
       for (const marker of ['-', '+', '*', '1.', '1)']) {
         for (const newline of ['\n', '\r\n']) {
