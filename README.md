@@ -166,7 +166,8 @@ WillBooster/tree-sitter runtime version locked in `Cargo.lock`, since the genera
 not the ones this package ships with. Its first run downloads that CLI from the runtime's GitHub Release, or builds it
 with `cargo` (whose build runs the CMake that `mise.toml` pins) when the download fails or the release has no binary
 that runs here. Run other CLI commands through it as well (e.g. `script/tree-sitter parse --grammar-path
-tree-sitter-markdown file.md`).
+tree-sitter-markdown file.md`). For repeated invocations, resolve the pinned executable once with
+`script/tree-sitter --print-path` and invoke the returned path to avoid repeating bootstrap/version discovery.
 
 `bun run generate` records a fresh generation profile for each grammar from the cases in its `test/corpus` (and, for the
 block grammar, from Git-tracked files in `examples/`, of which there are none), then generates compact parser tables.
