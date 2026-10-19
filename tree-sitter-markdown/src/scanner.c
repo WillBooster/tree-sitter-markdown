@@ -1300,6 +1300,7 @@ static bool parse_code_fence_line(Scanner *s, TSLexer *lexer, const bool *valid_
     return true;
 }
 
+static bool pipe_table_row_follows(Scanner *s, TSLexer *lexer);
 typedef enum { BOUNDARY_NONE, BOUNDARY_EMITTED, BOUNDARY_REJECTED } BoundaryResult;
 
 static BoundaryResult list_blank_boundary(Scanner *s, TSLexer *lexer,
@@ -1543,8 +1544,14 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
                    sizeof(interrupt_symbols));
             if (valid_symbols[PIPE_TABLE_LINE_ENDING]) {
                 interrupt_symbols[PIPE_TABLE_START] = false;
+                while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+                    s->indentation += advance(s, lexer);
+                }
             }
-            if (!lexer->eof(lexer) && !scan(s, lexer, interrupt_symbols)) {
+            bool continues = valid_symbols[PIPE_TABLE_LINE_ENDING] && lexer->lookahead == '|'
+                ? pipe_table_row_follows(s, lexer)
+                : !lexer->eof(lexer) && !scan(s, lexer, interrupt_symbols);
+            if (continues) {
                 s->matched = matched_temp;
                 // If the last line break ended a paragraph and no new block
                 // opened, the last line break should have been a soft line
@@ -1599,6 +1606,12 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         }
     }
     return false;
+}
+
+static bool pipe_table_row_follows(Scanner *s, TSLexer *lexer) {
+    advance(s, lexer);
+    skip_horizontal_padding(s, lexer);
+    return !lexer->eof(lexer) && lexer->lookahead != '\n' && lexer->lookahead != '\r';
 }
 
 static BoundaryResult list_blank_boundary(Scanner *s, TSLexer *lexer,

@@ -45,13 +45,13 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
           const large = `- a\n${`\n${padding}\n`.repeat(10_000)}  tail\n`;
           parseCpuTime(parser, small);
           parseCpuTime(parser, large);
-          let smallFastest = Infinity;
-          let largeFastest = Infinity;
+          const samples: { smallCpu: number; largeCpu: number }[] = [];
           for (let run = 0; run < 3; run++) {
-            smallFastest = Math.min(smallFastest, parseCpuTime(parser, small));
-            largeFastest = Math.min(largeFastest, parseCpuTime(parser, large));
+            samples.push({ smallCpu: parseCpuTime(parser, small), largeCpu: parseCpuTime(parser, large) });
           }
-          expect(largeFastest / smallFastest).toBeLessThan(18);
+          const smallFastest = Math.min(...samples.map(({ smallCpu }) => smallCpu));
+          const largeFastest = Math.min(...samples.map(({ largeCpu }) => largeCpu));
+          expect(largeFastest / smallFastest, JSON.stringify({ padding, samples })).toBeLessThan(18);
         }
       });
       test('does not rescan a long blank suffix for every closing list depth', { timeout: 60_000 }, () => {

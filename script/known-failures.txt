@@ -1,2 +1,0 @@
-examples/book/nostarch/appendix.md
-examples/book/nostarch/appendix_b.md
