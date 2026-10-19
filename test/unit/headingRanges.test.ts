@@ -115,6 +115,20 @@ test('heading ranges exclude closing syntax and following container prefixes', (
         expect(parse(source, [`0,0 ${level} text`, `0,0 4 ${marker}`])).toBe(tree);
       }
     }
+    for (const [source, closingNode] of [
+      ['# h\n    code\n   ', '(indented_code_block [1, 0] - [2, 3]'],
+      ['    ---\n  ', '(indented_code_block [0, 0] - [1, 2]'],
+      ['> <div>\n\t', '(block_quote [0, 0] - [1, 1]'],
+    ] as const) {
+      writeFileSync(input, source);
+      const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+        cwd: repositoryRoot,
+        encoding: 'utf8',
+        timeout: 10_000,
+      });
+      expect(tree, source).not.toMatch(/ERROR|MISSING|\(paragraph /);
+      expect(tree, source).toContain(closingNode);
+    }
     const boundarySource = '>     foo\n    bar\n';
     writeFileSync(input, boundarySource);
     const boundaryTree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
