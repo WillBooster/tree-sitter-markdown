@@ -199,6 +199,7 @@ static const uint8_t STATE_MATCHING = 0x1 << 0;
 // Last line break was inside a paragraph
 static const uint8_t STATE_WAS_SOFT_LINE_BREAK = 0x1 << 1;
 static const uint8_t STATE_BLANK_CONTINUES = 0x4;
+static const uint8_t STATE_BLANK_CLOSES = 0x8;
 // Block should be closed after next line break
 static const uint8_t STATE_CLOSE_BLOCK = 0x1 << 4;
 
@@ -237,14 +238,18 @@ typedef struct {
     // The delimiter length of the currently open fenced code block
     uint8_t fenced_code_block_delimiter_length;
 
+    uint8_t blank_failed_block;
+
     bool simulate;
 } Scanner;
 
-_Static_assert(5 + 2 * UINT8_MAX <= TREE_SITTER_SERIALIZATION_BUFFER_SIZE, "block state must fit");
+_Static_assert(6 + 2 * UINT8_MAX <= TREE_SITTER_SERIALIZATION_BUFFER_SIZE, "block state must fit");
 
 static bool push_block(Scanner *s, Block b) {
     if (s->simulate) return s->matched < UINT8_MAX;
     if (s->open_blocks.size >= UINT8_MAX) return false;
+    s->state &= ~(STATE_BLANK_CONTINUES | STATE_BLANK_CLOSES);
+    s->blank_failed_block = 0;
     if (s->open_blocks.size == s->open_blocks.capacity) {
         s->open_blocks.capacity =
             s->open_blocks.capacity ? s->open_blocks.capacity << 1 : 8;
@@ -269,6 +274,7 @@ static unsigned serialize(Scanner *s, char *buffer) {
     buffer[size++] = (char)s->indentation;
     buffer[size++] = (char)s->column;
     buffer[size++] = (char)s->fenced_code_block_delimiter_length;
+    buffer[size++] = (char)s->blank_failed_block;
     for (size_t i = 0; i < s->open_blocks.size; i++) {
         unsigned block = s->open_blocks.items[i];
         buffer[size++] = (char)block;
@@ -284,6 +290,7 @@ static void deserialize(Scanner *s, const char *buffer, unsigned length) {
     s->indentation = 0;
     s->column = 0;
     s->fenced_code_block_delimiter_length = 0;
+    s->blank_failed_block = 0;
     if (length > 0) {
         size_t size = 0;
         s->state = (uint8_t)buffer[size++];
@@ -291,6 +298,7 @@ static void deserialize(Scanner *s, const char *buffer, unsigned length) {
         s->indentation = (uint8_t)buffer[size++];
         s->column = (uint8_t)buffer[size++];
         s->fenced_code_block_delimiter_length = (uint8_t)buffer[size++];
+        s->blank_failed_block = (uint8_t)buffer[size++];
         size_t blocks_size = length - size;
         if (blocks_size > 0) {
             size_t blocks_count = blocks_size / 2;
@@ -1293,7 +1301,7 @@ typedef enum { BOUNDARY_NONE, BOUNDARY_EMITTED, BOUNDARY_REJECTED } BoundaryResu
 static BoundaryResult list_blank_boundary(Scanner *s, TSLexer *lexer,
                                          const bool *valid_symbols, Scanner before_match);
 static bool list_marker_follows(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
-static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer);
+static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer, uint8_t *failed_block);
 static void skip_horizontal_padding(Scanner *s, TSLexer *lexer);
 
 static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
@@ -1596,18 +1604,23 @@ static BoundaryResult list_blank_boundary(Scanner *s, TSLexer *lexer,
     Block last = s->open_blocks.items[s->open_blocks.size - 1];
     if (last < LIST_ITEM || last > LIST_ITEM_MAX_INDENTATION) return BOUNDARY_NONE;
     if (lexer->lookahead != '\n' && lexer->lookahead != '\r') {
-        s->state &= ~STATE_BLANK_CONTINUES;
+        s->state &= ~(STATE_BLANK_CONTINUES | STATE_BLANK_CLOSES);
+        s->blank_failed_block = 0;
         return BOUNDARY_NONE;
     }
     if ((s->state & STATE_BLANK_CONTINUES) || !valid_symbols[LIST_BLANK_GUARD]) return BOUNDARY_NONE;
-    bool continues = list_continues_after_blanks(*s, lexer);
+    uint8_t failed_block = s->blank_failed_block;
+    bool known_close = (s->state & STATE_BLANK_CLOSES) && s->open_blocks.size > failed_block;
+    bool continues = !known_close && list_continues_after_blanks(*s, lexer, &failed_block);
     if (!continues && !valid_symbols[BLOCK_CLOSE]) return BOUNDARY_REJECTED;
     *s = before_match;
     if (continues) {
-        s->state |= STATE_BLANK_CONTINUES;
+        s->state = (s->state & ~STATE_BLANK_CLOSES) | STATE_BLANK_CONTINUES;
+        s->blank_failed_block = 0;
         lexer->result_symbol = LIST_BLANK_GUARD;
     } else {
-        s->state &= ~STATE_CLOSE_BLOCK;
+        s->state = (s->state & ~STATE_CLOSE_BLOCK) | STATE_BLANK_CLOSES;
+        s->blank_failed_block = failed_block;
         pop_block(s);
         if (!s->open_blocks.size) s->state &= ~STATE_MATCHING;
         lexer->result_symbol = BLOCK_CLOSE;
@@ -1615,7 +1628,7 @@ static BoundaryResult list_blank_boundary(Scanner *s, TSLexer *lexer,
     return BOUNDARY_EMITTED;
 }
 
-static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer) {
+static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer, uint8_t *failed_block) {
     probe.simulate = true;
     while (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
         bool carriage_return = lexer->lookahead == '\r';
@@ -1625,6 +1638,7 @@ static bool list_continues_after_blanks(Scanner probe, TSLexer *lexer) {
         probe.column = 0;
         for (size_t i = 0; i < probe.open_blocks.size; i++) {
             if (!match(&probe, lexer, probe.open_blocks.items[i])) {
+                *failed_block = (uint8_t)i;
                 skip_horizontal_padding(&probe, lexer);
                 return lexer->eof(lexer);
             }
