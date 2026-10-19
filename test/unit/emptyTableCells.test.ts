@@ -6,15 +6,15 @@ import path from 'node:path';
 const repositoryRoot = path.resolve(import.meta.dirname, '../..');
 
 test('empty table cells and pipe-only body rows parse and remain editable', () => {
-  mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
-  const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/empty-table-cells-'));
-  const library = path.join(directory, 'markdown.dylib');
-  const input = path.join(directory, 'input.md');
   const cli = execFileSync(path.join(repositoryRoot, 'script/tree-sitter'), ['--print-path'], {
     cwd: repositoryRoot,
     encoding: 'utf8',
     timeout: 60_000,
   }).trim();
+  mkdirSync(path.join(repositoryRoot, '.tmp'), { recursive: true });
+  const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/empty-table-cells-'));
+  const library = path.join(directory, 'markdown.dylib');
+  const input = path.join(directory, 'input.md');
   const parse = (source: string, edits: string[] = []): string => {
     writeFileSync(input, source);
     const tree = execFileSync(
