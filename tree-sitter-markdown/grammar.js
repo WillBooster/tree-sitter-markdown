@@ -99,6 +99,7 @@ module.exports = grammar({
 
         // LEAF BLOCKS
 
+        // https://github.github.io/gfm/#thematic-breaks
         thematic_break: $ => seq($._thematic_break, choice($._line_ending, $._eof)),
 
         _atx_heading1: $ => prec(1, seq(
@@ -142,6 +143,7 @@ module.exports = grammar({
             field('heading_content', alias($._line, $.inline))
         )),
 
+        // https://github.github.io/gfm/#setext-headings
         _setext_heading1: $ => seq(
             field('heading_content', $.paragraph),
             $.setext_h1_underline,
