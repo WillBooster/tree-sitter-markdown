@@ -19,11 +19,11 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420001`) and load only with that fork's runtime, major version 2: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
-- Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only cells cannot start a table.
+- Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only cells cannot start a table. The delimiter row must also contain a pipe after at least one cell; otherwise it remains ordinary Markdown rather than an erroneous table.
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Empty list items followed by multiple blank lines remain in the same list as a following item with the same marker type, matching CommonMark.
-- Fenced code blocks and block quotes end before a following line’s container prefix; that prefix is outside the closing node, including outside lists.
-- Nested `list_item` nodes own continuation prefixes at the start of their lines and exclude the following line’s prefix. A container opener before the list, such as `>` in `> - a`, belongs to the enclosing container rather than its first item. Text-object consumers must account for that shared opener when deleting the first item; deleting only its node range can leave the opener attached to the following line.
+- Fenced code blocks and block quotes end before a following line’s container prefix; that prefix is outside the closing node, including outside lists. Indented code and HTML blocks can also release that prefix when an enclosing list item closes. When directly contained in a block quote, they can still include the following quote continuation; consumers must inspect those node ranges rather than assume the fenced-code rule applies.
+- `list_item` nodes own continuation prefixes at the start of their lines and exclude the following line’s prefix. Blank lines separating items or separating the list from following content, including their `block_continuation` nodes, belong to the list rather than the preceding item or its paragraph. Blank lines at the end of the document remain inside the final item. A container opener before the list, such as `>` in `> - a`, belongs to the enclosing container rather than its first item. Text-object consumers must account for that shared opener when deleting the first item; deleting only its node range can leave the opener attached to the following line.
 - Trailing horizontal padding is outside nonempty `pipe_table_cell` ranges; spaces between words remain inside the cell.
 - Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
 - HTML heading tags `h1` through `h6`, including closing and mixed-case forms, start HTML blocks.
@@ -32,7 +32,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - HTML declarations end on the first line containing `>`, leaving subsequent Markdown outside the HTML block.
 - Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
-- Final headings, thematic breaks, empty list items, and opening code fences are recognized without a trailing newline.
+- Final headings, thematic breaks, empty list items, opening code fences, and pipe-table delimiter rows are recognized without a trailing newline.
 - A final line containing only spaces or tabs is blank, even without a trailing newline.
 - Type-6 and type-7 HTML blocks inside quotes and lists close correctly at a blank line, leaving subsequent Markdown in its surrounding container.
 - ATX headings, setext headings, and thematic breaks inside quotes or lists end before the following line’s container prefix.
@@ -171,7 +171,8 @@ WillBooster/tree-sitter runtime version locked in `Cargo.lock`, since the genera
 not the ones this package ships with. Its first run downloads that CLI from the runtime's GitHub Release, or builds it
 with `cargo` (whose build runs the CMake that `mise.toml` pins) when the download fails or the release has no binary
 that runs here. Run other CLI commands through it as well (e.g. `script/tree-sitter parse --grammar-path
-tree-sitter-markdown file.md`).
+tree-sitter-markdown file.md`). For repeated invocations, resolve the pinned executable once with
+`script/tree-sitter --print-path` and invoke the returned path to avoid repeating bootstrap/version discovery.
 
 `bun run generate` records a fresh generation profile for each grammar from the cases in its `test/corpus` (and, for the
 block grammar, from Git-tracked files in `examples/`, of which there are none), then generates compact parser tables.
