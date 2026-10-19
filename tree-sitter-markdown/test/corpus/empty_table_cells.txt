@@ -74,3 +74,23 @@ Empty header cells retain following content
       (pipe_table_header (pipe_table_cell))
       (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
       (pipe_table_row))))
+
+================================================================================
+A padded lone pipe ends a quoted table
+================================================================================
+> |a|b|c|
+> |-|-|-|
+>  |
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (block_quote
+      (block_quote_marker)
+      (pipe_table
+        (pipe_table_header (pipe_table_cell) (pipe_table_cell) (pipe_table_cell))
+        (block_continuation)
+        (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
+        (block_continuation))
+      (paragraph (inline)))))

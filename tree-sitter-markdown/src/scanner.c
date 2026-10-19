@@ -1540,6 +1540,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
                    sizeof(interrupt_symbols));
             if (valid_symbols[PIPE_TABLE_LINE_ENDING]) {
                 interrupt_symbols[PIPE_TABLE_START] = false;
+                while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+                    s->indentation += advance(s, lexer);
+                }
             }
             bool continues = valid_symbols[PIPE_TABLE_LINE_ENDING] && lexer->lookahead == '|'
                 ? pipe_table_row_follows(s, lexer)
