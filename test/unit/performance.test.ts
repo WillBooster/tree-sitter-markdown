@@ -39,6 +39,21 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
     });
 
     if (grammar === 'tree-sitter-markdown') {
+      test('parses alternating blank and padded list lines in linear time', { timeout: 60_000 }, () => {
+        for (const padding of ['      ', '\t ']) {
+          const small = `- a\n${`\n${padding}\n`.repeat(1000)}  tail\n`;
+          const large = `- a\n${`\n${padding}\n`.repeat(10_000)}  tail\n`;
+          parseCpuTime(parser, small);
+          parseCpuTime(parser, large);
+          let smallFastest = Infinity;
+          let largeFastest = Infinity;
+          for (let run = 0; run < 3; run++) {
+            smallFastest = Math.min(smallFastest, parseCpuTime(parser, small));
+            largeFastest = Math.min(largeFastest, parseCpuTime(parser, large));
+          }
+          expect(largeFastest / smallFastest).toBeLessThan(18);
+        }
+      });
       test('does not rescan a long blank suffix for every closing list depth', { timeout: 60_000 }, () => {
         const shallow = listWithBlankSuffix(25);
         const deep = listWithBlankSuffix(250);
