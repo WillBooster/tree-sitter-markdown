@@ -311,3 +311,18 @@ Numeric words keep trailing underscores inside flat reference candidates
 (inline
   (shortcut_link
     (link_text)))
+
+================================================================================
+Closing run prefixes retain certified opening suffixes
+================================================================================
+~*.***~~*~~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))

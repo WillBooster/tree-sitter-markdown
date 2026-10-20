@@ -124,6 +124,7 @@ typedef struct {
     uint8_t run_flank;
     uint8_t run_modulo;
     bool run_can_open;
+    bool run_proved;
     uint32_t run_open_count;
     uint16_t certified_depth;
     uint16_t discarded_count;
@@ -212,6 +213,7 @@ static bool parse_emphasis(Scanner *s, TSLexer *lexer, const bool *valid_symbols
 static bool literal_emphasis_run(TSLexer *lexer, const bool *valid_symbols);
 static EmphasisRole emphasis_role(Scanner *s, TSLexer *lexer, const bool *valid_symbols,
                                   bool fresh_run, bool strikethrough, FutureDelimiter *following);
+static void read_remaining_emphasis(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following);
 static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols);
 static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
                              FutureDelimiter *run, uint32_t *result);
@@ -436,13 +438,23 @@ static EmphasisRole emphasis_role(Scanner *s, TSLexer *lexer, const bool *valid_
     bool closing_valid = valid_symbols[emphasis_token(s, first, EMPHASIS_ROLE_CLOSE)];
     bool continued = s->state & STATE_EMPHASIS_DELIMITER_IS_OPEN;
     if (!continued && s->run_flank != 0 && (s->certified_depth ? certified_closer(s) : closing_valid)) return EMPHASIS_ROLE_CLOSE;
-    if (s->run_can_open && !continued && fresh_run) {
+    if (s->run_can_open && !continued && !s->run_proved) {
+        if (!fresh_run) read_remaining_emphasis(s, lexer, strikethrough, following);
+        s->run_proved = true;
         s->run_open_count = proved_open_count(s, lexer, strikethrough, following, valid_symbols);
         assert(!s->certified_depth || s->run_open_count != UINT32_MAX);
     }
     if (!s->run_can_open) return EMPHASIS_ROLE_LITERAL;
     if (s->run_open_count == UINT32_MAX) return EMPHASIS_ROLE_CANDIDATE;
     return s->num_emphasis_delimiters_left + 1 > s->run_open_count ? EMPHASIS_ROLE_LITERAL : EMPHASIS_ROLE_OPEN;
+}
+
+static void read_remaining_emphasis(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following) {
+    while (lexer->lookahead == s->run_delimiter) lexer->advance(lexer, false);
+    if (strikethrough && s->run_delimiter != '~' && lexer->lookahead == '~') {
+        unsigned budget = CERTIFIED_LIMIT;
+        *following = read_future_delimiter(&budget, lexer, s->run_delimiter);
+    }
 }
 
 static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols) {
@@ -862,6 +874,7 @@ static void read_emphasis_run(Scanner *s, TSLexer *lexer, char delimiter,
     s->run_modulo = count % 3;
     s->run_flank = flanks.can_open ? (flanks.can_close ? 2 : 0) : (flanks.can_close ? 1 : 3);
     s->run_can_open = flanks.can_open;
+    s->run_proved = false;
     s->run_open_count = UINT32_MAX;
     s->root_group_opening = !s->certified_depth;
 }

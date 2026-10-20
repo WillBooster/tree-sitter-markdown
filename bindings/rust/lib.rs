@@ -101,6 +101,7 @@ mod tests {
             "[[~]]_~_",
             "~a _b~~ c_ ~",
             "~a *b*~~ c~",
+            "~*.***~~*~~",
             "~~~a~~~",
             "<a title=\"_a_\0\">",
             "~~*a*~~",
@@ -284,6 +285,23 @@ mod tests {
                     assert_eq!(inline_nodes(&restored), inline_nodes(&original));
                 }
             }
+        }
+    }
+
+    #[cfg(feature = "parser")]
+    #[test]
+    fn document_runs_can_close_then_open() {
+        let mut parser = MarkdownParser::default();
+        let mut inline_parser = tree_sitter::Parser::new();
+        inline_parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+        for source in ["~*.***~~*~~", "*_%___*o\n*_*[*]", "a *b* c", "~*.***~~*~~"] {
+            let document = format!("{source}\n");
+            let tree = parser.parse(document.as_bytes(), None).unwrap();
+            let inline = inline_parser.parse(source, None).unwrap();
+            assert!(!tree.block_tree().root_node().has_error());
+            assert!(!inline.root_node().has_error());
+            assert_eq!(tree.inline_trees().len(), 1);
+            assert_eq!(inline_nodes(&tree.inline_trees()[0]), inline_nodes(&inline));
         }
     }
 
