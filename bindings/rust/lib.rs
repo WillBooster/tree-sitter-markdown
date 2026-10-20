@@ -243,6 +243,18 @@ mod tests {
     }
 
     #[test]
+    fn inline_long_run_suffixes_reopen_at_the_root() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+        let source = format!("*a{}b{}", "*".repeat(1026), "*".repeat(1025));
+        let tree = parser.parse(&source, None).unwrap();
+        let sexp = tree.root_node().to_sexp();
+        assert!(!tree.root_node().has_error());
+        assert_eq!(sexp.matches("(strong_emphasis ").count(), 512);
+        assert_eq!(sexp.matches("(emphasis ").count(), 2);
+    }
+
+    #[test]
     fn inline_partial_runs_use_the_matched_suffix() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&INLINE_LANGUAGE.into()).unwrap();

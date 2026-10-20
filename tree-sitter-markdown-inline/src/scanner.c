@@ -711,7 +711,10 @@ static void pop_certified_opener(Scanner *s) {
     }
     unsigned index = --s->certified_depth;
     s->certified_openers[index / 2] &= ~(15 << (4 * (index % 2)));
-    if (!index) s->root_repetitions = 0;
+    if (index) return;
+    s->root_repetitions = 0;
+    // An opening suffix of this run now starts at the root, where its repeated openers compress.
+    s->root_group_opening = true;
 }
 
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
