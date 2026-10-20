@@ -124,3 +124,26 @@ A closed LaTeX span hides its brackets and delimiters from ownership proofs
   (latex_block
     (latex_span_delimiter)
     (latex_span_delimiter)))
+
+================================================================================
+An escaped dollar sign does not close LaTeX
+================================================================================
+text $x\$
+
+--------------------------------------------------------------------------------
+
+(inline
+  (backslash_escape))
+
+================================================================================
+LaTeX closes after an escaped dollar sign
+================================================================================
+$a\$b$
+
+--------------------------------------------------------------------------------
+
+(inline
+  (latex_block
+    (latex_span_delimiter)
+    (backslash_escape)
+    (latex_span_delimiter)))

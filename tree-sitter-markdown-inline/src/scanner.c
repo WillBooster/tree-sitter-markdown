@@ -475,6 +475,11 @@ static bool parse_leaf_delimiter(TSLexer *lexer, uint8_t *delimiter_length,
         else {
             if (close_level == level) break;
             close_level = 0;
+            // LaTeX contents read `\$` as a backslash escape, so its dollar sign cannot close the span.
+            if (delimiter == '$' && lexer->lookahead == '\\') {
+                lexer->advance(lexer, false);
+                if (lexer->eof(lexer)) break;
+            }
         }
         lexer->advance(lexer, false);
     }
