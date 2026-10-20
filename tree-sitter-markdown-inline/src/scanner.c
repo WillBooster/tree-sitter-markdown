@@ -1011,7 +1011,7 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
         }
     }
     if (run != level) return PROOF_UNCERTAIN;
-    proof->search.active = false;
+    proof->search = (CloserSearch){0};
     proof->previous = proof->emphasis_previous = delimiter;
     return PROOF_TEXT;
 }
