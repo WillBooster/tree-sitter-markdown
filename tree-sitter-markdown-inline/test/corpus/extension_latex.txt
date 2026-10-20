@@ -85,3 +85,18 @@ $<a title="$">
   (latex_block
     (latex_span_delimiter)
     (latex_span_delimiter)))
+
+================================================================================
+Brackets in LaTeX do not bound later emphasis
+================================================================================
+$[$ *a]b*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (latex_block
+    (latex_span_delimiter)
+    (latex_span_delimiter))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))

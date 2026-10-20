@@ -10,6 +10,7 @@ const emphasisTokens = delimiter => ['open', 'close', 'literal', 'candidate'].fl
 const literalTokens = delimiter => emphasisTokens(delimiter).filter(name => name.includes('_literal_'));
 const openTokens = delimiter => emphasisTokens(delimiter).filter(name => name.includes('_candidate_'));
 const PRECEDENCE_LEVEL_LINK = 100;
+const LITERAL_BRACKET_RULES = ['code_span', 'latex_block', 'link_destination', '_link_destination_parenthesis', '_text_no_angle', 'link_title'];
 
 const PUNCTUATION_CHARACTERS_REGEX = '!-/:-@\\[-`\\{-~';
 
@@ -246,6 +247,8 @@ function add_inline_rules(grammar) {
     addReferenceHeads(grammar, conflicts);
     add_context_rules(grammar);
     for (const name of Object.keys(grammar.rules)) {
+        // Brackets in literal contents cannot open or close a link head, so they must not reach the scanner's scope tracking.
+        if (LITERAL_BRACKET_RULES.includes(name)) continue;
         const rule = grammar.rules[name];
         grammar.rules[name] = $ => replace_bracket(rule($), $, ['link_label', 'collapsed_reference_link', 'wiki_link', '_image_collapsed_reference_link'].includes(name) || name.startsWith('_link_text_') || name.startsWith('_image_description_'));
     }

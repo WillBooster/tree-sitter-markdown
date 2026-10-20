@@ -581,3 +581,24 @@ HTML-looking code span contents end at the closing delimiter
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+Brackets in code spans and link destinations do not bound later emphasis
+================================================================================
+`[` *a]b* [x](a[b) *c]d*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter))
+  (inline_link
+    (link_text)
+    (link_destination))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
