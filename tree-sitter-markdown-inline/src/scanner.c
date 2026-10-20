@@ -904,7 +904,9 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
     uint32_t run = 0;
     while (!lexer->eof(lexer)) {
         if (lexer->lookahead != delimiter && run == level) break;
+        // Inside a span the lexer reads a run of another length piece by piece and can close the span within it, and
         // LaTeX contents also read backslash escapes, which can consume the closing `$` the scanner matched.
+        if (lexer->lookahead != delimiter && run) return PROOF_UNCERTAIN;
         if (!proof->budget || (delimiter == '$' && lexer->lookahead == '\\')) return PROOF_UNCERTAIN;
         run = lexer->lookahead == delimiter ? run + 1 : 0;
         proof->span_hidden_delimiters |= delimiter_bit(lexer->lookahead);

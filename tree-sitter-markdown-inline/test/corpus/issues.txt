@@ -699,3 +699,18 @@ _[~_x`]~_`
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+A longer backtick run inside a code span keeps the ownership proof uncertain
+================================================================================
+*x `a``b`* `c`
+
+--------------------------------------------------------------------------------
+
+(inline
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter))
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter)))
