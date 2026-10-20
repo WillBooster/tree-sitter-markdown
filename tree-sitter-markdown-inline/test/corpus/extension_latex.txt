@@ -147,3 +147,16 @@ $a\$b$
     (latex_span_delimiter)
     (backslash_escape)
     (latex_span_delimiter)))
+
+================================================================================
+An escape inside LaTeX keeps a bracket in it from closing link text
+================================================================================
+*[ ~*a$\~]*$
+
+--------------------------------------------------------------------------------
+
+(inline
+  (latex_block
+    (latex_span_delimiter)
+    (backslash_escape)
+    (latex_span_delimiter)))

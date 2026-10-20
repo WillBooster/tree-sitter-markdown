@@ -760,11 +760,16 @@ static SpanScan skip_span(TSLexer *lexer, unsigned *budget) {
     bool passed_bracket = false;
     while (!lexer->eof(lexer) && *budget) {
         if (lexer->lookahead != delimiter && run == level) return SPAN_CLOSED;
-        if ((lexer->lookahead != delimiter && run) || (delimiter == '$' && lexer->lookahead == '\\')) break;
+        if (lexer->lookahead != delimiter && run) break;
+        bool escape = delimiter == '$' && lexer->lookahead == '\\';
         passed_bracket |= lexer->lookahead == ']';
         run = lexer->lookahead == delimiter ? run + 1 : 0;
         (*budget)--;
         lexer->advance(lexer, false);
+        if (escape && !lexer->eof(lexer) && *budget) {
+            (*budget)--;
+            lexer->advance(lexer, false);
+        }
     }
     if (run == level && lexer->eof(lexer)) return SPAN_CLOSED;
     return passed_bracket ? SPAN_PASSED_BRACKET : SPAN_OPEN;
@@ -977,13 +982,19 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
     uint32_t run = 0;
     while (!lexer->eof(lexer)) {
         if (lexer->lookahead != delimiter && run == level) break;
-        // Inside a span the lexer reads a run of another length piece by piece and can close the span within it, and
-        // LaTeX contents also read backslash escapes, which can consume the closing `$` the scanner matched.
+        // Inside a span the lexer reads a run of another length piece by piece and can close the span within it.
         if (lexer->lookahead != delimiter && run) return PROOF_UNCERTAIN;
-        if (!proof->budget || (delimiter == '$' && lexer->lookahead == '\\')) return PROOF_UNCERTAIN;
+        if (!proof->budget) return PROOF_UNCERTAIN;
+        // LaTeX contents read a backslash and the next character as one unit, as `parse_leaf_delimiter` does.
+        bool escape = delimiter == '$' && lexer->lookahead == '\\';
         run = lexer->lookahead == delimiter ? run + 1 : 0;
         proof->budget--;
         advance_searching(lexer, proof);
+        if (escape && !lexer->eof(lexer)) {
+            if (!proof->budget) return PROOF_UNCERTAIN;
+            proof->budget--;
+            advance_searching(lexer, proof);
+        }
     }
     if (run != level) return PROOF_UNCERTAIN;
     proof->search.active = false;
