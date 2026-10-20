@@ -235,7 +235,7 @@ static EmphasisRole emphasis_role(Scanner *s, TSLexer *lexer, const bool *valid_
                                   bool fresh_run, bool strikethrough, FutureDelimiter *following);
 static void read_remaining_emphasis(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following);
 static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols);
-static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
+static bool finish_proof_run(Scanner *s, DelimiterProof *proof,
                              FutureDelimiter *run, uint32_t *result);
 static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, uint8_t modulo, bool can_open);
 static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
@@ -544,7 +544,7 @@ static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough
     uint32_t result;
     if (following->count) {
         proof.budget -= following->count < proof.budget ? following->count : proof.budget;
-        if (finish_proof_run(s, lexer, &proof, following, &result)) return certify_protected_suffix(s, lexer, &proof, result);
+        if (finish_proof_run(s, &proof, following, &result)) return certify_protected_suffix(s, lexer, &proof, result);
         proof.previous = '~';
     }
     while (!lexer->eof(lexer)) {
@@ -558,17 +558,17 @@ static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough
         FutureDelimiter run = read_future_delimiter(&proof.budget, lexer, proof.previous);
         FutureDelimiter tildes = {0};
         if (strikethrough && run.delimiter != '~') read_transparent_tildes(lexer, &proof, &run, &tildes);
-        if (finish_proof_run(s, lexer, &proof, &run, &result)) return certify_protected_suffix(s, lexer, &proof, result);
+        if (finish_proof_run(s, &proof, &run, &result)) return certify_protected_suffix(s, lexer, &proof, result);
         proof.previous = run.delimiter;
         if (run.delimiter != '~') proof.emphasis_previous = run.delimiter;
         if (!tildes.count) continue;
-        if (finish_proof_run(s, lexer, &proof, &tildes, &result)) return certify_protected_suffix(s, lexer, &proof, result);
+        if (finish_proof_run(s, &proof, &tildes, &result)) return certify_protected_suffix(s, lexer, &proof, result);
         proof.previous = '~';
     }
     return certify_protected_suffix(s, lexer, &proof, proof.matched_initial);
 }
 
-static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
+static bool finish_proof_run(Scanner *s, DelimiterProof *proof,
                              FutureDelimiter *run, uint32_t *result) {
     if (run->delimiter == '~') proof->tilde_runs++;
     match_future_delimiter(proof, run);
