@@ -238,10 +238,7 @@ static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough
 static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
                              FutureDelimiter *run, uint32_t *result);
 static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, uint8_t modulo, bool can_open);
-static uint32_t oversized_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
-                                FutureDelimiter *run);
-static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
-                                bool matching_run);
+static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static bool possible_closer(TSLexer *lexer, unsigned budget, char delimiter, uint8_t modulo, bool opener_can_close, bool strikethrough);
 static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run);
 static bool record_emphasis_role(Scanner *s, EmphasisRole role);
@@ -551,9 +548,11 @@ static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough
         proof.previous = '~';
     }
     while (!lexer->eof(lexer)) {
-        if (!proof.budget) return uncertain_proof(s, lexer, &proof, false);
+        // Closers already found keep their pairs; the rest of the run stays literal rather than a candidate, since
+        // candidates without a nearby closer make the parse stacks grow with the input.
+        if (!proof.budget) return certify_protected_suffix(s, lexer, &proof, proof.matched_initial);
         ProofStep step = advance_proof_text(s, lexer, &proof);
-        if (step == PROOF_UNCERTAIN) return uncertain_proof(s, lexer, &proof, false);
+        if (step == PROOF_UNCERTAIN) return uncertain_proof(s, lexer, &proof);
         if (step == PROOF_SCOPE_END) return certify_protected_suffix(s, lexer, &proof, proof.matched_initial);
         if (step == PROOF_TEXT) continue;
         FutureDelimiter run = read_future_delimiter(&proof.budget, lexer, proof.previous);
@@ -572,13 +571,10 @@ static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough
 static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
                              FutureDelimiter *run, uint32_t *result) {
     if (run->delimiter == '~') proof->tilde_runs++;
-    if (run->oversized) {
-        *result = oversized_proof(s, lexer, proof, run);
-        return true;
-    }
     match_future_delimiter(proof, run);
     *result = proof->matched_initial;
-    if (!proof->pending[0].count) return true;
+    // A run that exhausted the budget was still read whole, but nothing after it is.
+    if (run->oversized || !proof->pending[0].count) return true;
     if (run->flanks.can_close && run->count &&
         proof_boundary(s, proof, run->delimiter, run->modulo, run->flanks.can_open)) return true;
     if (run->flanks.can_open && run->count) {
@@ -604,22 +600,11 @@ static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, ui
     return false;
 }
 
-static uint32_t oversized_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
-                                FutureDelimiter *run) {
+static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
     PendingDelimiter *first = &proof->pending[0];
-    bool matching = proof->top == 0 && run->delimiter == first->delimiter && run->flanks.can_close &&
-        delimiter_pair_allowed(first->can_close, first->modulo, run->flanks.can_open, run->modulo);
-    if (matching && run->count >= first->count) return proof->initial_count;
-    if (matching && lexer->eof(lexer)) return proof->initial_count - first->count + run->count;
-    return uncertain_proof(s, lexer, proof, matching);
-}
-
-static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
-                                bool matching_run) {
-    PendingDelimiter *first = &proof->pending[0];
-    s->run_can_open = first->count < proof->initial_count || matching_run ||
-        // Every opener gets the same window of two budgets, wherever its proof stopped.
-        possible_closer(lexer, CERTIFIED_LIMIT + proof->budget, first->delimiter, first->modulo, first->can_close, proof->strikethrough);
+    s->run_can_open = first->count < proof->initial_count ||
+        // The search ends where the proof's budget would have, so every opener gets the same window.
+        possible_closer(lexer, proof->budget, first->delimiter, first->modulo, first->can_close, proof->strikethrough);
     return UINT32_MAX;
 }
 
@@ -639,7 +624,6 @@ static bool possible_closer(TSLexer *lexer, unsigned budget, char delimiter, uin
         if (flanks.can_close && delimiter_pair_allowed(opener_can_close, modulo, flanks.can_open, count % 3)) return true;
         previous = delimiter;
     }
-    // Keeping every opener without a nearby closer as a candidate makes the parse stacks grow with the input.
     return false;
 }
 
@@ -798,13 +782,13 @@ static int32_t context_character(uint8_t context) {
 static uint32_t certify_protected_suffix(Scanner *s, TSLexer *lexer, DelimiterProof *proof, uint32_t result) {
     while ((proof->pending_bracket || proof->angle) && proof->budget && !lexer->eof(lexer)) {
         ProofStep step = advance_proof_text(s, lexer, proof);
-        if (step == PROOF_UNCERTAIN || step == PROOF_SCOPE_END) return uncertain_proof(s, lexer, proof, false);
+        if (step == PROOF_UNCERTAIN || step == PROOF_SCOPE_END) return uncertain_proof(s, lexer, proof);
         if (step == PROOF_DELIMITER) {
             proof->budget--;
             lexer->advance(lexer, false);
         }
     }
-    if ((proof->pending_bracket || proof->angle) && !lexer->eof(lexer)) return uncertain_proof(s, lexer, proof, false);
+    if ((proof->pending_bracket || proof->angle) && !lexer->eof(lexer)) return uncertain_proof(s, lexer, proof);
     s->discard_offset = proof->discard_offset;
     return result;
 }
