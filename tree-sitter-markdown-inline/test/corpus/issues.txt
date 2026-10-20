@@ -667,3 +667,23 @@ Certified openers whose closer becomes destination text do not abort
     (emphasis_delimiter))
   (shortcut_link
     (link_text)))
+
+================================================================================
+A later angle bracket inside raw HTML keeps its delimiters protected
+================================================================================
+*<a href="*< ">
+
+--------------------------------------------------------------------------------
+
+(inline
+  (html_tag))
+
+================================================================================
+A declaration containing an angle bracket keeps its tildes protected
+================================================================================
+~<!X ]~<>*`
+
+--------------------------------------------------------------------------------
+
+(inline
+  (html_tag))

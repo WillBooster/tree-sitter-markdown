@@ -880,7 +880,8 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     proof->budget--;
     proof->previous = proof->emphasis_previous = next;
     lexer->advance(lexer, false);
-    if (next == '<') proof->angle = opening_angle(lexer->lookahead);
+    // A `<` inside a tag or processing instruction still belongs to that construct.
+    if (next == '<' && !proof->angle) proof->angle = opening_angle(lexer->lookahead);
     return PROOF_TEXT;
 }
 
