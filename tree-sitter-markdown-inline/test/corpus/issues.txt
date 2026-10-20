@@ -106,6 +106,19 @@ normal text (or even nothing) `[index][]`
     (code_span_delimiter)))
 
 ================================================================================
+Empty angle destination retains inline link precedence after bracketed text
+================================================================================
+[ref][lab](<>)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text))
+  (inline_link
+    (link_text)))
+
+================================================================================
 #151 - Underscore with numbers
 ================================================================================
 _foobar1_
@@ -193,6 +206,19 @@ HTML tag names still allow digits and hyphens
   (html_tag))
 
 ================================================================================
+Underscore runs inside raw HTML
+================================================================================
+a <!--__ note --> <?_ x?> <![CDATA[__]]> <a title="__-">
+
+--------------------------------------------------------------------------------
+
+(inline
+  (html_tag)
+  (html_tag)
+  (html_tag)
+  (html_tag))
+
+================================================================================
 Rejected underscore runs preserve punctuation context
 ================================================================================
 *hello_*world
@@ -202,9 +228,9 @@ Rejected underscore runs preserve punctuation context
 (inline)
 
 ================================================================================
-Emphasis after a rejected underscore run
+Mixed delimiter runs retain punctuation context
 ================================================================================
-a_*_*
+**a_*b*
 
 --------------------------------------------------------------------------------
 
@@ -214,25 +240,16 @@ a_*_*
     (emphasis_delimiter)))
 
 ================================================================================
-Strikethrough after a rejected underscore run
+Underscores left over from a closing run can open emphasis
 ================================================================================
-a_~_~
+_.--____._
 
 --------------------------------------------------------------------------------
 
 (inline
-  (strikethrough
+  (emphasis
     (emphasis_delimiter)
-    (emphasis_delimiter)))
-
-================================================================================
-Mixed delimiter runs retain punctuation context
-================================================================================
-**a_*b*
-
---------------------------------------------------------------------------------
-
-(inline
+    (emphasis_delimiter))
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))

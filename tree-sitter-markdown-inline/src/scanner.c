@@ -278,7 +278,8 @@ static bool parse_tilde(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
 static bool parse_underscore(Scanner *s, TSLexer *lexer,
                              const bool *valid_symbols) {
     lexer->advance(lexer, false);
-    if (s->num_emphasis_delimiters_left > 0) {
+    const bool run_remainder = s->num_emphasis_delimiters_left > 0;
+    if (run_remainder) {
         if ((s->state & STATE_EMPHASIS_DELIMITER_IS_OPEN) &&
             valid_symbols[EMPHASIS_OPEN_UNDERSCORE]) {
             s->state &= (~STATE_EMPHASIS_DELIMITER_IS_OPEN);
@@ -322,7 +323,10 @@ static bool parse_underscore(Scanner *s, TSLexer *lexer,
             return true;
         }
     }
-    if (valid_symbols[LITERAL_EMPHASIS_RUN]) {
+    // The rest of a run that already supplied delimiters falls back to
+    // single `_` tokens, as upstream does: emitting it as one literal run would
+    // also swallow its final underscores, which can still open emphasis.
+    if (!run_remainder && valid_symbols[LITERAL_EMPHASIS_RUN]) {
         s->num_emphasis_delimiters_left = 0;
         lexer->mark_end(lexer);
         lexer->result_symbol = LITERAL_EMPHASIS_RUN;

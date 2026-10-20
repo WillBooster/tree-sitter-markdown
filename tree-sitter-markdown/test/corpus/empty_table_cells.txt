@@ -1,0 +1,96 @@
+================================================================================
+Empty body cells retain table rows
+================================================================================
+|a|b|c|
+|-|-|-|
+|x||
+||y|
+|||
+|
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (pipe_table
+      (pipe_table_header (pipe_table_cell) (pipe_table_cell) (pipe_table_cell))
+      (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
+      (pipe_table_row (pipe_table_cell))
+      (pipe_table_row (pipe_table_cell))
+      (pipe_table_row))
+    (paragraph (inline))))
+
+================================================================================
+An empty quoted table body row can gain cell content
+================================================================================
+> |a|b|
+> |-|-|
+> ||
+> |x||
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (block_quote
+      (block_quote_marker)
+      (pipe_table
+        (pipe_table_header (pipe_table_cell) (pipe_table_cell))
+        (block_continuation)
+        (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
+        (block_continuation)
+        (pipe_table_row)
+        (block_continuation)
+        (pipe_table_row (pipe_table_cell))))))
+
+================================================================================
+A table header can contain only empty cells
+================================================================================
+|||||
+|-|-|-|-|
+||
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (pipe_table
+      (pipe_table_header)
+      (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell) (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
+      (pipe_table_row))))
+
+================================================================================
+Empty header cells retain following content
+================================================================================
+||a|
+|-|-|
+||
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (pipe_table
+      (pipe_table_header (pipe_table_cell))
+      (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
+      (pipe_table_row))))
+
+================================================================================
+A padded lone pipe ends a quoted table
+================================================================================
+> |a|b|c|
+> |-|-|-|
+>  |
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (block_quote
+      (block_quote_marker)
+      (pipe_table
+        (pipe_table_header (pipe_table_cell) (pipe_table_cell) (pipe_table_cell))
+        (block_continuation)
+        (pipe_table_delimiter_row (pipe_table_delimiter_cell) (pipe_table_delimiter_cell) (pipe_table_delimiter_cell))
+        (block_continuation))
+      (paragraph (inline)))))

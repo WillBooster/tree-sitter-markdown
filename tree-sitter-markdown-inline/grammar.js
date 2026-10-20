@@ -5,6 +5,7 @@
 /// <reference types="tree-sitter-cli/dsl" />
 
 const common = require('../common/common');
+common.LITERAL_EMPHASIS_RUN = true;
 
 // Levels used for dynmic precedence. Ideally
 // n * PRECEDENCE_LEVEL_EMPHASIS > PRECEDENCE_LEVEL_LINK for any n, so maybe the
@@ -164,7 +165,7 @@ module.exports = grammar(add_inline_rules({
             optional(seq(
                 choice(
                     seq(
-                        $.link_destination,
+                        $._link_destination,
                         optional(seq(
                             repeat1(choice($._whitespace, $._soft_line_break)),
                             $.link_title
@@ -216,7 +217,7 @@ module.exports = grammar(add_inline_rules({
             optional(seq(
                 choice(
                     seq(
-                        $.link_destination,
+                        $._link_destination,
                         optional(seq(
                             repeat1(choice($._whitespace, $._soft_line_break)),
                             $.link_title
@@ -345,8 +346,8 @@ module.exports = grammar(add_inline_rules({
         // lexer does not have to many different states, which makes it a lot easier to make
         // conflicts work.
         _word: $ => choice($._word_no_digit, $._digits, $._tag_letters, $._tag_digits),
-        _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \t\n\r]+)*'),
-        _digits: $ => new RegExp('[0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \t\n\r]+)*'),
+        _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
+        _digits: $ => new RegExp('[0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
         _soft_line_break: $ => seq($._newline_token, optional($._last_token_whitespace)),
 
         _inline_base: $ => prec.right(repeat1(choice(
@@ -364,7 +365,6 @@ module.exports = grammar(add_inline_rules({
             $._text_base,
             common.EXTENSION_TAGS ? $.tag : choice(),
             $._unclosed_span,
-            seq($._literal_emphasis_run, optional($._last_token_punctuation)),
         ))),
         _text_base: $ => choice(
             $._word,
@@ -380,7 +380,6 @@ module.exports = grammar(add_inline_rules({
             $._emphasis_open_star,
             $._emphasis_open_underscore,
             $._unclosed_span,
-            seq($._literal_emphasis_run, optional($._last_token_punctuation)),
         ),
 
         ...(common.EXTENSION_TAGS ? {

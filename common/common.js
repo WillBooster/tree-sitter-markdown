@@ -48,26 +48,30 @@ module.exports.rules = {
         $._soft_line_break
     )), ']'),
 
-    link_destination: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, choice(
-        seq('<', repeat(choice($._text_no_angle, $.backslash_escape, $.entity_reference, $.numeric_character_reference)), '>'),
-        seq(
-            choice( // first character is not a '<'
-                $._word,
-                punctuation_without($, ['<', '(', ')']),
-                $.backslash_escape,
-                $.entity_reference,
-                $.numeric_character_reference,
-                $._link_destination_parenthesis
-            ),
-            repeat(choice(
-                $._word,
-                punctuation_without($, ['(', ')']),
-                $.backslash_escape,
-                $.entity_reference,
-                $.numeric_character_reference,
-                $._link_destination_parenthesis
-            )),
-        )
+    _link_destination: $ => choice(
+        $.link_destination,
+        prec.dynamic(PRECEDENCE_LEVEL_LINK, seq('<', optional(alias($._angle_link_destination, $.link_destination)), '>')),
+    ),
+    _angle_link_destination: $ => repeat1(choice(
+        $._text_no_angle, $.backslash_escape, $.entity_reference, $.numeric_character_reference
+    )),
+    link_destination: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq(
+        choice(
+            $._word,
+            punctuation_without($, ['<', '(', ')']),
+            $.backslash_escape,
+            $.entity_reference,
+            $.numeric_character_reference,
+            $._link_destination_parenthesis
+        ),
+        repeat(choice(
+            $._word,
+            punctuation_without($, ['(', ')']),
+            $.backslash_escape,
+            $.entity_reference,
+            $.numeric_character_reference,
+            $._link_destination_parenthesis
+        )),
     )),
     _link_destination_parenthesis: $ => seq('(', repeat(choice(
         $._word,
@@ -114,8 +118,17 @@ module.exports.rules = {
 // Returns a rule that matches all characters that count as punctuation inside markdown, besides
 // a list of excluded punctuation characters. Calling this function with a empty list as the second
 // argument returns a rule that matches all punctuation.
+// The inline grammar sets this because its scanner emits an underscore run that can neither open nor close emphasis
+// as one `_literal_emphasis_run` token. That token must be accepted wherever `_` is, or it would end constructs such as
+// raw HTML comments that the scanner cannot recognize; the block grammar does not declare it.
+module.exports.LITERAL_EMPHASIS_RUN = false;
+
 function punctuation_without($, chars) {
-    return seq(choice(...PUNCTUATION_CHARACTERS_ARRAY.filter(c => !chars.includes(c))), optional($._last_token_punctuation));
+    const tokens = PUNCTUATION_CHARACTERS_ARRAY.filter(c => !chars.includes(c));
+    if (module.exports.LITERAL_EMPHASIS_RUN && tokens.includes('_')) {
+        tokens.push($._literal_emphasis_run);
+    }
+    return seq(choice(...tokens), optional($._last_token_punctuation));
 }
 
 module.exports.punctuation_without = punctuation_without;

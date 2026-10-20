@@ -16,20 +16,39 @@ This fork builds on the grammars, external scanners, and queries of upstream's v
 with the [WillBooster/tree-sitter](https://github.com/WillBooster/tree-sitter) generator. The block scanner compares the
 digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigit`, which the C headers for
 `wasm32-unknown-unknown` do not declare; both accept the ASCII digits only. The parsers carry that fork's
-own ABI number (`0x57420001`) and load only with that fork's runtime, version 2.0.0 or later: upstream's tree-sitter
+own ABI number (`0x57420001`) and load only with that fork's runtime, major version 2: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
 - Underscore emphasis can end immediately after a digit, as in `_hello1_`. Intraword underscores around digits,
   such as `a_1_b_`, stay plain text instead of producing emphasis. Underscore runs that cannot open or close emphasis
   stay together as text, so punctuation after a digit does not open false emphasis in `1__-_`.
 - Inline HTML tag names contain ASCII letters, digits, and hyphens, starting with a letter; underscores remain text.
-- Ordered lists interrupt a paragraph only when their first marker is `1.` or `1)`.
+- Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only delimiter cells cannot start a table. The delimiter row must also contain a pipe after at least one cell; otherwise it remains ordinary Markdown rather than an erroneous table.
+- Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
+- Empty list items followed by multiple blank lines remain in the same list as a following item with the same marker type, matching CommonMark.
+- Fenced code blocks and block quotes end before a following line’s container prefix; that prefix is outside the closing node, including outside lists. Indented code and HTML blocks can also release that prefix when an enclosing list item closes. When directly contained in a block quote, they can still include the following quote continuation; consumers must inspect those node ranges rather than assume the fenced-code rule applies.
+- `list_item` nodes own continuation prefixes at the start of their lines and exclude the following line’s prefix. Blank lines separating items or separating the list from following content, including their `block_continuation` nodes, belong to the list rather than the preceding item or its paragraph. Blank lines at the end of the document remain inside the final item. A container opener before the list, such as `>` in `> - a`, belongs to the enclosing container rather than its first item. Text-object consumers must account for that shared opener when deleting the first item; deleting only its node range can leave the opener attached to the following line.
+- Trailing horizontal padding is outside nonempty `pipe_table_cell` ranges; spaces between words remain inside the cell.
+- Empty pipe-table header and body cells parse without missing nodes. Zero-content cells retain their separators without a named cell node, so a header can have no cell children; a lone `|` on a body line ends the table; rows such as `| text` retain their cell content.
+- Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
+- HTML heading tags `h1` through `h6`, including closing and mixed-case forms, start HTML blocks.
+- Malformed HTML tags such as `<hr/x>` and `<div/ x>` remain paragraph text; a slash immediately after the tag name must complete `/>`.
+- Link reference definitions labelled `[x]` or `[X]` are recognized even with task-list support enabled.
+- HTML declarations end on the first line containing `>`, leaving subsequent Markdown outside the HTML block.
+- Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
+- Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
+- Final headings, thematic breaks, empty list items, opening code fences, and pipe-table delimiter rows are recognized without a trailing newline.
+- A final line containing only spaces or tabs is blank, even without a trailing newline.
+- Type-6 and type-7 HTML blocks inside quotes and lists close correctly at a blank line, leaving subsequent Markdown in its surrounding container.
+- ATX headings, setext headings, and thematic breaks inside quotes or lists end before the following line’s container prefix.
+- A block following a closed container can start at its line’s indentation. That whitespace belongs to the following block and may be included in its first marker or inline node, rather than in the closing container.
+- A closing code fence at the end of a file is recognized even without a trailing line ending.
+- Trailing spaces and tabs at EOF are excluded from the preceding block’s inline range, as they are before a line ending.
+- Ordered lists interrupt a paragraph only when the first marker has numeric value 1, including leading-zero forms such as `01.`.
 - A NUL character is part of the text around it, in both grammars, where upstream's lexers report it as an unexpected
   character in an `ERROR` node.
-- A block that starts with bracketed text holding a backslash escape or a character reference, such as
-  `[\<g> element](/a)` or `[&lt;a&gt;] b`, has an error in both parsers. Upstream's parser reads an `ERROR` that holds the
-  `link_label`, followed by a paragraph. When the rest of the line reads as a single link destination, as in both
-  examples, this parser reads a `link_reference_definition` whose `:` is `MISSING` instead.
+- Bracketed text containing escapes or character references, such as `[\<g> element](/a)` or `[&lt;a&gt;] b`,
+  remains paragraph content when no reference-definition colon follows. Upstream produces a parse error for these forms.
 
 It holds two grammars, as upstream does: `markdown` (in `tree-sitter-markdown/`) parses the block structure of a
 document, and `markdown_inline` (in `tree-sitter-markdown-inline/`) parses the inline content that the block grammar
@@ -41,7 +60,7 @@ included, as they are not in upstream's packages.
 ## Usage
 
 The npm package ships `tree-sitter-markdown.wasm` and `tree-sitter-markdown_inline.wasm` for
-[@willbooster/web-tree-sitter](https://www.npmjs.com/package/@willbooster/web-tree-sitter) version 2.0.0 or later, which
+[@willbooster/web-tree-sitter](https://www.npmjs.com/package/@willbooster/web-tree-sitter) major version 2, which
 runs in Node.js, Bun, browsers, and Cloudflare Workers. Parse a document with the block grammar, then parse the inline
 content of each `inline` or `pipe_table_cell` node with the inline grammar, limited to the node's range without its
 named children (block continuations such as the `>` of a block quote). In Node.js and Bun, load the grammars from their
@@ -136,6 +155,7 @@ parser.set_language(&tree_sitter_md::LANGUAGE.into())?;
 
 The crate keeps the API of upstream's `tree-sitter-md` crate: `tree_sitter_md::INLINE_LANGUAGE` is the inline grammar,
 and the `parser` feature adds `MarkdownParser`, which parses a document with both grammars into a `MarkdownTree`.
+The `parser` feature requires runtime version 2.0.18 or later, which supports UTF-8 characters split across short input chunks.
 `MarkdownCursor::field_name` returns a name that borrows from the tree (`Option<&'tree str>`), since the
 willbooster-tree-sitter runtime returns field names with that lifetime, where upstream's returns `Option<&'static str>`.
 
@@ -156,7 +176,8 @@ WillBooster/tree-sitter runtime version locked in `Cargo.lock`, since the genera
 not the ones this package ships with. Its first run downloads that CLI from the runtime's GitHub Release, or builds it
 with `cargo` (whose build runs the CMake that `mise.toml` pins) when the download fails or the release has no binary
 that runs here. Run other CLI commands through it as well (e.g. `script/tree-sitter parse --grammar-path
-tree-sitter-markdown file.md`).
+tree-sitter-markdown file.md`). For repeated invocations, resolve the pinned executable once with
+`script/tree-sitter --print-path` and invoke the returned path to avoid repeating bootstrap/version discovery.
 
 `bun run generate` records a fresh generation profile for each grammar from the cases in its `test/corpus` (and, for the
 block grammar, from Git-tracked files in `examples/`, of which there are none), then generates compact parser tables.
