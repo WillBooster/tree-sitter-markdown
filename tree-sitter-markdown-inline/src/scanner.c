@@ -722,8 +722,14 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
                 continue;
             }
             closing = lexer->lookahead == ']';
+            bool escape = lexer->lookahead == '\\';
             remaining--;
             lexer->advance(lexer, false);
+            // An escaped punctuation character, such as `\]` or `` \` ``, neither closes nor opens anything.
+            if (escape && is_punctuation(lexer->lookahead) && remaining) {
+                remaining--;
+                lexer->advance(lexer, false);
+            }
         }
         s->no_closing_bracket = lexer->eof(lexer) && !closing;
     }

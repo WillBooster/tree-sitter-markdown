@@ -752,3 +752,19 @@ A code span holding a closing bracket stays inside link text
         (code_span_delimiter)
         (code_span_delimiter)))
     (link_destination)))
+
+================================================================================
+An escaped backtick in link text does not open a span for the bracket scan
+================================================================================
+[a \` b](u) `c`
+
+--------------------------------------------------------------------------------
+
+(inline
+  (inline_link
+    (link_text
+      (backslash_escape))
+    (link_destination))
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter)))
