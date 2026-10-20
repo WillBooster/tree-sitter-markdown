@@ -71,7 +71,7 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
     });
     if (grammar === 'tree-sitter-markdown-inline') {
       test('parses alternating delimiter runs in linear time', { timeout: 60_000 }, () => {
-        expectLinearParsing(parser, '1_*_*a ');
+        for (const line of ['1_*_*a ', 'b_*_*a ']) expectLinearParsing(parser, line);
       });
     }
   });

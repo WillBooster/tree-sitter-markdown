@@ -244,7 +244,6 @@ static bool opener_can_close(uint8_t opener);
 static uint8_t opener_modulo(uint8_t opener);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static bool proof_uncertain_character(int32_t character);
-static ProofStep read_proof_numeric_word(TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_escape(TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static void read_transparent_tildes(TSLexer *lexer, DelimiterProof *proof,
@@ -798,7 +797,6 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
     if (next == '>' && proof->pending_angle) return PROOF_UNCERTAIN;
     if (next == '<') proof->pending_angle = true;
-    if (next >= '0' && next <= '9') return read_proof_numeric_word(lexer, proof);
     if (proof_uncertain_character(next)) return PROOF_UNCERTAIN;
     if (next == '*' || next == '_' || (proof->strikethrough && next == '~')) return PROOF_DELIMITER;
     proof->budget--;
@@ -950,12 +948,3 @@ static bool is_punctuation(int32_t chr) {
            (chr >= '[' && chr <= '`') || (chr >= '{' && chr <= '~');
 }
 
-static ProofStep read_proof_numeric_word(TSLexer *lexer, DelimiterProof *proof) {
-    while ((lexer->lookahead >= '0' && lexer->lookahead <= '9') || lexer->lookahead == '_') {
-        if (!proof->budget) return PROOF_UNCERTAIN;
-        proof->budget--;
-        proof->previous = proof->emphasis_previous = lexer->lookahead;
-        lexer->advance(lexer, false);
-    }
-    return PROOF_TEXT;
-}

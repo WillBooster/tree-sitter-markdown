@@ -29,6 +29,10 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
   shortcut links retain priority over crossing emphasis, including `*[foo*]`; consumers can resolve them against the
   block tree's definitions. Consequently, parsing an isolated inline fragment can differ from rendering that fragment
   as a complete document without definitions.
+- Underscore emphasis can end immediately after a digit, as in `_hello1_`. Intraword underscores around digits,
+  such as `a_1_b_`, stay plain text instead of producing emphasis. Underscore runs that cannot open or close emphasis
+  stay together as text, so punctuation after a digit does not open false emphasis in `1__-_`.
+- Inline HTML tag names contain ASCII letters, digits, and hyphens, starting with a letter; underscores remain text.
 - Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only delimiter cells cannot start a table. The delimiter row must also contain a pipe after at least one cell; otherwise it remains ordinary Markdown rather than an erroneous table.
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Empty list items followed by multiple blank lines remain in the same list as a following item with the same marker type, matching CommonMark.

@@ -3363,37 +3363,11 @@
     },
     "_word_no_digit": {
       "type": "PATTERN",
-      "value": "[^!-/:-@\\[-`\\{-~ \\t\\n\\r0-9]+(_+[^!-/:-@\\[-`\\{-~ \\t\\n\\r0-9]+)*"
+      "value": "[^!-/:-@\\[-`\\{-~ \\t\\n\\r0-9]+(_+[^!-/:-@\\[-`\\{-~ \\t\\n\\r]+)*"
     },
     "_digits": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "PATTERN",
-          "value": "[0-9]([0-9_]*[0-9])?"
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "PATTERN",
-              "value": "[0-9][0-9_]*_"
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "_last_token_punctuation"
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            }
-          ]
-        }
-      ]
+      "type": "PATTERN",
+      "value": "[0-9]+(_+[^!-/:-@\\[-`\\{-~ \\t\\n\\r]+)*"
     },
     "_soft_line_break": {
       "type": "SEQ",

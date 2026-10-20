@@ -302,7 +302,7 @@ Nested brackets keep crossing strikethrough
     (emphasis_delimiter)))
 
 ================================================================================
-Numeric words keep trailing underscores inside flat reference candidates
+Underscore runs after digits close inside flat reference candidates
 ================================================================================
 [____1____]
 
@@ -310,7 +310,17 @@ Numeric words keep trailing underscores inside flat reference candidates
 
 (inline
   (shortcut_link
-    (link_text)))
+    (link_text
+      (strong_emphasis
+        (emphasis_delimiter)
+        (emphasis_delimiter)
+        (strong_emphasis
+          (emphasis_delimiter)
+          (emphasis_delimiter)
+          (emphasis_delimiter)
+          (emphasis_delimiter))
+        (emphasis_delimiter)
+        (emphasis_delimiter)))))
 
 ================================================================================
 Closing run prefixes retain certified opening suffixes

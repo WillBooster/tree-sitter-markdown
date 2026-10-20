@@ -186,8 +186,8 @@ module.exports = grammar(add_inline_rules({
         _whitespace: $ => seq(choice($._whitespace_ge_2, / /), optional($._last_token_whitespace)),
 
         _word: $ => choice($._word_no_digit, $._digits),
-        _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+)*'),
-        _digits: $ => choice(/[0-9]([0-9_]*[0-9])?/, seq(/[0-9][0-9_]*_/, optional($._last_token_punctuation))),
+        _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
+        _digits: $ => new RegExp('[0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
         _soft_line_break: $ => seq($._newline_token, optional($._last_token_whitespace)),
 
         _inline_base: $ => choice(
