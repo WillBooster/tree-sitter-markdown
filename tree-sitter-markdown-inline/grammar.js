@@ -165,7 +165,7 @@ module.exports = grammar(add_inline_rules({
             optional(seq(
                 choice(
                     seq(
-                        $.link_destination,
+                        $._link_destination,
                         optional(seq(
                             repeat1(choice($._whitespace, $._soft_line_break)),
                             $.link_title
@@ -217,7 +217,7 @@ module.exports = grammar(add_inline_rules({
             optional(seq(
                 choice(
                     seq(
-                        $.link_destination,
+                        $._link_destination,
                         optional(seq(
                             repeat1(choice($._whitespace, $._soft_line_break)),
                             $.link_title

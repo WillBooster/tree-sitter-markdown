@@ -25,6 +25,9 @@ module.exports = grammar({
 
         ...common.rules,
         _last_token_punctuation: $ => choice(), // needed for compatability with common rules
+        link_label: $ => common.EXTENSION_TASK_LIST
+            ? choice(common.rules.link_label($), /\[[xX]\]/)
+            : common.rules.link_label($),
 
         // BLOCK STRUCTURE
 
@@ -34,14 +37,14 @@ module.exports = grammar({
             $.section,
         ),
         _block_not_section: $ => choice(
-            alias($._setext_heading1, $.setext_heading),
-            alias($._setext_heading2, $.setext_heading),
+            seq(alias($._setext_heading1, $.setext_heading), optional($.block_continuation)),
+            seq(alias($._setext_heading2, $.setext_heading), optional($.block_continuation)),
             $.paragraph,
             $.indented_code_block,
-            $.block_quote,
-            $.thematic_break,
+            seq($.block_quote, optional($.block_continuation)),
+            seq($.thematic_break, optional($.block_continuation)),
             $.list,
-            $.fenced_code_block,
+            seq($.fenced_code_block, optional($.block_continuation)),
             $._blank_line,
             $.html_block,
             $.link_reference_definition,
@@ -50,6 +53,7 @@ module.exports = grammar({
         section: $ => choice($._section1, $._section2, $._section3, $._section4, $._section5, $._section6),
         _section1: $ => prec.right(seq(
             alias($._atx_heading1, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias(choice($._section6, $._section5, $._section4, $._section3, $._section2), $.section),
                 $._block_not_section
@@ -57,6 +61,7 @@ module.exports = grammar({
         )),
         _section2: $ => prec.right(seq(
             alias($._atx_heading2, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias(choice($._section6, $._section5, $._section4, $._section3), $.section),
                 $._block_not_section
@@ -64,6 +69,7 @@ module.exports = grammar({
         )),
         _section3: $ => prec.right(seq(
             alias($._atx_heading3, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias(choice($._section6, $._section5, $._section4), $.section),
                 $._block_not_section
@@ -71,6 +77,7 @@ module.exports = grammar({
         )),
         _section4: $ => prec.right(seq(
             alias($._atx_heading4, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias(choice($._section6, $._section5), $.section),
                 $._block_not_section
@@ -78,6 +85,7 @@ module.exports = grammar({
         )),
         _section5: $ => prec.right(seq(
             alias($._atx_heading5, $.atx_heading),
+            optional($.block_continuation),
             repeat(choice(
                 alias($._section6, $.section),
                 $._block_not_section
@@ -85,69 +93,66 @@ module.exports = grammar({
         )),
         _section6: $ => prec.right(seq(
             alias($._atx_heading6, $.atx_heading),
+            optional($.block_continuation),
             repeat($._block_not_section)
         )),
 
         // LEAF BLOCKS
 
-        // A thematic break. This is currently handled by the external scanner but maybe could be
-        // parsed using normal tree-sitter rules.
-        //
-        // https://github.github.com/gfm/#thematic-breaks
-        thematic_break: $ => seq($._thematic_break, choice($._newline, $._eof)),
+        // https://github.github.io/gfm/#thematic-breaks
+        thematic_break: $ => seq($._thematic_break, choice($._line_ending, $._eof)),
 
-        // An ATX heading. This is currently handled by the external scanner but maybe could be
-        // parsed using normal tree-sitter rules.
-        //
-        // https://github.github.com/gfm/#atx-headings
         _atx_heading1: $ => prec(1, seq(
             $.atx_h1_marker,
             optional($._atx_heading_content),
-            $._newline
+            optional($.atx_heading_closing_sequence),
+            choice($._line_ending, $._eof)
         )),
         _atx_heading2: $ => prec(1, seq(
             $.atx_h2_marker,
             optional($._atx_heading_content),
-            $._newline
+            optional($.atx_heading_closing_sequence),
+            choice($._line_ending, $._eof)
         )),
         _atx_heading3: $ => prec(1, seq(
             $.atx_h3_marker,
             optional($._atx_heading_content),
-            $._newline
+            optional($.atx_heading_closing_sequence),
+            choice($._line_ending, $._eof)
         )),
         _atx_heading4: $ => prec(1, seq(
             $.atx_h4_marker,
             optional($._atx_heading_content),
-            $._newline
+            optional($.atx_heading_closing_sequence),
+            choice($._line_ending, $._eof)
         )),
         _atx_heading5: $ => prec(1, seq(
             $.atx_h5_marker,
             optional($._atx_heading_content),
-            $._newline
+            optional($.atx_heading_closing_sequence),
+            choice($._line_ending, $._eof)
         )),
         _atx_heading6: $ => prec(1, seq(
             $.atx_h6_marker,
             optional($._atx_heading_content),
-            $._newline
+            optional($.atx_heading_closing_sequence),
+            choice($._line_ending, $._eof)
         )),
         _atx_heading_content: $ => prec(1, seq(
             optional($._whitespace),
             field('heading_content', alias($._line, $.inline))
         )),
 
-        // A setext heading. The underlines are currently handled by the external scanner but maybe
-        // could be parsed using normal tree-sitter rules.
-        //
-        // https://github.github.com/gfm/#setext-headings
+        // https://github.github.io/gfm/#setext-headings
         _setext_heading1: $ => seq(
             field('heading_content', $.paragraph),
             $.setext_h1_underline,
-            choice($._newline, $._eof),
+            choice($._line_ending, $._eof),
         ),
         _setext_heading2: $ => seq(
             field('heading_content', $.paragraph),
             $.setext_h2_underline,
-            choice($._newline, $._eof),
+            choice($._line_ending, $._eof),
         ),
 
         // An indented code block. An indented code block is made up of indented chunks and blank
@@ -167,18 +172,18 @@ module.exports = grammar({
                 alias($._fenced_code_block_start_backtick, $.fenced_code_block_delimiter),
                 optional($._whitespace),
                 optional($.info_string),
-                $._newline,
+                choice($._newline, $._eof),
                 optional($.code_fence_content),
-                optional(seq(alias($._fenced_code_block_end_backtick, $.fenced_code_block_delimiter), $._close_block, choice($._newline, $._eof))),
+                optional(seq(alias($._fenced_code_block_end_backtick, $.fenced_code_block_delimiter), $._close_block, choice($._line_ending, $._eof))),
                 $._block_close,
             ),
             seq(
                 alias($._fenced_code_block_start_tilde, $.fenced_code_block_delimiter),
                 optional($._whitespace),
                 optional($.info_string),
-                $._newline,
+                choice($._newline, $._eof),
                 optional($.code_fence_content),
-                optional(seq(alias($._fenced_code_block_end_tilde, $.fenced_code_block_delimiter), $._close_block, choice($._newline, $._eof))),
+                optional(seq(alias($._fenced_code_block_end_tilde, $.fenced_code_block_delimiter), $._close_block, choice($._line_ending, $._eof))),
                 $._block_close,
             ),
         )),
@@ -221,7 +226,7 @@ module.exports = grammar({
         ),
         _html_block_2: $ => build_html_block($, $._html_block_2_start, '-->', true),
         _html_block_3: $ => build_html_block($, $._html_block_3_start, '?>', true),
-        _html_block_4: $ => build_html_block($, $._html_block_4_start, '>', true),
+        _html_block_4: $ => build_html_block($, $._html_block_4_start, '>', true, $._declaration_line),
         _html_block_5: $ => build_html_block($, $._html_block_5_start, ']]>', true),
         _html_block_6: $ => build_html_block(
             $,
@@ -247,7 +252,7 @@ module.exports = grammar({
             $.link_label,
             ':',
             optional(seq(optional($._whitespace), optional(seq($._soft_line_break, optional($._whitespace))))),
-            $.link_destination,
+            $._link_destination,
             optional(prec.dynamic(2 * PRECEDENCE_LEVEL_LINK, seq(
                 choice(
                     seq($._whitespace, optional(seq($._soft_line_break, optional($._whitespace)))),
@@ -278,7 +283,7 @@ module.exports = grammar({
         // related to paragraphs ending does not grow.
         //
         // https://github.github.com/gfm/#paragraphs
-        paragraph: $ => seq(alias(repeat1(choice($._line, $._soft_line_break)), $.inline), choice($._newline, $._eof)),
+        paragraph: $ => seq(alias(repeat1(choice($._paragraph_line, $._soft_line_break)), $.inline), choice($._newline, $._eof)),
 
         // A blank line including the following newline.
         //
@@ -297,7 +302,6 @@ module.exports = grammar({
             optional($.block_continuation),
             repeat($._block),
             $._block_close,
-            optional($.block_continuation)
         ),
 
         // A list. This grammar does not differentiate between loose and tight lists for efficiency
@@ -314,11 +318,11 @@ module.exports = grammar({
             $._list_dot,
             $._list_parenthesis
         )),
-        _list_plus: $ => prec.right(repeat1(alias($._list_item_plus, $.list_item))),
-        _list_minus: $ => prec.right(repeat1(alias($._list_item_minus, $.list_item))),
-        _list_star: $ => prec.right(repeat1(alias($._list_item_star, $.list_item))),
-        _list_dot: $ => prec.right(repeat1(alias($._list_item_dot, $.list_item))),
-        _list_parenthesis: $ => prec.right(repeat1(alias($._list_item_parenthesis, $.list_item))),
+        _list_plus: $ => build_list($, $._list_item_plus),
+        _list_minus: $ => build_list($, $._list_item_minus),
+        _list_star: $ => build_list($, $._list_item_star),
+        _list_dot: $ => build_list($, $._list_item_dot),
+        _list_parenthesis: $ => build_list($, $._list_item_parenthesis),
         // Some list items can not interrupt a paragraph and are marked as such by the external
         // scanner.
         list_marker_plus: $ => choice($._list_marker_plus, $._list_marker_plus_dont_interrupt),
@@ -327,42 +331,43 @@ module.exports = grammar({
         list_marker_dot: $ => choice($._list_marker_dot, $._list_marker_dot_dont_interrupt),
         list_marker_parenthesis: $ => choice($._list_marker_parenthesis, $._list_marker_parenthesis_dont_interrupt),
         _list_item_plus: $ => seq(
+            optional(alias($._list_item_prefix_plus, $.block_continuation)),
             $.list_marker_plus,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         _list_item_minus: $ => seq(
+            optional(alias($._list_item_prefix_minus, $.block_continuation)),
             $.list_marker_minus,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         _list_item_star: $ => seq(
+            optional(alias($._list_item_prefix_star, $.block_continuation)),
             $.list_marker_star,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         _list_item_dot: $ => seq(
+            optional(alias($._list_item_prefix_dot, $.block_continuation)),
             $.list_marker_dot,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         _list_item_parenthesis: $ => seq(
+            optional(alias($._list_item_prefix_parenthesis, $.block_continuation)),
             $.list_marker_parenthesis,
             optional($.block_continuation),
             $._list_item_content,
-            $._block_close,
-            optional($.block_continuation)
+            $._block_close
         ),
         // List items are closed after two consecutive blank lines
         _list_item_content: $ => choice(
+            $._eof,
             prec(1, seq(
                 $._blank_line,
                 $._blank_line,
@@ -389,7 +394,20 @@ module.exports = grammar({
             optional($.block_continuation)
         ),
         // Some symbols get parsed as single tokens so that html blocks get detected properly
+        _declaration_line: $ => prec.right(repeat1(choice($._word, $._whitespace, common.punctuation_without($, ['>'])))),
         _line: $ => prec.right(repeat1(choice($._word, $._whitespace, common.punctuation_without($, [])))),
+        entity_reference: $ => $._entity_reference,
+        _entity_reference: common.rules.entity_reference,
+        numeric_character_reference: $ => $._numeric_character_reference,
+        _numeric_character_reference: common.rules.numeric_character_reference,
+        _paragraph_line: $ => prec.right(repeat1(choice(
+            $._word,
+            $._whitespace,
+            common.punctuation_without($, []),
+            $._backslash_escape,
+            $._entity_reference,
+            $._numeric_character_reference,
+        ))),
         _word: $ => choice(
             new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+'),
             common.EXTENSION_TASK_LIST ? choice(
@@ -452,14 +470,14 @@ module.exports = grammar({
                 choice(
                     seq(
                         repeat1(prec.right(seq(
-                            choice(
+                            optional(choice(
                                 seq(
                                     optional($._whitespace),
                                     $.pipe_table_cell,
                                     optional($._whitespace)
                                 ),
                                 alias($._whitespace, $.pipe_table_cell)
-                            ),
+                            )),
                             '|',
                         ))),
                         optional($._whitespace),
@@ -476,19 +494,16 @@ module.exports = grammar({
                 ),
             ),
 
-            pipe_table_cell: $ => prec.right(seq(
-                choice(
-                    $._word,
-                    $._backslash_escape,
-                    common.punctuation_without($, ['|']),
-                ),
-                repeat(choice(
-                    $._word,
-                    $._whitespace,
-                    $._backslash_escape,
-                    common.punctuation_without($, ['|']),
-                )),
-            )),
+            pipe_table_cell: $ => seq(
+                $._pipe_table_cell_content,
+                repeat(seq(optional($._whitespace), $._pipe_table_cell_content)),
+            ),
+
+            _pipe_table_cell_content: $ => choice(
+                $._word,
+                $._backslash_escape,
+                common.punctuation_without($, ['|']),
+            ),
         } : {}),
     },
 
@@ -581,6 +596,14 @@ module.exports = grammar({
         $._pipe_table_start,
         $._pipe_table_line_ending,
         $._code_fence_line,
+        $.atx_heading_closing_sequence,
+        $._list_blank_guard,
+        $._list_blank_separator,
+        $._list_item_prefix_minus,
+        $._list_item_prefix_plus,
+        $._list_item_prefix_star,
+        $._list_item_prefix_parenthesis,
+        $._list_item_prefix_dot,
     ],
     precedences: $ => [
         [$._setext_heading1, $._block],
@@ -588,21 +611,31 @@ module.exports = grammar({
         [$.indented_code_block, $._block],
     ],
     conflicts: $ => [
+        ...(common.EXTENSION_PIPE_TABLE ? [[$.pipe_table_cell]] : []),
         [$.link_reference_definition],
-        [$.link_label, $._line],
-        [$.link_reference_definition, $._line],
+        [$.link_label, $._paragraph_line],
+        [$.link_label, $._word],
+        [$.link_reference_definition, $._paragraph_line],
     ],
-    extras: $ => [],
+    extras: $ => [$._list_blank_guard],
 });
+
+function build_list($, item) {
+    return prec.right(repeat1(seq(
+        alias(item, $.list_item),
+        optional($.block_continuation),
+        repeat(seq($._list_blank_separator, optional($.block_continuation)))
+    )));
+}
 
 // General purpose structure for html blocks. The different kinds mostly work the same but have
 // different openling and closing conditions. Some html blocks may not interrupt a paragraph and
 // have to be marked as such.
-function build_html_block($, open, close, interrupt_paragraph) {
+function build_html_block($, open, close, interrupt_paragraph, line = $._line) {
     return seq(
         open,
         repeat(choice(
-            $._line,
+            line,
             $._newline,
             seq(close, $._close_block),
         )),

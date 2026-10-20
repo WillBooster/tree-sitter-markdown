@@ -37,16 +37,16 @@ Example 280 - https://github.github.com/gfm/#example-280
         (list_marker_minus)
         (task_list_marker_checked)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (task_list_marker_unchecked)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (task_list_marker_checked)
             (paragraph

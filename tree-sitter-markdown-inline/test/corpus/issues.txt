@@ -198,3 +198,16 @@ Unclosed link text preserves star emphasis
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+Empty angle destination retains inline link precedence after bracketed text
+================================================================================
+[ref][lab](<>)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text))
+  (inline_link
+    (link_text)))

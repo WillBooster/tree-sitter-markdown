@@ -16,18 +16,16 @@
       (list_item
         (list_marker_star)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_star)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
-            (list_marker_star)
             (block_continuation)
-            (block_continuation))))))
+            (list_marker_star))))))
   (section
     (atx_heading
       (atx_h1_marker)
@@ -137,8 +135,7 @@ globalNS.method1(5, 10);
       (list_item
         (list_marker_parenthesis)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (list
       (list_item
         (list_marker_dot)
@@ -174,36 +171,35 @@ globalNS.method1(5, 10);
         (paragraph
           (inline)
           (block_continuation))
-        (block_continuation)
         (list
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))))
+              (inline)))))
       (list_item
         (list_marker_star)
         (paragraph
           (inline)
           (block_continuation))
-        (block_continuation)
         (list
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
               (inline))))))))
@@ -231,8 +227,7 @@ A paragraph,
       (list_item
         (list_marker_dot)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (paragraph
       (inline))
     (paragraph
@@ -260,19 +255,18 @@ A paragraph,
         (list_marker_star)
         (paragraph
           (inline
-            (block_continuation))
-          (block_continuation))
+            (block_continuation)))
         (list
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_parenthesis)
             (paragraph
-              (inline)
-              (block_continuation)))))
+              (inline)))))
       (list_item
         (list_marker_star)
         (paragraph
@@ -384,3 +378,382 @@ text ```
       (block_continuation)
       (code_fence_content
         (block_continuation)))))
+
+================================================================================
+DOCTYPE ends at its closing angle bracket
+================================================================================
+<!DOCTYPE html>
+
+# after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block))
+  (section
+    (atx_heading
+      (atx_h1_marker)
+      (inline))))
+
+================================================================================
+Declaration spans lines until a closing angle bracket
+================================================================================
+<!X
+
+value>
+
+# after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block
+      (block_continuation)
+      (block_continuation)))
+  (section
+    (atx_heading
+      (atx_h1_marker)
+      (inline))))
+
+================================================================================
+Declaration closes at the first angle bracket
+================================================================================
+<!X ">"
+
+# after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block))
+  (section
+    (atx_heading
+      (atx_h1_marker)
+      (inline))))
+
+================================================================================
+Empty HTML comment does not consume the next heading
+================================================================================
+<!-->
+
+# after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block))
+  (section
+    (atx_heading
+      (atx_h1_marker)
+      (inline))))
+
+================================================================================
+One-dash HTML comment does not consume the next heading
+================================================================================
+<!--->
+
+# after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block))
+  (section
+    (atx_heading
+      (atx_h1_marker)
+      (inline))))
+
+================================================================================
+Longer HTML comment does not consume the next heading
+================================================================================
+<!---->
+
+# after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block))
+  (section
+    (atx_heading
+      (atx_h1_marker)
+      (inline))))
+
+================================================================================
+Invalid declaration prefix does not consume the next heading
+================================================================================
+<!-div>
+
+# after
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline)))
+  (section
+    (atx_heading
+      (atx_h1_marker)
+      (inline))))
+
+================================================================================
+short HTML comment followed by a heading without a final newline
+================================================================================
+<!-->
+# after
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block))
+  (section
+    (atx_heading
+      (atx_h1_marker)
+      (inline))))
+
+================================================================================
+Leading-zero ordered marker 01. interrupts a paragraph
+================================================================================
+paragraph
+01. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))
+    (list
+      (list_item
+        (list_marker_dot)
+        (paragraph
+          (inline))))))
+
+================================================================================
+Leading-zero ordered marker 001) interrupts a paragraph
+================================================================================
+paragraph
+001) item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))
+    (list
+      (list_item
+        (list_marker_parenthesis)
+        (paragraph
+          (inline))))))
+
+================================================================================
+Leading-zero ordered marker 000000001. interrupts a paragraph
+================================================================================
+paragraph
+000000001. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))
+    (list
+      (list_item
+        (list_marker_dot)
+        (paragraph
+          (inline))))))
+
+================================================================================
+Malformed slash in HTML tag <h1/x> remains paragraph text
+================================================================================
+<h1/x>
+text
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+Malformed slash in HTML tag </h1/x> remains paragraph text
+================================================================================
+</h1/x>
+text
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+Malformed slash in HTML tag <h10/x> remains paragraph text
+================================================================================
+<h10/x>
+text
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+Malformed slash in HTML tag <hr/x> remains paragraph text
+================================================================================
+<hr/x>
+text
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+Self-closing custom end tag </h1x/> remains paragraph text
+================================================================================
+</h1x/>
+text
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+Self-closing custom end tag </h10/> remains paragraph text
+================================================================================
+</h10/>
+text
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+Escaped bracket text without a definition colon
+================================================================================
+[\<g> element](/a)
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+Entity bracket text without a definition colon
+================================================================================
+[&lt;a&gt;] b
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+Numeric reference bracket text without a definition colon
+================================================================================
+[&#65;] b
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))))
+
+================================================================================
+entity reference labels retain valid definitions
+================================================================================
+[&lt;a&gt;]: /x
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (link_reference_definition
+      (link_label
+        (entity_reference)
+        (entity_reference))
+      (link_destination))))
+
+================================================================================
+numeric reference labels retain valid definitions
+================================================================================
+[&#65;]: /x
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (link_reference_definition
+      (link_label
+        (numeric_character_reference))
+      (link_destination))))
+
+================================================================================
+Leading-zero markers other than one or longer than nine digits do not interrupt
+================================================================================
+paragraph
+02. item
+
+paragraph
+007) item
+
+paragraph
+0000000001. item
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))
+    (paragraph
+      (inline))
+    (paragraph
+      (inline))))
+
+================================================================================
+List-like text in nested indented code retains code precedence
+================================================================================
+1. a
+
+       * b
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (list
+      (list_item
+        (list_marker_dot)
+        (paragraph
+          (inline)
+          (block_continuation))
+        (block_continuation)
+        (indented_code_block)))))

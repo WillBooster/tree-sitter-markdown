@@ -129,16 +129,16 @@ Example 9 - https://github.github.com/gfm/#example-9
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
-              (inline)
-              (block_continuation))
+              (inline))
             (list
               (list_item
+                (block_continuation)
                 (list_marker_minus)
                 (paragraph
                   (inline))))))))))
@@ -629,11 +629,13 @@ Example 41 - https://github.github.com/gfm/#example-41
   (section
     (atx_heading
       (atx_h2_marker)
-      (inline))
+      (inline)
+      (atx_heading_closing_sequence))
     (section
       (atx_heading
         (atx_h3_marker)
-        (inline)))))
+        (inline)
+        (atx_heading_closing_sequence)))))
 
 ================================================================================
 Example 42 - https://github.github.com/gfm/#example-42
@@ -647,11 +649,13 @@ Example 42 - https://github.github.com/gfm/#example-42
   (section
     (atx_heading
       (atx_h1_marker)
-      (inline))
+      (inline)
+      (atx_heading_closing_sequence))
     (section
       (atx_heading
         (atx_h5_marker)
-        (inline)))))
+        (inline)
+        (atx_heading_closing_sequence)))))
 
 ================================================================================
 Example 43 - https://github.github.com/gfm/#example-43
@@ -664,7 +668,8 @@ Example 43 - https://github.github.com/gfm/#example-43
   (section
     (atx_heading
       (atx_h3_marker)
-      (inline))))
+      (inline)
+      (atx_heading_closing_sequence))))
 
 ================================================================================
 Example 44 - https://github.github.com/gfm/#example-44
@@ -772,7 +777,7 @@ Example 49 - https://github.github.com/gfm/#example-49
     (section
       (atx_heading
         (atx_h3_marker)
-        (inline)))))
+        (atx_heading_closing_sequence)))))
 
 ================================================================================
 Example 50 - https://github.github.com/gfm/#example-50
@@ -1313,9 +1318,9 @@ Example 79 - https://github.github.com/gfm/#example-79
         (paragraph
           (inline)
           (block_continuation))
-        (block_continuation)
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
               (inline))))))))
@@ -2919,8 +2924,7 @@ Example 169 - https://github.github.com/gfm/#example-169
 (document
   (section
     (link_reference_definition
-      (link_label)
-      (link_destination))
+      (link_label))
     (paragraph
       (inline))))
 
@@ -3425,8 +3429,8 @@ Example 206 - https://github.github.com/gfm/#example-206
       (section
         (atx_heading
           (atx_h1_marker)
-          (inline)
-          (block_continuation))
+          (inline))
+        (block_continuation)
         (paragraph
           (inline
             (block_continuation)))))))
@@ -3447,8 +3451,8 @@ Example 207 - https://github.github.com/gfm/#example-207
       (section
         (atx_heading
           (atx_h1_marker)
-          (inline)
-          (block_continuation))
+          (inline))
+        (block_continuation)
         (paragraph
           (inline
             (block_continuation)))))))
@@ -3469,8 +3473,8 @@ Example 208 - https://github.github.com/gfm/#example-208
       (section
         (atx_heading
           (atx_h1_marker)
-          (inline)
-          (block_continuation))
+          (inline))
+        (block_continuation)
         (paragraph
           (inline
             (block_continuation)))))))
@@ -3506,8 +3510,8 @@ baz
       (section
         (atx_heading
           (atx_h1_marker)
-          (inline)
-          (block_continuation))
+          (inline))
+        (block_continuation)
         (paragraph
           (inline))))))
 
@@ -3936,8 +3940,7 @@ Example 233 - https://github.github.com/gfm/#example-233
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (paragraph
       (inline))))
 
@@ -3977,8 +3980,7 @@ Example 235 - https://github.github.com/gfm/#example-235
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (indented_code_block)))
 
 ================================================================================
@@ -4046,9 +4048,9 @@ Example 238 - https://github.github.com/gfm/#example-238
           (list_item
             (list_marker_minus)
             (paragraph
-              (inline)
-              (block_continuation))
-            (block_continuation)))
+              (inline)))
+          (block_continuation)
+          (block_continuation))
         (paragraph
           (inline))))))
 
@@ -4120,8 +4122,8 @@ Example 241 - https://github.github.com/gfm/#example-241
           (block_continuation)
           (code_fence_content
             (block_continuation))
-          (fenced_code_block_delimiter)
-          (block_continuation))
+          (fenced_code_block_delimiter))
+        (block_continuation)
         (block_continuation)
         (paragraph
           (inline)
@@ -4366,8 +4368,7 @@ Example 254 - https://github.github.com/gfm/#example-254
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (paragraph
       (inline))))
 
@@ -4772,22 +4773,22 @@ Example 272 - https://github.github.com/gfm/#example-272
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
-              (inline)
-              (block_continuation))
+              (inline))
             (list
               (list_item
+                (block_continuation)
                 (list_marker_minus)
                 (paragraph
-                  (inline)
-                  (block_continuation))
+                  (inline))
                 (list
                   (list_item
+                    (block_continuation)
                     (list_marker_minus)
                     (paragraph
                       (inline))))))))))))
@@ -4836,10 +4837,10 @@ Example 274 - https://github.github.com/gfm/#example-274
       (list_item
         (list_marker_parenthesis)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
               (inline))))))))
@@ -4929,8 +4930,8 @@ Example 278 - https://github.github.com/gfm/#example-278
           (paragraph
             (inline)
             (block_continuation))
-          (setext_h2_underline)
-          (block_continuation))
+          (setext_h2_underline))
+        (block_continuation)
         (paragraph
           (inline))))))
 
@@ -5058,14 +5059,11 @@ Example 286 - https://github.github.com/gfm/#example-286
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation)))
+          (inline)))
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))
-        (block_continuation))
+          (inline)))
       (list_item
         (list_marker_minus)
         (paragraph
@@ -5089,16 +5087,16 @@ Example 287 - https://github.github.com/gfm/#example-287
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
-              (inline)
-              (block_continuation))
+              (inline))
             (list
               (list_item
+                (block_continuation)
                 (list_marker_minus)
                 (paragraph
                   (inline)
@@ -5131,8 +5129,7 @@ Example 288 - https://github.github.com/gfm/#example-288
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (html_block)
     (list
       (list_item
@@ -5169,13 +5166,11 @@ Example 289 - https://github.github.com/gfm/#example-289
           (block_continuation))
         (block_continuation)
         (paragraph
-          (inline)
-          (block_continuation)))
+          (inline)))
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (html_block)
     (indented_code_block)))
 
@@ -5241,13 +5236,11 @@ Example 291 - https://github.github.com/gfm/#example-291
       (list_item
         (list_marker_dot)
         (paragraph
-          (inline)
-          (block_continuation)))
+          (inline)))
       (list_item
         (list_marker_dot)
         (paragraph
-          (inline)
-          (block_continuation)))
+          (inline)))
       (list_item
         (list_marker_dot)
         (paragraph
@@ -5301,13 +5294,11 @@ Example 293 - https://github.github.com/gfm/#example-293
       (list_item
         (list_marker_dot)
         (paragraph
-          (inline)
-          (block_continuation)))
+          (inline)))
       (list_item
         (list_marker_dot)
         (paragraph
-          (inline)
-          (block_continuation))))
+          (inline))))
     (indented_code_block)))
 
 ================================================================================
@@ -5330,8 +5321,7 @@ Example 294 - https://github.github.com/gfm/#example-294
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation)))
+          (inline)))
       (list_item
         (list_marker_minus)
         (paragraph
@@ -5355,8 +5345,7 @@ Example 295 - https://github.github.com/gfm/#example-295
         (paragraph
           (inline)))
       (list_item
-        (list_marker_star)
-        (block_continuation))
+        (list_marker_star))
       (list_item
         (list_marker_star)
         (paragraph
@@ -5477,10 +5466,10 @@ Example 299 - https://github.github.com/gfm/#example-299
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
               (inline)
@@ -5544,8 +5533,8 @@ Example 301 - https://github.github.com/gfm/#example-301
         (block_quote
           (block_quote_marker)
           (paragraph
-            (inline)
-            (block_continuation)))
+            (inline)))
+        (block_continuation)
         (fenced_code_block
           (fenced_code_block_delimiter)
           (block_continuation)
@@ -5586,10 +5575,10 @@ Example 303 - https://github.github.com/gfm/#example-303
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
               (inline))))))))
@@ -5615,8 +5604,8 @@ Example 304 - https://github.github.com/gfm/#example-304
           (block_continuation)
           (code_fence_content
             (block_continuation))
-          (fenced_code_block_delimiter)
-          (block_continuation))
+          (fenced_code_block_delimiter))
+        (block_continuation)
         (block_continuation)
         (paragraph
           (inline))))))
@@ -5637,15 +5626,15 @@ Example 305 - https://github.github.com/gfm/#example-305
       (list_item
         (list_marker_star)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_star)
             (paragraph
-              (inline)
-              (block_continuation))
-            (block_continuation)))
+              (inline)))
+          (block_continuation)
+          (block_continuation))
         (paragraph
           (inline))))))
 
@@ -5668,31 +5657,30 @@ Example 306 - https://github.github.com/gfm/#example-306
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
-              (inline)
-              (block_continuation)))))
+              (inline)))))
       (list_item
         (list_marker_minus)
         (paragraph
-          (inline)
-          (block_continuation))
+          (inline))
         (list
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
-              (inline)
-              (block_continuation)))
+              (inline)))
           (list_item
+            (block_continuation)
             (list_marker_minus)
             (paragraph
               (inline))))))))

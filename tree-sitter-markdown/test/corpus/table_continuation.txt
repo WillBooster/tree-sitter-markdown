@@ -1,0 +1,81 @@
+================================================================================
+Delimiter-like body rows remain in one table
+================================================================================
+| a | b |
+| - | - |
+| x | y |
+| - | - |
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (pipe_table
+      (pipe_table_header
+        (pipe_table_cell)
+        (pipe_table_cell))
+      (pipe_table_delimiter_row
+        (pipe_table_delimiter_cell)
+        (pipe_table_delimiter_cell))
+      (pipe_table_row
+        (pipe_table_cell)
+        (pipe_table_cell))
+      (pipe_table_row
+        (pipe_table_cell)
+        (pipe_table_cell)))))
+
+================================================================================
+Whitespace-only body rows do not restart a table
+================================================================================
+| a | b |
+| - | - |
+|   |   |
+| - | - |
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (pipe_table
+      (pipe_table_header
+        (pipe_table_cell)
+        (pipe_table_cell))
+      (pipe_table_delimiter_row
+        (pipe_table_delimiter_cell)
+        (pipe_table_delimiter_cell))
+      (pipe_table_row
+        (pipe_table_cell)
+        (pipe_table_cell))
+      (pipe_table_row
+        (pipe_table_cell)
+        (pipe_table_cell)))))
+
+================================================================================
+Pipe-only empty body rows retain surrounding rows
+================================================================================
+| a | b |
+| - | - |
+| x | y |
+|   |   |
+| z | w |
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (pipe_table
+      (pipe_table_header
+        (pipe_table_cell)
+        (pipe_table_cell))
+      (pipe_table_delimiter_row
+        (pipe_table_delimiter_cell)
+        (pipe_table_delimiter_cell))
+      (pipe_table_row
+        (pipe_table_cell)
+        (pipe_table_cell))
+      (pipe_table_row
+        (pipe_table_cell)
+        (pipe_table_cell))
+      (pipe_table_row
+        (pipe_table_cell)
+        (pipe_table_cell)))))
