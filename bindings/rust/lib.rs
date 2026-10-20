@@ -294,7 +294,7 @@ mod tests {
         let mut parser = MarkdownParser::default();
         let mut inline_parser = tree_sitter::Parser::new();
         inline_parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
-        for source in ["~*.***~~*~~", "*_%___*o\n*_*[*]", "a *b* c", "~*.***~~*~~"] {
+        for source in ["~*.***~~*~~", "*_%___*o\n*_*[*]", "a *b* c"] {
             let document = format!("{source}\n");
             let tree = parser.parse(document.as_bytes(), None).unwrap();
             let inline = inline_parser.parse(source, None).unwrap();
