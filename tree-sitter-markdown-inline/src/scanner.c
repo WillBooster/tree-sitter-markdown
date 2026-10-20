@@ -235,6 +235,7 @@ static bool parse_backtick(Scanner *s, TSLexer *lexer,
                            const bool *valid_symbols);
 static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool scan_html_terminator(TSLexer *lexer, const char *terminator);
+static uint8_t read_html_special_opener(TSLexer *lexer, const char **terminator);
 static bool parse_dollar(Scanner *s, TSLexer *lexer,
                          const bool *valid_symbols);
 static bool parse_leaf_delimiter(TSLexer *lexer, uint8_t *delimiter_length,
@@ -381,30 +382,9 @@ static bool dispatch_delimiter(Scanner *s, TSLexer *lexer, const bool *valid_sym
 static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     if (!valid_symbols[HTML_SPECIAL] && !valid_symbols[HTML_SPECIAL_OPENER]) return false;
     lexer->advance(lexer, false);
-    uint8_t kind;
-    const char *terminator;
-    if (lexer->lookahead == '?') {
-        lexer->advance(lexer, false);
-        kind = UNTERMINATED_PROCESSING_INSTRUCTION;
-        terminator = "?>";
-    } else if (lexer->lookahead == '!') {
-        lexer->advance(lexer, false);
-        if (lexer->lookahead == '[') {
-            for (const char *c = "[CDATA["; *c; c++) {
-                if (lexer->lookahead != *c) return false;
-                lexer->advance(lexer, false);
-            }
-            kind = UNTERMINATED_CDATA;
-            terminator = "]]>";
-        } else {
-            if (lexer->lookahead < 'A' || lexer->lookahead > 'Z') return false;
-            while (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') lexer->advance(lexer, false);
-            kind = UNTERMINATED_DECLARATION;
-            terminator = is_whitespace(lexer->lookahead) ? ">" : NULL;
-        }
-    } else {
-        return false;
-    }
+    const char *terminator = NULL;
+    uint8_t kind = read_html_special_opener(lexer, &terminator);
+    if (!kind) return false;
     lexer->mark_end(lexer);
     if (terminator && valid_symbols[HTML_SPECIAL] && !(s->unterminated_html & kind)) {
         if (scan_html_terminator(lexer, terminator)) {
@@ -417,6 +397,30 @@ static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_sym
     if (!valid_symbols[HTML_SPECIAL_OPENER]) return false;
     lexer->result_symbol = HTML_SPECIAL_OPENER;
     return true;
+}
+
+// Reads the opener after `<` and returns its kind, or 0 when there is none. A declaration needs whitespace after its
+// name before a terminator can complete it.
+static uint8_t read_html_special_opener(TSLexer *lexer, const char **terminator) {
+    if (lexer->lookahead == '?') {
+        lexer->advance(lexer, false);
+        *terminator = "?>";
+        return UNTERMINATED_PROCESSING_INSTRUCTION;
+    }
+    if (lexer->lookahead != '!') return 0;
+    lexer->advance(lexer, false);
+    if (lexer->lookahead == '[') {
+        for (const char *c = "[CDATA["; *c; c++) {
+            if (lexer->lookahead != *c) return 0;
+            lexer->advance(lexer, false);
+        }
+        *terminator = "]]>";
+        return UNTERMINATED_CDATA;
+    }
+    if (lexer->lookahead < 'A' || lexer->lookahead > 'Z') return 0;
+    while (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') lexer->advance(lexer, false);
+    if (is_whitespace(lexer->lookahead)) *terminator = ">";
+    return UNTERMINATED_DECLARATION;
 }
 
 // Advances past the first occurrence of `terminator`, whose characters other than the first never begin it again.
