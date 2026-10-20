@@ -191,6 +191,8 @@ typedef struct {
     bool strikethrough;
     const bool *scope_symbols;
     ProofAngle angle;
+    // Delimiter characters that an unclosed span's scan passed, which a fallback closer search can no longer see.
+    uint8_t span_hidden_delimiters;
     unsigned pending_bracket;
     int32_t previous;
     int32_t emphasis_previous;
@@ -260,7 +262,8 @@ static bool delimiter_pair_allowed(bool opener_closes, uint8_t opener_modulo,
 static bool opener_can_close(uint8_t opener);
 static uint8_t opener_modulo(uint8_t opener);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
-static bool proof_uncertain_character(int32_t character);
+static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t delimiter);
+static uint8_t delimiter_bit(int32_t character);
 static ProofAngle opening_angle(int32_t next);
 static ProofAngle next_angle(ProofAngle angle, int32_t next);
 static bool is_email_local(int32_t character);
@@ -602,7 +605,7 @@ static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, ui
 
 static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
     PendingDelimiter *first = &proof->pending[0];
-    s->run_can_open = first->count < proof->initial_count ||
+    s->run_can_open = first->count < proof->initial_count || (proof->span_hidden_delimiters & delimiter_bit(first->delimiter)) ||
         // The search ends where the proof's budget would have, so every opener gets the same window.
         possible_closer(lexer, proof->budget, first->delimiter, first->modulo, first->can_close, proof->strikethrough);
     return UINT32_MAX;
@@ -860,7 +863,7 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
     proof->angle = next_angle(proof->angle, next);
     if (next == '>' && proof->angle) return PROOF_UNCERTAIN;
-    if (proof_uncertain_character(next)) return PROOF_UNCERTAIN;
+    if (next == '`' || next == '$') return proof->angle ? PROOF_UNCERTAIN : read_proof_span(lexer, proof, next);
     if (next == '*' || next == '_' || (proof->strikethrough && next == '~')) return PROOF_DELIMITER;
     proof->budget--;
     proof->previous = proof->emphasis_previous = next;
@@ -888,8 +891,33 @@ static bool is_email_local(int32_t character) {
         (character >= 'a' && character <= 'z') || (character > 0 && character < 128 && strchr(".!#$%&'*+/=?^_`{|}~-", character));
 }
 
-static bool proof_uncertain_character(int32_t character) {
-    return character > 0 && character < 128 && strchr("`$", character);
+// A code or LaTeX span that closes is one token whose contents are not delimiters, as `parse_leaf_delimiter` reads
+// it. An unclosed opener is text, but the proof has then read past what follows it.
+static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t delimiter) {
+    uint32_t level = 0;
+    while (lexer->lookahead == delimiter) {
+        if (!proof->budget) return PROOF_UNCERTAIN;
+        proof->budget--;
+        level++;
+        lexer->advance(lexer, false);
+    }
+    uint32_t run = 0;
+    while (!lexer->eof(lexer)) {
+        if (lexer->lookahead != delimiter && run == level) break;
+        // LaTeX contents also read backslash escapes, which can consume the closing `$` the scanner matched.
+        if (!proof->budget || (delimiter == '$' && lexer->lookahead == '\\')) return PROOF_UNCERTAIN;
+        run = lexer->lookahead == delimiter ? run + 1 : 0;
+        proof->span_hidden_delimiters |= delimiter_bit(lexer->lookahead);
+        proof->budget--;
+        lexer->advance(lexer, false);
+    }
+    if (run != level) return PROOF_UNCERTAIN;
+    proof->previous = proof->emphasis_previous = delimiter;
+    return PROOF_TEXT;
+}
+
+static uint8_t delimiter_bit(int32_t character) {
+    return character == '*' ? 1 : character == '_' ? 2 : character == '~' ? 4 : 0;
 }
 
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {

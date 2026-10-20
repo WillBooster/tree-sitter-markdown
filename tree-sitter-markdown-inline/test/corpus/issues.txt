@@ -687,3 +687,15 @@ A declaration containing an angle bracket keeps its tildes protected
 
 (inline
   (html_tag))
+
+================================================================================
+A closed code span hides its brackets and delimiters from ownership proofs
+================================================================================
+_[~_x`]~_`
+
+--------------------------------------------------------------------------------
+
+(inline
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter)))

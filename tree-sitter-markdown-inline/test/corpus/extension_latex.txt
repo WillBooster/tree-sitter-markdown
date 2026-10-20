@@ -112,3 +112,15 @@ $**a*
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+A closed LaTeX span hides its brackets and delimiters from ownership proofs
+================================================================================
+*[~*x$]~*$
+
+--------------------------------------------------------------------------------
+
+(inline
+  (latex_block
+    (latex_span_delimiter)
+    (latex_span_delimiter)))
