@@ -123,6 +123,11 @@
     }
   },
   {
+    "type": "emphasis_delimiter",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "entity_reference",
     "named": true,
     "fields": {}
@@ -760,10 +765,6 @@
     "named": false
   },
   {
-    "type": "-->",
-    "named": false
-  },
-  {
     "type": ".",
     "named": false
   },
@@ -808,10 +809,6 @@
     "named": false
   },
   {
-    "type": "?>",
-    "named": false
-  },
-  {
     "type": "@",
     "named": false
   },
@@ -828,10 +825,6 @@
     "named": false
   },
   {
-    "type": "]]>",
-    "named": false
-  },
-  {
     "type": "^",
     "named": false
   },
@@ -845,10 +838,6 @@
   },
   {
     "type": "code_span_delimiter",
-    "named": true
-  },
-  {
-    "type": "emphasis_delimiter",
     "named": true
   },
   {

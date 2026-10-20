@@ -16,11 +16,19 @@ This fork builds on the grammars, external scanners, and queries of upstream's v
 with the [WillBooster/tree-sitter](https://github.com/WillBooster/tree-sitter) generator. The block scanner compares the
 digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigit`, which the C headers for
 `wasm32-unknown-unknown` do not declare; both accept the ASCII digits only. The parsers carry that fork's
-own ABI number (`0x57420001`) and load only with that fork's runtime, major version 2: upstream's tree-sitter
+own ABI number (`0x57420005`) and load only with that fork's runtime, major version 6: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
-- Inline emphasis and strikethrough record preceding punctuation and whitespace, including boundaries after links,
-  code spans, HTML tags, and escapes. This changes both fresh parses and incremental edits.
+- Inline emphasis and strikethrough preserve source punctuation and whitespace across edits, including boundaries
+  after links, code spans, HTML tags, and escapes. Emphasis pairs retain their original delimiter-run lengths and
+  flanking, enforcing the CommonMark multiple-of-three restriction. Raw HTML is an atomic `html_tag` token; its
+  anonymous punctuation children are no longer emitted. Single and double tilde runs each emit one `strikethrough`
+  node; runs of three or more tildes remain literal. Tildes are transparent when determining asterisk/underscore
+  flanking, matching the GFM strikethrough extension.
+- Reference links remain syntactic candidates: the inline parser does not receive reference definitions. Potential
+  shortcut links retain priority over crossing emphasis, including `*[foo*]`; consumers can resolve them against the
+  block tree's definitions. Consequently, parsing an isolated inline fragment can differ from rendering that fragment
+  as a complete document without definitions.
 - Every pipe-table delimiter cell must contain a hyphen; empty or whitespace-only delimiter cells cannot start a table. The delimiter row must also contain a pipe after at least one cell; otherwise it remains ordinary Markdown rather than an erroneous table.
 - Angle brackets surrounding a link destination are outside its `link_destination` node. Empty angle destinations have no destination child.
 - Empty list items followed by multiple blank lines remain in the same list as a following item with the same marker type, matching CommonMark.
@@ -58,7 +66,7 @@ included, as they are not in upstream's packages.
 ## Usage
 
 The npm package ships `tree-sitter-markdown.wasm` and `tree-sitter-markdown_inline.wasm` for
-[@willbooster/web-tree-sitter](https://www.npmjs.com/package/@willbooster/web-tree-sitter) major version 2, which
+[@willbooster/web-tree-sitter](https://www.npmjs.com/package/@willbooster/web-tree-sitter) major version 6, which
 runs in Node.js, Bun, browsers, and Cloudflare Workers. Parse a document with the block grammar, then parse the inline
 content of each `inline` or `pipe_table_cell` node with the inline grammar, limited to the node's range without its
 named children (block continuations such as the `>` of a block quote). In Node.js and Bun, load the grammars from their
@@ -142,8 +150,8 @@ fuzzed with:
 
 ```toml
 [dependencies]
-tree-sitter = { package = "willbooster-tree-sitter", version = "2" }
-tree-sitter-md = { package = "willbooster-tree-sitter-md", version = "1" }
+tree-sitter = { package = "willbooster-tree-sitter", version = "6.0.19" }
+tree-sitter-md = { package = "willbooster-tree-sitter-md", version = "2" }
 ```
 
 ```rust
@@ -153,7 +161,7 @@ parser.set_language(&tree_sitter_md::LANGUAGE.into())?;
 
 The crate keeps the API of upstream's `tree-sitter-md` crate: `tree_sitter_md::INLINE_LANGUAGE` is the inline grammar,
 and the `parser` feature adds `MarkdownParser`, which parses a document with both grammars into a `MarkdownTree`.
-The `parser` feature requires runtime version 2.0.18 or later, which supports UTF-8 characters split across short input chunks.
+The runtime must be version 6.0.19 or later within major version 6.
 `MarkdownCursor::field_name` returns a name that borrows from the tree (`Option<&'tree str>`), since the
 willbooster-tree-sitter runtime returns field names with that lifetime, where upstream's returns `Option<&'static str>`.
 
