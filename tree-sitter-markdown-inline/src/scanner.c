@@ -716,15 +716,20 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
     s->num_emphasis_delimiters_left = 0;
     if (!s->no_closing_bracket) {
         bool closing = false;
+        // Raw HTML and autolinks own the backticks and dollar signs they contain, as in delimiter proofs.
+        ProofAngle angle = ANGLE_NONE;
         for (unsigned remaining = 1024; remaining && !lexer->eof(lexer) && !closing;) {
-            if (lexer->lookahead == '`' || lexer->lookahead == '$') {
+            int32_t character = lexer->lookahead;
+            angle = character == '>' ? ANGLE_NONE : next_angle(angle, character);
+            if (!angle && (character == '`' || character == '$')) {
                 closing = skip_span(lexer, &remaining) == SPAN_PASSED_BRACKET;
                 continue;
             }
-            closing = lexer->lookahead == ']';
-            bool escape = lexer->lookahead == '\\';
+            closing = character == ']';
+            bool escape = character == '\\';
             remaining--;
             lexer->advance(lexer, false);
+            if (character == '<' && !angle) angle = opening_angle(lexer->lookahead);
             // An escaped punctuation character, such as `\]` or `` \` ``, neither closes nor opens anything.
             if (escape && is_punctuation(lexer->lookahead) && remaining) {
                 remaining--;

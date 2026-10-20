@@ -768,3 +768,19 @@ An escaped backtick in link text does not open a span for the bracket scan
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+A backtick inside raw HTML in link text does not open a span for the bracket scan
+================================================================================
+[<a title="`">](u) `x`
+
+--------------------------------------------------------------------------------
+
+(inline
+  (inline_link
+    (link_text
+      (html_tag))
+    (link_destination))
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter)))
