@@ -160,3 +160,15 @@ An escape inside LaTeX keeps a bracket in it from closing link text
     (latex_span_delimiter)
     (backslash_escape)
     (latex_span_delimiter)))
+
+================================================================================
+LaTeX after an unclosed backtick owns a bracket
+================================================================================
+[_~*`$]~_*$
+
+--------------------------------------------------------------------------------
+
+(inline
+  (latex_block
+    (latex_span_delimiter)
+    (latex_span_delimiter)))

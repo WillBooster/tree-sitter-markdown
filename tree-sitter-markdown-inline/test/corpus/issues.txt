@@ -797,3 +797,15 @@ _[``~$ _`[\~\_]
     (link_text
       (backslash_escape)
       (backslash_escape))))
+
+================================================================================
+A longer backtick run after an unclosed one opens the span that owns a bracket
+================================================================================
+*[ ~*+`a``~]*``
+
+--------------------------------------------------------------------------------
+
+(inline
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter)))
