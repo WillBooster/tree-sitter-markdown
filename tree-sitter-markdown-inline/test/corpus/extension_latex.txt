@@ -100,3 +100,15 @@ $[$ *a]b*
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+Unclosed LaTeX openers supply punctuation context
+================================================================================
+$**a*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))

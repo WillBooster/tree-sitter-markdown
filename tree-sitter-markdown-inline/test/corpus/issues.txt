@@ -602,3 +602,52 @@ Brackets in code spans and link destinations do not bound later emphasis
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+Unclosed code span openers supply punctuation context
+================================================================================
+`**a*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Angle brackets that cannot begin HTML or autolinks do not hide emphasis
+================================================================================
+*<~>*~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Brackets in an unclosed destination do not abort ownership
+================================================================================
+__![]](__[*<>
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strong_emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)
+    (image
+      (image_description))
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Unterminated processing instructions, declarations, and CDATA remain text
+================================================================================
+a <?b <![CDATA[c <!D e
+
+--------------------------------------------------------------------------------
+
+(inline)

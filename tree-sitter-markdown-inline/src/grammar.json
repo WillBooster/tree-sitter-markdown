@@ -2664,15 +2664,7 @@
             },
             {
               "type": "SYMBOL",
-              "name": "_processing_instruction"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "_declaration"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "_cdata_section"
+              "name": "_html_special"
             }
           ]
         },
@@ -2778,27 +2770,6 @@
             "value": "-->"
           }
         ]
-      }
-    },
-    "_processing_instruction": {
-      "type": "TOKEN",
-      "content": {
-        "type": "PATTERN",
-        "value": "<\\?([^?]|\\?+[^?>])*\\?+>"
-      }
-    },
-    "_declaration": {
-      "type": "TOKEN",
-      "content": {
-        "type": "PATTERN",
-        "value": "<![A-Z]+[ \\t\\r\\n][^>]*>"
-      }
-    },
-    "_cdata_section": {
-      "type": "TOKEN",
-      "content": {
-        "type": "PATTERN",
-        "value": "<!\\[CDATA\\[([^\\]]|\\][^\\]]|\\]\\]+[^\\]>])*\\]\\]+>"
       }
     },
     "hard_line_break": {
@@ -3299,8 +3270,25 @@
           "members": []
         },
         {
-          "type": "SYMBOL",
-          "name": "_unclosed_span"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_unclosed_span"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_last_token_punctuation"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
         },
         {
           "type": "SYMBOL",
@@ -3479,16 +3467,8 @@
           "value": "<!--"
         },
         {
-          "type": "PATTERN",
-          "value": "<![A-Z]+"
-        },
-        {
-          "type": "STRING",
-          "value": "<?"
-        },
-        {
-          "type": "STRING",
-          "value": "<![CDATA["
+          "type": "SYMBOL",
+          "name": "_html_special_opener"
         }
       ]
     },
@@ -3644,8 +3624,25 @@
           "name": "_emphasis_underscore_candidate_both_2"
         },
         {
-          "type": "SYMBOL",
-          "name": "_unclosed_span"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_unclosed_span"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_last_token_punctuation"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
         },
         {
           "type": "SYMBOL",
@@ -9270,6 +9267,14 @@
     {
       "type": "SYMBOL",
       "name": "_close_bracket_unknown_label"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_html_special"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_html_special_opener"
     }
   ],
   "inline": [],

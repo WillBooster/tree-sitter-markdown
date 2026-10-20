@@ -94,8 +94,17 @@ typedef enum {
     UNCLOSED_OPEN_BRACKET,
     CLOSE_BRACKET_NO_LABEL,
     CLOSE_BRACKET_WITH_LABEL,
-    CLOSE_BRACKET_UNKNOWN_LABEL
+    CLOSE_BRACKET_UNKNOWN_LABEL,
+    HTML_SPECIAL,
+    HTML_SPECIAL_OPENER
 } TokenType;
+
+// Constructs whose terminator is known to be missing from the scanned position to the end of the input.
+enum {
+    UNTERMINATED_PROCESSING_INSTRUCTION = 1,
+    UNTERMINATED_DECLARATION = 2,
+    UNTERMINATED_CDATA = 4,
+};
 
 typedef enum {
     EMPHASIS_ROLE_OPEN,
@@ -116,6 +125,7 @@ typedef struct {
     bool context_pending;
     char run_delimiter;
     bool no_closing_bracket;
+    uint8_t unterminated_html;
     uint32_t bracket_depth;
     uint32_t flat_head_depth;
     uint8_t code_span_delimiter_length;
@@ -161,6 +171,14 @@ typedef struct {
     bool can_close;
 } PendingDelimiter;
 
+// How far a `<` read by a delimiter proof can still begin raw HTML or an autolink, whose contents are not emphasis text.
+typedef enum {
+    ANGLE_NONE,
+    ANGLE_HTML_OR_URI,
+    ANGLE_EMAIL_LOCAL,
+    ANGLE_EMAIL_DOMAIN,
+} ProofAngle;
+
 typedef struct {
     PendingDelimiter pending[CERTIFIED_LIMIT + 1];
     unsigned used;
@@ -172,7 +190,7 @@ typedef struct {
     unsigned discard_offset;
     bool strikethrough;
     const bool *scope_symbols;
-    bool pending_angle;
+    ProofAngle angle;
     unsigned pending_bracket;
     int32_t previous;
     int32_t emphasis_previous;
@@ -203,6 +221,8 @@ static bool emit_context(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool dispatch_delimiter(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool parse_backtick(Scanner *s, TSLexer *lexer,
                            const bool *valid_symbols);
+static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
+static bool scan_html_terminator(TSLexer *lexer, const char *terminator);
 static bool parse_dollar(Scanner *s, TSLexer *lexer,
                          const bool *valid_symbols);
 static bool parse_leaf_delimiter(TSLexer *lexer, uint8_t *delimiter_length,
@@ -244,6 +264,9 @@ static bool opener_can_close(uint8_t opener);
 static uint8_t opener_modulo(uint8_t opener);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static bool proof_uncertain_character(int32_t character);
+static ProofAngle opening_angle(int32_t next);
+static ProofAngle next_angle(ProofAngle angle, int32_t next);
+static bool is_email_local(int32_t character);
 static ProofStep read_proof_escape(TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static void read_transparent_tildes(TSLexer *lexer, DelimiterProof *proof,
@@ -335,11 +358,70 @@ static bool dispatch_delimiter(Scanner *s, TSLexer *lexer, const bool *valid_sym
         case '[': return parse_bracket(s, lexer, valid_symbols);
         case '`': return parse_backtick(s, lexer, valid_symbols);
         case '$': return parse_dollar(s, lexer, valid_symbols);
+        case '<': return parse_html_special(s, lexer, valid_symbols);
         case '*': return parse_emphasis(s, lexer, valid_symbols, '*', EMPHASIS_STAR_OPEN_LEFT_0);
         case '_': return parse_emphasis(s, lexer, valid_symbols, '_', EMPHASIS_UNDERSCORE_OPEN_LEFT_0);
         case '~': return parse_emphasis(s, lexer, valid_symbols, '~', STRIKETHROUGH_FORCED_OPEN);
         default: return false;
     }
+}
+
+static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
+    if (!valid_symbols[HTML_SPECIAL] && !valid_symbols[HTML_SPECIAL_OPENER]) return false;
+    lexer->advance(lexer, false);
+    uint8_t kind;
+    const char *terminator;
+    if (lexer->lookahead == '?') {
+        lexer->advance(lexer, false);
+        kind = UNTERMINATED_PROCESSING_INSTRUCTION;
+        terminator = "?>";
+    } else if (lexer->lookahead == '!') {
+        lexer->advance(lexer, false);
+        if (lexer->lookahead == '[') {
+            for (const char *c = "[CDATA["; *c; c++) {
+                if (lexer->lookahead != *c) return false;
+                lexer->advance(lexer, false);
+            }
+            kind = UNTERMINATED_CDATA;
+            terminator = "]]>";
+        } else {
+            if (lexer->lookahead < 'A' || lexer->lookahead > 'Z') return false;
+            while (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') lexer->advance(lexer, false);
+            kind = UNTERMINATED_DECLARATION;
+            terminator = is_whitespace(lexer->lookahead) ? ">" : NULL;
+        }
+    } else {
+        return false;
+    }
+    lexer->mark_end(lexer);
+    if (terminator && valid_symbols[HTML_SPECIAL] && !(s->unterminated_html & kind)) {
+        if (scan_html_terminator(lexer, terminator)) {
+            lexer->mark_end(lexer);
+            lexer->result_symbol = HTML_SPECIAL;
+            return true;
+        }
+        s->unterminated_html |= kind;
+    }
+    if (!valid_symbols[HTML_SPECIAL_OPENER]) return false;
+    lexer->result_symbol = HTML_SPECIAL_OPENER;
+    return true;
+}
+
+// Advances past the first occurrence of `terminator`, whose characters other than the first never begin it again.
+static bool scan_html_terminator(TSLexer *lexer, const char *terminator) {
+    size_t matched = 0;
+    while (!lexer->eof(lexer)) {
+        int32_t character = lexer->lookahead;
+        lexer->advance(lexer, false);
+        if (character == terminator[matched]) {
+            if (!terminator[++matched]) return true;
+        } else if (matched && character == terminator[0] && terminator[0] == terminator[matched - 1]) {
+            continue;
+        } else {
+            matched = character == terminator[0];
+        }
+    }
+    return false;
 }
 
 static bool parse_backtick(Scanner *s, TSLexer *lexer,
@@ -713,11 +795,7 @@ static int32_t context_character(uint8_t context) {
 }
 
 static uint32_t certify_protected_suffix(Scanner *s, TSLexer *lexer, DelimiterProof *proof, uint32_t result) {
-    if (!proof->pending_bracket && !proof->pending_angle) {
-        s->discard_offset = proof->discard_offset;
-        return result;
-    }
-    while (proof->budget && !lexer->eof(lexer)) {
+    while ((proof->pending_bracket || proof->angle) && proof->budget && !lexer->eof(lexer)) {
         ProofStep step = advance_proof_text(s, lexer, proof);
         if (step == PROOF_UNCERTAIN || step == PROOF_SCOPE_END) return uncertain_proof(s, lexer, proof, false);
         if (step == PROOF_DELIMITER) {
@@ -725,7 +803,7 @@ static uint32_t certify_protected_suffix(Scanner *s, TSLexer *lexer, DelimiterPr
             lexer->advance(lexer, false);
         }
     }
-    if (!lexer->eof(lexer)) return uncertain_proof(s, lexer, proof, false);
+    if ((proof->pending_bracket || proof->angle) && !lexer->eof(lexer)) return uncertain_proof(s, lexer, proof, false);
     s->discard_offset = proof->discard_offset;
     return result;
 }
@@ -795,14 +873,33 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     if (next == ']' && proof->pending_bracket) return PROOF_UNCERTAIN;
     if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
     if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
-    if (next == '>' && proof->pending_angle) return PROOF_UNCERTAIN;
-    if (next == '<') proof->pending_angle = true;
+    proof->angle = next_angle(proof->angle, next);
+    if (next == '>' && proof->angle) return PROOF_UNCERTAIN;
     if (proof_uncertain_character(next)) return PROOF_UNCERTAIN;
     if (next == '*' || next == '_' || (proof->strikethrough && next == '~')) return PROOF_DELIMITER;
     proof->budget--;
     proof->previous = proof->emphasis_previous = next;
     lexer->advance(lexer, false);
+    if (next == '<') proof->angle = opening_angle(lexer->lookahead);
     return PROOF_TEXT;
+}
+
+static ProofAngle opening_angle(int32_t next) {
+    if ((next >= 'A' && next <= 'Z') || (next >= 'a' && next <= 'z') || next == '/' || next == '!' || next == '?') {
+        return ANGLE_HTML_OR_URI;
+    }
+    return is_email_local(next) ? ANGLE_EMAIL_LOCAL : ANGLE_NONE;
+}
+
+static ProofAngle next_angle(ProofAngle angle, int32_t next) {
+    if (angle == ANGLE_EMAIL_LOCAL) return next == '@' ? ANGLE_EMAIL_DOMAIN : is_email_local(next) ? angle : ANGLE_NONE;
+    if (angle != ANGLE_EMAIL_DOMAIN || next == '>' || next == '.' || next == '-') return angle;
+    return (next >= '0' && next <= '9') || (next >= 'A' && next <= 'Z') || (next >= 'a' && next <= 'z') ? angle : ANGLE_NONE;
+}
+
+static bool is_email_local(int32_t character) {
+    return (character >= '0' && character <= '9') || (character >= 'A' && character <= 'Z') ||
+        (character >= 'a' && character <= 'z') || (character > 0 && character < 128 && strchr(".!#$%&'*+/=?^_`{|}~-", character));
 }
 
 static bool proof_uncertain_character(int32_t character) {

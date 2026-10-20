@@ -43,7 +43,11 @@ module.exports = grammar(add_inline_rules({
         $._unclosed_open_bracket,
         $._close_bracket_no_label,
         $._close_bracket_with_label,
-        $._close_bracket_unknown_label
+        $._close_bracket_unknown_label,
+        // Processing instructions, declarations, and CDATA sections, which the scanner reads so that it can remember a
+        // missing terminator instead of rescanning the rest of the input at every later opener.
+        $._html_special,
+        $._html_special_opener
     ],
     precedences: $ => [
         [$.hard_line_break, $._whitespace],
@@ -172,13 +176,10 @@ module.exports = grammar(add_inline_rules({
         email_autolink: $ =>
             /<[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>/,
 
-        _html_tag: $ => choice($._open_tag, $._closing_tag, $._html_comment, $._processing_instruction, $._declaration, $._cdata_section),
+        _html_tag: $ => choice($._open_tag, $._closing_tag, $._html_comment, $._html_special),
         _open_tag: $ => token(/<[A-Za-z][A-Za-z0-9-]*([ \t\r\n]+[A-Za-z_:][A-Za-z0-9_.:\-]*([ \t\r\n]*=[ \t\r\n]*("[^"]*"|'[^']*'|[^ \t\r\n"'=<>`]+)))*[ \t\r\n]*\/?>/),
         _closing_tag: $ => token(/<\/[A-Za-z][A-Za-z0-9-]*[ \t\r\n]*>/),
         _html_comment: $ => token(seq('<!--', optional(seq(choice(/[^->]/, seq('-', /[^>]/)), repeat(choice(/[^-]/, seq('-', /[^-]/))))), '-->')),
-        _processing_instruction: $ => token(/<\?([^?]|\?+[^?>])*\?+>/),
-        _declaration: $ => token(/<![A-Z]+[ \t\r\n][^>]*>/),
-        _cdata_section: $ => token(/<!\[CDATA\[([^\]]|\][^\]]|\]\]+[^\]>])*\]\]+>/),
 
         hard_line_break: $ => seq(choice('\\', $._whitespace_ge_2), $._soft_line_break),
         _text: $ => choice($._word, common.punctuation_without($, []), $._whitespace),
@@ -206,7 +207,7 @@ module.exports = grammar(add_inline_rules({
             $._text_base_no_emphasis,
             ...EMPHASIS_DELIMITERS.flatMap(delimiter => literalTokens(delimiter).map(name => prec.dynamic(1, $[name]))),
             common.EXTENSION_TAGS ? $.tag : choice(),
-            $._unclosed_span,
+            seq($._unclosed_span, optional($._last_token_punctuation)),
             $._literal_emphasis_run,
             ...(common.EXTENSION_STRIKETHROUGH ? [$._strikethrough_literal] : []),
         ),
@@ -216,14 +217,12 @@ module.exports = grammar(add_inline_rules({
             common.punctuation_without($, ['[', ']', '*', '_', ...(common.EXTENSION_STRIKETHROUGH ? ['~'] : [])]),
             $._whitespace,
             '<!--',
-            /<![A-Z]+/,
-            '<?',
-            '<![CDATA[',
+            $._html_special_opener,
         ),
         _text_inline_no_link: $ => choice(
             $._text_base_no_emphasis,
             ...EMPHASIS_DELIMITERS.flatMap(delimiter => emphasisTokens(delimiter).filter(name => !name.includes('_close_') && !name.includes('_open_')).map(name => $[name])),
-            $._unclosed_span,
+            seq($._unclosed_span, optional($._last_token_punctuation)),
             $._literal_emphasis_run,
             ...(common.EXTENSION_STRIKETHROUGH ? [$._strikethrough_literal] : []),
         ),
