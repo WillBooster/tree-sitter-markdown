@@ -25,7 +25,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
   anonymous punctuation children are no longer emitted. Single and double tilde runs each emit one `strikethrough`
   node; runs of three or more tildes remain literal. Tildes are transparent when determining asterisk/underscore
   flanking, matching the GFM strikethrough extension. An opener with no possible closer within roughly 1,000
-  characters stays literal, which keeps parsing linear for long paragraphs of unpaired delimiters.
+  characters stays literal, which bounds the parse work that long paragraphs of unpaired delimiters cause.
 - Reference links remain syntactic candidates: the inline parser does not receive reference definitions. Potential
   shortcut links retain priority over crossing emphasis, including `*[foo*]`; consumers can resolve them against the
   block tree's definitions. Consequently, parsing an isolated inline fragment can differ from rendering that fragment
