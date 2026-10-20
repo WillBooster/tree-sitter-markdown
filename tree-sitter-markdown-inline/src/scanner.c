@@ -242,7 +242,7 @@ static uint32_t oversized_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proo
                                 FutureDelimiter *run);
 static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
                                 bool matching_run);
-static bool possible_closer(TSLexer *lexer, char delimiter, uint8_t modulo, bool opener_can_close, bool strikethrough);
+static bool possible_closer(TSLexer *lexer, unsigned budget, char delimiter, uint8_t modulo, bool opener_can_close, bool strikethrough);
 static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run);
 static bool record_emphasis_role(Scanner *s, EmphasisRole role);
 static void pop_certified_opener(Scanner *s);
@@ -618,13 +618,14 @@ static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proo
                                 bool matching_run) {
     PendingDelimiter *first = &proof->pending[0];
     s->run_can_open = first->count < proof->initial_count || matching_run ||
-        possible_closer(lexer, first->delimiter, first->modulo, first->can_close, proof->strikethrough);
+        // Every opener gets the same window of two budgets, wherever its proof stopped.
+        possible_closer(lexer, CERTIFIED_LIMIT + proof->budget, first->delimiter, first->modulo, first->can_close, proof->strikethrough);
     return UINT32_MAX;
 }
 
-static bool possible_closer(TSLexer *lexer, char delimiter, uint8_t modulo, bool opener_can_close, bool strikethrough) {
+static bool possible_closer(TSLexer *lexer, unsigned budget, char delimiter, uint8_t modulo, bool opener_can_close, bool strikethrough) {
     int32_t previous = delimiter;
-    for (unsigned budget = CERTIFIED_LIMIT; budget && !lexer->eof(lexer); budget--) {
+    for (; budget && !lexer->eof(lexer); budget--) {
         if (lexer->lookahead != delimiter) {
             if (!strikethrough || lexer->lookahead != '~' || delimiter == '~') previous = lexer->lookahead;
             lexer->advance(lexer, false);
