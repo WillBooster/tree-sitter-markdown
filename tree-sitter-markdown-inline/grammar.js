@@ -67,13 +67,13 @@ module.exports = grammar(add_inline_rules({
 
         code_span: $ => seq(
             alias($._code_span_start, $.code_span_delimiter),
-            repeat(choice($._text_base, '[', ']', $._soft_line_break, $._html_tag)),
+            repeat(choice($._text_base, '[', ']', $._soft_line_break)),
             alias($._code_span_close, $.code_span_delimiter)
         ),
 
         latex_block: $ => seq(
             alias($._latex_span_start, $.latex_span_delimiter),
-            repeat(choice($._text_base, '[', ']', $._soft_line_break, $._html_tag, $.backslash_escape)),
+            repeat(choice($._text_base, '[', ']', $._soft_line_break, $.backslash_escape)),
             alias($._latex_span_close, $.latex_span_delimiter),
         ),
 

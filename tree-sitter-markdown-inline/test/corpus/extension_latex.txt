@@ -73,3 +73,15 @@ $Hello\$th*er*e$
     (latex_span_delimiter)
     (backslash_escape)
     (latex_span_delimiter)))
+
+================================================================================
+HTML-looking LaTeX contents end at the closing delimiter
+================================================================================
+$<a title="$">
+
+--------------------------------------------------------------------------------
+
+(inline
+  (latex_block
+    (latex_span_delimiter)
+    (latex_span_delimiter)))

@@ -560,3 +560,24 @@ Rejected underscore before a tilde closer
 --------------------------------------------------------------------------------
 
 (inline)
+
+================================================================================
+HTML-looking code span contents end at the closing delimiter
+================================================================================
+`<? ` ?> `<a title="`"> `<!-- ` --> `<![CDATA[ ` ]]>
+
+--------------------------------------------------------------------------------
+
+(inline
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter))
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter))
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter))
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter)))

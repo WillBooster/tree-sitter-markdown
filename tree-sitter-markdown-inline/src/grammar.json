@@ -1848,10 +1848,6 @@
                   {
                     "type": "SYMBOL",
                     "name": "_soft_line_break"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "_html_tag"
                   }
                 ]
               }
@@ -1948,10 +1944,6 @@
                   {
                     "type": "SYMBOL",
                     "name": "_soft_line_break"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "_html_tag"
                   },
                   {
                     "type": "SYMBOL",
