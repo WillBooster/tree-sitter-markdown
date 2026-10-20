@@ -258,8 +258,8 @@ static bool record_emphasis_role(Scanner *s, EmphasisRole role);
 static void pop_certified_opener(Scanner *s);
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
-static bool closes_bracket(const int32_t *text, unsigned length, bool complete);
-static unsigned span_end(const int32_t *text, unsigned length, unsigned start, bool complete);
+static bool closes_bracket(const int32_t *text, unsigned length);
+static unsigned span_end(const int32_t *text, unsigned length, unsigned start);
 static TokenType following_label(TSLexer *lexer);
 static unsigned serialize(Scanner *s, char *buffer);
 static void deserialize(Scanner *s, const char *buffer, unsigned length);
@@ -726,7 +726,7 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
             text[length] = lexer->lookahead;
             lexer->advance(lexer, false);
         }
-        s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length, lexer->eof(lexer));
+        s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length);
     }
     lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
@@ -735,18 +735,15 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
     return true;
 }
 
-// Reports whether `text` holds a `]` outside escapes, raw HTML, autolinks, and code or LaTeX spans, reading spans
-// as `parse_leaf_delimiter` and the grammar tokenize them. Without the rest of the input, a span left undecided at
-// the end counts as closing nothing.
-static bool closes_bracket(const int32_t *text, unsigned length, bool complete) {
+// Reports whether `text`, the rest of the input, holds a `]` outside escapes, raw HTML, autolinks, and code or LaTeX
+// spans, reading spans as `parse_leaf_delimiter` and the grammar tokenize them.
+static bool closes_bracket(const int32_t *text, unsigned length) {
     ProofAngle angle = ANGLE_NONE;
     for (unsigned i = 0; i < length;) {
         int32_t character = text[i];
         angle = character == '>' ? ANGLE_NONE : next_angle(angle, character);
         if (!angle && (character == '`' || character == '$')) {
-            unsigned end = span_end(text, length, i, complete);
-            if (!end) return false;
-            i = end;
+            i = span_end(text, length, i);
             continue;
         }
         if (character == ']') return true;
@@ -759,8 +756,8 @@ static bool closes_bracket(const int32_t *text, unsigned length, bool complete) 
 
 // Returns where reading resumes after the run at `start`: after its span when a run of the same length follows,
 // which the scanner requires, though the grammar closes the span at the first run at least that long; otherwise
-// after the opening run, which is then text. Returns 0 when the text ends before that is known.
-static unsigned span_end(const int32_t *text, unsigned length, unsigned start, bool complete) {
+// after the opening run, which is then text.
+static unsigned span_end(const int32_t *text, unsigned length, unsigned start) {
     int32_t delimiter = text[start];
     unsigned opener_end = start;
     while (opener_end < length && text[opener_end] == delimiter) opener_end++;
@@ -778,13 +775,11 @@ static unsigned span_end(const int32_t *text, unsigned length, unsigned start, b
         }
         unsigned run_end = i;
         while (run_end < length && text[run_end] == delimiter) run_end++;
-        if (run_end == length && !complete) return 0;
         if (!close && run_end - i >= level) close = run_end;
         exact = run_end - i == level;
         i = run_end;
     }
-    if (exact) return close;
-    return complete ? opener_end : 0;
+    return exact ? close : opener_end;
 }
 
 static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
