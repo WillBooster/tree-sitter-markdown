@@ -714,3 +714,41 @@ A longer backtick run inside a code span keeps the ownership proof uncertain
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+An unclosed code span inside a bracket leaves delimiters to the bracket
+================================================================================
+[*~**` ~]*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text)))
+
+================================================================================
+A bracket closed only inside a code span stays text
+================================================================================
+~_[__`_]~`$
+
+--------------------------------------------------------------------------------
+
+(inline
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter)))
+
+================================================================================
+A code span holding a closing bracket stays inside link text
+================================================================================
+[a `]` b](u)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (inline_link
+    (link_text
+      (code_span
+        (code_span_delimiter)
+        (code_span_delimiter)))
+    (link_destination)))

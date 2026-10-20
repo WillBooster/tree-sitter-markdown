@@ -171,6 +171,21 @@ typedef struct {
     bool can_close;
 } PendingDelimiter;
 
+typedef enum {
+    SPAN_CLOSED,
+    SPAN_OPEN,
+    SPAN_PASSED_BRACKET,
+} SpanScan;
+
+// Looks for any run that could close the proof's first opener, ignoring the structure a proof would respect.
+typedef struct {
+    bool active;
+    bool found;
+    bool after_tildes;
+    uint32_t count;
+    int32_t previous;
+} CloserSearch;
+
 // How far a `<` read by a delimiter proof can still begin raw HTML or an autolink, whose contents are not emphasis text.
 typedef enum {
     ANGLE_NONE,
@@ -191,8 +206,8 @@ typedef struct {
     bool strikethrough;
     const bool *scope_symbols;
     ProofAngle angle;
-    // Delimiter characters that an unclosed span's scan passed, which a fallback closer search can no longer see.
-    uint8_t span_hidden_delimiters;
+    // Started where the proof first met a construct it cannot read for certain.
+    CloserSearch search;
     unsigned pending_bracket;
     int32_t previous;
     int32_t emphasis_previous;
@@ -241,12 +256,14 @@ static bool finish_proof_run(Scanner *s, DelimiterProof *proof,
                              FutureDelimiter *run, uint32_t *result);
 static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, uint8_t modulo, bool can_open);
 static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
-static bool possible_closer(TSLexer *lexer, unsigned budget, char delimiter, uint8_t modulo, bool opener_can_close, bool strikethrough);
+static void search_closer(DelimiterProof *proof, int32_t character);
+static void advance_searching(TSLexer *lexer, DelimiterProof *proof);
 static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run);
 static bool record_emphasis_role(Scanner *s, EmphasisRole role);
 static void pop_certified_opener(Scanner *s);
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
+static SpanScan skip_span(TSLexer *lexer, unsigned *budget);
 static TokenType following_label(TSLexer *lexer);
 static unsigned serialize(Scanner *s, char *buffer);
 static void deserialize(Scanner *s, const char *buffer, unsigned length);
@@ -263,7 +280,6 @@ static bool opener_can_close(uint8_t opener);
 static uint8_t opener_modulo(uint8_t opener);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t delimiter);
-static uint8_t delimiter_bit(int32_t character);
 static ProofAngle opening_angle(int32_t next);
 static ProofAngle next_angle(ProofAngle angle, int32_t next);
 static bool is_email_local(int32_t character);
@@ -604,30 +620,44 @@ static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, ui
 }
 
 static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
-    PendingDelimiter *first = &proof->pending[0];
-    s->run_can_open = first->count < proof->initial_count || (proof->span_hidden_delimiters & delimiter_bit(first->delimiter)) ||
-        // The search ends where the proof's budget would have, so every opener gets the same window.
-        possible_closer(lexer, proof->budget, first->delimiter, first->modulo, first->can_close, proof->strikethrough);
+    // The search ends where the proof's budget would have, so every opener gets the same window.
+    for (; proof->budget && !lexer->eof(lexer) && !proof->search.found; proof->budget--) advance_searching(lexer, proof);
+    if (lexer->eof(lexer)) search_closer(proof, -1);
+    s->run_can_open = proof->pending[0].count < proof->initial_count || proof->search.found;
     return UINT32_MAX;
 }
 
-static bool possible_closer(TSLexer *lexer, unsigned budget, char delimiter, uint8_t modulo, bool opener_can_close, bool strikethrough) {
-    int32_t previous = delimiter;
-    for (; budget && !lexer->eof(lexer); budget--) {
-        if (lexer->lookahead != delimiter) {
-            if (!strikethrough || lexer->lookahead != '~' || delimiter == '~') previous = lexer->lookahead;
-            lexer->advance(lexer, false);
-            continue;
+static void advance_searching(TSLexer *lexer, DelimiterProof *proof) {
+    search_closer(proof, lexer->lookahead);
+    lexer->advance(lexer, false);
+}
+
+// Feeds the next character, or -1 at the end of the input.
+static void search_closer(DelimiterProof *proof, int32_t character) {
+    CloserSearch *search = &proof->search;
+    PendingDelimiter *first = &proof->pending[0];
+    if (!search->active) *search = (CloserSearch){.active = true, .previous = first->delimiter};
+    if (search->found) return;
+    bool skips_tildes = proof->strikethrough && first->delimiter != '~';
+    if (search->count) {
+        if (character == first->delimiter && !search->after_tildes) {
+            search->count++;
+            return;
         }
-        uint32_t count = 0;
-        do { count++; lexer->advance(lexer, false); } while (lexer->lookahead == delimiter);
-        if (strikethrough && delimiter != '~') while (lexer->lookahead == '~') lexer->advance(lexer, false);
-        DelimiterFlanks flanks = delimiter_flanks(delimiter, is_whitespace(previous), is_punctuation(previous),
-            lexer->eof(lexer) || is_whitespace(lexer->lookahead), is_punctuation(lexer->lookahead));
-        if (flanks.can_close && delimiter_pair_allowed(opener_can_close, modulo, flanks.can_open, count % 3)) return true;
-        previous = delimiter;
+        if (skips_tildes && character == '~') {
+            search->after_tildes = true;
+            return;
+        }
+        DelimiterFlanks flanks = delimiter_flanks(first->delimiter, is_whitespace(search->previous),
+            is_punctuation(search->previous), character < 0 || is_whitespace(character), is_punctuation(character));
+        search->found = flanks.can_close &&
+            delimiter_pair_allowed(first->can_close, first->modulo, flanks.can_open, search->count % 3);
+        search->previous = first->delimiter;
+        search->count = 0;
+        search->after_tildes = false;
     }
-    return false;
+    if (character == first->delimiter) search->count = 1;
+    else if (character >= 0 && (!skips_tildes || character != '~')) search->previous = character;
 }
 
 static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run) {
@@ -685,16 +715,43 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
     s->context_pending = is_inline_delimiter(lexer->lookahead);
     s->num_emphasis_delimiters_left = 0;
     if (!s->no_closing_bracket) {
-        for (unsigned remaining = 1024; remaining && !lexer->eof(lexer) && lexer->lookahead != ']'; remaining--) {
+        bool closing = false;
+        for (unsigned remaining = 1024; remaining && !lexer->eof(lexer) && !closing;) {
+            if (lexer->lookahead == '`' || lexer->lookahead == '$') {
+                closing = skip_span(lexer, &remaining) == SPAN_PASSED_BRACKET;
+                continue;
+            }
+            closing = lexer->lookahead == ']';
+            remaining--;
             lexer->advance(lexer, false);
         }
-        s->no_closing_bracket = lexer->eof(lexer);
+        s->no_closing_bracket = lexer->eof(lexer) && !closing;
     }
     lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
     s->bracket_depth++;
     s->flat_head_depth = s->bracket_depth;
     return true;
+}
+
+// Skips a code or LaTeX span that closes as `read_proof_span` reads it, so that a `]` inside it does not count as a
+// closing bracket. Otherwise reports whether a `]` was passed.
+static SpanScan skip_span(TSLexer *lexer, unsigned *budget) {
+    int32_t delimiter = lexer->lookahead;
+    uint32_t level = 0;
+    for (; lexer->lookahead == delimiter && *budget; (*budget)--, level++) lexer->advance(lexer, false);
+    uint32_t run = 0;
+    bool passed_bracket = false;
+    while (!lexer->eof(lexer) && *budget) {
+        if (lexer->lookahead != delimiter && run == level) return SPAN_CLOSED;
+        if ((lexer->lookahead != delimiter && run) || (delimiter == '$' && lexer->lookahead == '\\')) break;
+        passed_bracket |= lexer->lookahead == ']';
+        run = lexer->lookahead == delimiter ? run + 1 : 0;
+        (*budget)--;
+        lexer->advance(lexer, false);
+    }
+    if (run == level && lexer->eof(lexer)) return SPAN_CLOSED;
+    return passed_bracket ? SPAN_PASSED_BRACKET : SPAN_OPEN;
 }
 
 static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
@@ -899,7 +956,7 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
         if (!proof->budget) return PROOF_UNCERTAIN;
         proof->budget--;
         level++;
-        lexer->advance(lexer, false);
+        advance_searching(lexer, proof);
     }
     uint32_t run = 0;
     while (!lexer->eof(lexer)) {
@@ -909,17 +966,13 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
         if (lexer->lookahead != delimiter && run) return PROOF_UNCERTAIN;
         if (!proof->budget || (delimiter == '$' && lexer->lookahead == '\\')) return PROOF_UNCERTAIN;
         run = lexer->lookahead == delimiter ? run + 1 : 0;
-        proof->span_hidden_delimiters |= delimiter_bit(lexer->lookahead);
         proof->budget--;
-        lexer->advance(lexer, false);
+        advance_searching(lexer, proof);
     }
     if (run != level) return PROOF_UNCERTAIN;
+    proof->search.active = false;
     proof->previous = proof->emphasis_previous = delimiter;
     return PROOF_TEXT;
-}
-
-static uint8_t delimiter_bit(int32_t character) {
-    return character == '*' ? 1 : character == '_' ? 2 : character == '~' ? 4 : 0;
 }
 
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
