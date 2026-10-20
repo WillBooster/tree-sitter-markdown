@@ -268,7 +268,7 @@ function add_inline_rules(grammar) {
 
 function addOpenerRules(grammar) {
     for (const kind of EMPHASIS_DELIMITERS) for (const flank of ['left', 'both']) for (const modulo of [0, 1, 2]) {
-        grammar.rules[`_preferred_opener_${kind}_${flank}_${modulo}`] = $ => prec.dynamic(2, choice(...['open', 'candidate'].map(role => $[`_emphasis_${kind}_${role}_${flank}_${modulo}`])));
+        grammar.rules[`_emphasis_opener_${kind}_${flank}_${modulo}`] = $ => choice(...['open', 'candidate'].map(role => $[`_emphasis_${kind}_${role}_${flank}_${modulo}`]));
     }
 }
 
@@ -278,7 +278,7 @@ function addInlineCollection(grammar, conflicts, suffixLink, link, noTilde) {
     grammar.rules['_inline' + suffix] = $ => repeat1($['_inline_element' + suffix]);
     for (const kind of EMPHASIS_DELIMITERS) {
         for (const flank of ['left', 'both']) for (const modulo of [0, 1, 2]) {
-            conflicts.push(['_inline_element' + suffix, `_preferred_opener_${kind}_${flank}_${modulo}`]);
+            conflicts.push(['_inline_element' + suffix, `_emphasis_opener_${kind}_${flank}_${modulo}`]);
         }
         if (!noTilde) conflicts.push(['_inline_element' + suffix, '_strong_emphasis_' + kind + suffixLink]);
     }
@@ -320,7 +320,7 @@ function addEmphasisRules(grammar, suffix) {
 function emphasisRule($, delimiter, suffix, strong) {
     return prec.dynamic((strong ? 2 : 1) * PRECEDENCE_LEVEL_EMPHASIS, choice(
         ...['left', 'both'].flatMap(openFlank => [0, 1, 2].map(openModulo => seq(
-            alias($[`_preferred_opener_${delimiter}_${openFlank}_${openModulo}`], $.emphasis_delimiter),
+            alias($[`_emphasis_opener_${delimiter}_${openFlank}_${openModulo}`], $.emphasis_delimiter),
             $[(strong ? '_emphasis_' + delimiter : '_inline') + suffix],
             choice(...['right', 'both'].flatMap(closeFlank => [0, 1, 2].filter(closeModulo =>
                 (openFlank !== 'both' && closeFlank !== 'both') ||

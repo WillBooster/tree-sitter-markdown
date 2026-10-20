@@ -336,3 +336,17 @@ Closing run prefixes retain certified opening suffixes
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+Uncertain openers before a nested reference candidate remain literal
+================================================================================
+[_*~a[_]*~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strikethrough
+    (emphasis_delimiter)
+    (shortcut_link
+      (link_text))
+    (emphasis_delimiter)))
