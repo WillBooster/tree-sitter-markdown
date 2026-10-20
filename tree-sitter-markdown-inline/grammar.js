@@ -5,6 +5,7 @@
 /// <reference types="tree-sitter-cli/dsl" />
 
 const common = require('../common/common');
+common.LITERAL_EMPHASIS_RUN = true;
 
 // Levels used for dynmic precedence. Ideally
 // n * PRECEDENCE_LEVEL_EMPHASIS > PRECEDENCE_LEVEL_LINK for any n, so maybe the
@@ -58,7 +59,8 @@ module.exports = grammar(add_inline_rules({
 
         // Token emmited when encountering opening delimiters for a leaf span
         // e.g. a code span, that does not have a matching closing span
-        $._unclosed_span
+        $._unclosed_span,
+        $._literal_emphasis_run
     ],
     precedences: $ => [
         // [$._strong_emphasis_star, $._inline_element_no_star],
@@ -252,7 +254,9 @@ module.exports = grammar(add_inline_rules({
         _html_tag: $ => choice($._open_tag, $._closing_tag, $._html_comment, $._processing_instruction, $._declaration, $._cdata_section),
         _open_tag: $ => prec.dynamic(PRECEDENCE_LEVEL_HTML, seq('<', $._tag_name, repeat($._attribute), repeat(choice($._whitespace, $._soft_line_break)), optional('/'), '>')),
         _closing_tag: $ => prec.dynamic(PRECEDENCE_LEVEL_HTML, seq('<', '/', $._tag_name, repeat(choice($._whitespace, $._soft_line_break)), '>')),
-        _tag_name: $ => seq($._word_no_digit, repeat(choice($._word_no_digit, $._digits, '-'))),
+        _tag_name: $ => seq($._tag_letters, repeat(choice($._tag_letters, $._tag_digits, '-'))),
+        _tag_letters: $ => /[A-Za-z]+/,
+        _tag_digits: $ => /[0-9]+/,
         _attribute: $ => seq(repeat1(choice($._whitespace, $._soft_line_break)), $._attribute_name, repeat(choice($._whitespace, $._soft_line_break)), '=', repeat(choice($._whitespace, $._soft_line_break)), $._attribute_value),
         _attribute_name: $ => /[a-zA-Z_:][a-zA-Z0-9_\.:\-]*/,
         _attribute_value: $ => choice(
@@ -341,9 +345,9 @@ module.exports = grammar(add_inline_rules({
         // (handled by `common.punctuation_without`) and strings of any other characters. This way the
         // lexer does not have to many different states, which makes it a lot easier to make
         // conflicts work.
-        _word: $ => choice($._word_no_digit, $._digits),
-        _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+)*'),
-        _digits: $ => /[0-9][0-9_]*/,
+        _word: $ => choice($._word_no_digit, $._digits, $._tag_letters, $._tag_digits),
+        _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
+        _digits: $ => new RegExp('[0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
         _soft_line_break: $ => seq($._newline_token, optional($._last_token_whitespace)),
 
         _inline_base: $ => prec.right(repeat1(choice(

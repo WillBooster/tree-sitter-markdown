@@ -22,7 +22,8 @@ typedef enum {
     STRIKETHROUGH_CLOSE,
     LATEX_SPAN_START,
     LATEX_SPAN_CLOSE,
-    UNCLOSED_SPAN
+    UNCLOSED_SPAN,
+    LITERAL_EMPHASIS_RUN
 } TokenType;
 
 // Determines if a character is punctuation as defined by the markdown spec.
@@ -277,12 +278,8 @@ static bool parse_tilde(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
 static bool parse_underscore(Scanner *s, TSLexer *lexer,
                              const bool *valid_symbols) {
     lexer->advance(lexer, false);
-    // If `num_emphasis_delimiters_left` is not zero then we already decided
-    // that this should be part of an emphasis delimiter run, so interpret it as
-    // such.
-    if (s->num_emphasis_delimiters_left > 0) {
-        // The `STATE_EMPHASIS_DELIMITER_IS_OPEN` state flag tells us wether it
-        // should be open or close.
+    const bool run_remainder = s->num_emphasis_delimiters_left > 0;
+    if (run_remainder) {
         if ((s->state & STATE_EMPHASIS_DELIMITER_IS_OPEN) &&
             valid_symbols[EMPHASIS_OPEN_UNDERSCORE]) {
             s->state &= (~STATE_EMPHASIS_DELIMITER_IS_OPEN);
@@ -297,7 +294,6 @@ static bool parse_underscore(Scanner *s, TSLexer *lexer,
         }
     }
     lexer->mark_end(lexer);
-    // Otherwise count the number of stars
     uint8_t underscore_count = 1;
     while (lexer->lookahead == '_') {
         underscore_count++;
@@ -307,21 +303,14 @@ static bool parse_underscore(Scanner *s, TSLexer *lexer,
                     lexer->eof(lexer);
     if (valid_symbols[EMPHASIS_OPEN_UNDERSCORE] ||
         valid_symbols[EMPHASIS_CLOSE_UNDERSCORE]) {
-        // The desicion made for the first underscore also counts for all the
-        // following underscores in the delimiter run. Rembemer how many there are.
         s->num_emphasis_delimiters_left = underscore_count - 1;
-        // Look ahead to the next symbol (after the last underscore) to find out if it
-        // is whitespace punctuation or other.
         bool next_symbol_whitespace =
             line_end || lexer->lookahead == ' ' || lexer->lookahead == '\t';
         bool next_symbol_punctuation = is_punctuation(lexer->lookahead);
-        // Information about the last token is in valid_symbols. See grammar.js
-        // for these tokens for how this is done.
         if (valid_symbols[EMPHASIS_CLOSE_UNDERSCORE] &&
             !valid_symbols[LAST_TOKEN_WHITESPACE] &&
             (!valid_symbols[LAST_TOKEN_PUNCTUATION] ||
              next_symbol_punctuation || next_symbol_whitespace)) {
-            // Closing delimiters take precedence
             s->state &= ~STATE_EMPHASIS_DELIMITER_IS_OPEN;
             lexer->result_symbol = EMPHASIS_CLOSE_UNDERSCORE;
             return true;
@@ -333,6 +322,15 @@ static bool parse_underscore(Scanner *s, TSLexer *lexer,
             lexer->result_symbol = EMPHASIS_OPEN_UNDERSCORE;
             return true;
         }
+    }
+    // The rest of a run that already supplied delimiters falls back to
+    // single `_` tokens, as upstream does: emitting it as one literal run would
+    // also swallow its final underscores, which can still open emphasis.
+    if (!run_remainder && valid_symbols[LITERAL_EMPHASIS_RUN]) {
+        s->num_emphasis_delimiters_left = 0;
+        lexer->mark_end(lexer);
+        lexer->result_symbol = LITERAL_EMPHASIS_RUN;
+        return true;
     }
     return false;
 }
