@@ -115,14 +115,14 @@ module.exports.rules = {
     _newline_token: $ => /\n|\r\n?/,
 };
 
-// Returns a rule that matches all characters that count as punctuation inside markdown, besides
-// a list of excluded punctuation characters. Calling this function with a empty list as the second
-// argument returns a rule that matches all punctuation.
 // The inline grammar sets this because its scanner emits an underscore run that can neither open nor close emphasis
 // as one `_literal_emphasis_run` token. That token must be accepted wherever `_` is, or it would end constructs such as
 // raw HTML comments that the scanner cannot recognize; the block grammar does not declare it.
 module.exports.LITERAL_EMPHASIS_RUN = false;
 
+// Returns a rule that matches all characters that count as punctuation inside markdown, besides
+// a list of excluded punctuation characters. Calling this function with a empty list as the second
+// argument returns a rule that matches all punctuation.
 function punctuation_without($, chars) {
     const tokens = PUNCTUATION_CHARACTERS_ARRAY.filter(c => !chars.includes(c));
     if (module.exports.LITERAL_EMPHASIS_RUN && tokens.includes('_')) {
