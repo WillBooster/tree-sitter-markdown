@@ -117,6 +117,7 @@ typedef struct {
     char run_delimiter;
     bool no_closing_bracket;
     uint32_t bracket_depth;
+    uint32_t flat_head_depth;
     uint8_t code_span_delimiter_length;
     uint8_t latex_span_delimiter_length;
     uint32_t num_emphasis_delimiters_left;
@@ -169,6 +170,8 @@ typedef struct {
     unsigned tilde_runs;
     unsigned discard_offset;
     bool strikethrough;
+    const bool *scope_symbols;
+    bool pending_angle;
     unsigned pending_bracket;
     int32_t previous;
     int32_t emphasis_previous;
@@ -186,6 +189,7 @@ typedef enum {
     PROOF_DELIMITER,
     PROOF_TEXT,
     PROOF_UNCERTAIN,
+    PROOF_SCOPE_END,
 } ProofStep;
 
 static char opener_delimiter(uint8_t opener) {
@@ -205,14 +209,13 @@ static bool parse_leaf_delimiter(TSLexer *lexer, uint8_t *delimiter_length,
                                  const TokenType open_token, const TokenType close_token);
 static bool parse_emphasis(Scanner *s, TSLexer *lexer, const bool *valid_symbols,
                             char delimiter, TokenType first_token);
-static bool literal_emphasis_run(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
+static bool literal_emphasis_run(TSLexer *lexer, const bool *valid_symbols);
 static EmphasisRole emphasis_role(Scanner *s, TSLexer *lexer, const bool *valid_symbols,
                                   bool fresh_run, bool strikethrough, FutureDelimiter *following);
-static bool uncertain_context(const bool *valid_symbols);
-static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following);
+static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols);
 static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
                              FutureDelimiter *run, uint32_t *result);
-static bool certified_boundary(Scanner *s, char delimiter, uint8_t modulo, bool can_open);
+static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, uint8_t modulo, bool can_open);
 static uint32_t oversized_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
                                 FutureDelimiter *run);
 static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
@@ -228,17 +231,18 @@ static unsigned serialize(Scanner *s, char *buffer);
 static void deserialize(Scanner *s, const char *buffer, unsigned length);
 static TokenType emphasis_token(Scanner *s, TokenType first_token, EmphasisRole role);
 static int32_t context_character(uint8_t context);
-static uint32_t certify_brackets(Scanner *s, TSLexer *lexer, DelimiterProof *proof, uint32_t result);
+static uint32_t certify_protected_suffix(Scanner *s, TSLexer *lexer, DelimiterProof *proof, uint32_t result);
 static bool record_discard(Scanner *s);
 static bool push_certified_opener(Scanner *s);
 static bool certified_closer(Scanner *s);
 static uint8_t certified_opener(Scanner *s, unsigned index);
-static bool delimiter_pair_allowed(char delimiter, bool opener_closes, uint8_t opener_modulo,
+static bool delimiter_pair_allowed(bool opener_closes, uint8_t opener_modulo,
                                    bool closer_opens, uint8_t closer_modulo);
 static bool opener_can_close(uint8_t opener);
 static uint8_t opener_modulo(uint8_t opener);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static bool proof_uncertain_character(int32_t character);
+static ProofStep read_proof_numeric_word(TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_escape(TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static void read_transparent_tildes(TSLexer *lexer, DelimiterProof *proof,
@@ -403,7 +407,7 @@ static bool parse_emphasis(Scanner *s, TSLexer *lexer, const bool *valid_symbols
     bool fresh_run = consume_emphasis_run(s, lexer, delimiter, strikethrough, &following);
     if (s->run_flank == 3) {
         if (delimiter == '~') s->num_emphasis_delimiters_left = 0;
-        return literal_emphasis_run(s, lexer, valid_symbols);
+        return literal_emphasis_run(lexer, valid_symbols);
     }
     EmphasisRole role = s->run_suppressed ? EMPHASIS_ROLE_LITERAL
         : emphasis_role(s, lexer, valid_symbols, fresh_run, strikethrough, &following);
@@ -420,7 +424,7 @@ static bool parse_emphasis(Scanner *s, TSLexer *lexer, const bool *valid_symbols
     return true;
 }
 
-static bool literal_emphasis_run(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
+static bool literal_emphasis_run(TSLexer *lexer, const bool *valid_symbols) {
     if (!valid_symbols[LITERAL_EMPHASIS_RUN]) return false;
     lexer->result_symbol = LITERAL_EMPHASIS_RUN;
     return true;
@@ -433,9 +437,7 @@ static EmphasisRole emphasis_role(Scanner *s, TSLexer *lexer, const bool *valid_
     bool continued = s->state & STATE_EMPHASIS_DELIMITER_IS_OPEN;
     if (!continued && s->run_flank != 0 && (s->certified_depth ? certified_closer(s) : closing_valid)) return EMPHASIS_ROLE_CLOSE;
     if (s->run_can_open && !continued && fresh_run) {
-        if (!s->certified_depth && uncertain_context(valid_symbols)) {
-            s->run_can_open = possible_closer(lexer, s->run_delimiter, s->run_modulo, s->run_flank == 2, strikethrough);
-        } else s->run_open_count = proved_open_count(s, lexer, strikethrough, following);
+        s->run_open_count = proved_open_count(s, lexer, strikethrough, following, valid_symbols);
         assert(!s->certified_depth || s->run_open_count != UINT32_MAX);
     }
     if (!s->run_can_open) return EMPHASIS_ROLE_LITERAL;
@@ -443,43 +445,36 @@ static EmphasisRole emphasis_role(Scanner *s, TSLexer *lexer, const bool *valid_
     return s->num_emphasis_delimiters_left + 1 > s->run_open_count ? EMPHASIS_ROLE_LITERAL : EMPHASIS_ROLE_OPEN;
 }
 
-static bool uncertain_context(const bool *valid_symbols) {
-    for (unsigned delimiter = 0; delimiter < 2; delimiter++) {
-        unsigned first = delimiter ? EMPHASIS_UNDERSCORE_OPEN_LEFT_0 : EMPHASIS_STAR_OPEN_LEFT_0;
-        for (unsigned variant = 0; variant < 9; variant++) if (valid_symbols[first + 9 + variant]) return true;
-    }
-    return valid_symbols[STRIKETHROUGH_CLOSE];
-}
-
-static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following) {
+static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols) {
     uint32_t count = s->num_emphasis_delimiters_left + 1;
     DelimiterProof proof = {.used = 1, .top = 0, .initial_count = count, .budget = CERTIFIED_LIMIT,
-        .strikethrough = strikethrough, .previous = s->run_delimiter,
+        .strikethrough = strikethrough, .scope_symbols = scope_symbols, .previous = s->run_delimiter,
         .emphasis_previous = s->run_delimiter == '~' ? context_character(s->emphasis_context) : s->run_delimiter,
         .pending = {{.previous = -1, .count = count, .modulo = s->run_modulo,
                      .delimiter = s->run_delimiter, .can_close = s->run_flank == 2}}};
     uint32_t result;
     if (following->count) {
         proof.budget -= following->count < proof.budget ? following->count : proof.budget;
-        if (finish_proof_run(s, lexer, &proof, following, &result)) return certify_brackets(s, lexer, &proof, result);
+        if (finish_proof_run(s, lexer, &proof, following, &result)) return certify_protected_suffix(s, lexer, &proof, result);
         proof.previous = '~';
     }
     while (!lexer->eof(lexer)) {
         if (!proof.budget) return UINT32_MAX;
         ProofStep step = advance_proof_text(s, lexer, &proof);
         if (step == PROOF_UNCERTAIN) return uncertain_proof(s, lexer, &proof, false);
+        if (step == PROOF_SCOPE_END) return certify_protected_suffix(s, lexer, &proof, proof.matched_initial);
         if (step == PROOF_TEXT) continue;
         FutureDelimiter run = read_future_delimiter(&proof.budget, lexer, proof.previous);
         FutureDelimiter tildes = {0};
         if (strikethrough && run.delimiter != '~') read_transparent_tildes(lexer, &proof, &run, &tildes);
-        if (finish_proof_run(s, lexer, &proof, &run, &result)) return certify_brackets(s, lexer, &proof, result);
+        if (finish_proof_run(s, lexer, &proof, &run, &result)) return certify_protected_suffix(s, lexer, &proof, result);
         proof.previous = run.delimiter;
         if (run.delimiter != '~') proof.emphasis_previous = run.delimiter;
         if (!tildes.count) continue;
-        if (finish_proof_run(s, lexer, &proof, &tildes, &result)) return certify_brackets(s, lexer, &proof, result);
+        if (finish_proof_run(s, lexer, &proof, &tildes, &result)) return certify_protected_suffix(s, lexer, &proof, result);
         proof.previous = '~';
     }
-    return certify_brackets(s, lexer, &proof, proof.matched_initial);
+    return certify_protected_suffix(s, lexer, &proof, proof.matched_initial);
 }
 
 static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
@@ -493,7 +488,7 @@ static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
     *result = proof->matched_initial;
     if (!proof->pending[0].count) return true;
     if (run->flanks.can_close && run->count &&
-        certified_boundary(s, run->delimiter, run->modulo, run->flanks.can_open)) return true;
+        proof_boundary(s, proof, run->delimiter, run->modulo, run->flanks.can_open)) return true;
     if (run->flanks.can_open && run->count) {
         assert(proof->used <= CERTIFIED_LIMIT);
         proof->pending[proof->used] = (PendingDelimiter){.previous = proof->top, .count = run->count,
@@ -503,11 +498,16 @@ static bool finish_proof_run(Scanner *s, TSLexer *lexer, DelimiterProof *proof,
     return false;
 }
 
-static bool certified_boundary(Scanner *s, char delimiter, uint8_t modulo, bool can_open) {
+static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, uint8_t modulo, bool can_open) {
+    if (!s->certified_depth) {
+        if (delimiter == '~') return proof->scope_symbols[STRIKETHROUGH_CLOSE];
+        unsigned first = delimiter == '_' ? EMPHASIS_UNDERSCORE_CLOSE_LEFT_0 : EMPHASIS_STAR_CLOSE_LEFT_0;
+        return proof->scope_symbols[first + (can_open ? 6 : 3) + modulo];
+    }
     for (unsigned i = s->certified_depth; i > 0; i--) {
         uint8_t opener = certified_opener(s, i - 1);
         if (opener_delimiter(opener) != delimiter) continue;
-        if (delimiter_pair_allowed(delimiter, opener_can_close(opener), opener_modulo(opener), can_open, modulo)) return true;
+        if (delimiter_pair_allowed(opener_can_close(opener), opener_modulo(opener), can_open, modulo)) return true;
     }
     return false;
 }
@@ -516,7 +516,7 @@ static uint32_t oversized_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proo
                                 FutureDelimiter *run) {
     PendingDelimiter *first = &proof->pending[0];
     bool matching = proof->top == 0 && run->delimiter == first->delimiter && run->flanks.can_close &&
-        delimiter_pair_allowed(run->delimiter, first->can_close, first->modulo, run->flanks.can_open, run->modulo);
+        delimiter_pair_allowed(first->can_close, first->modulo, run->flanks.can_open, run->modulo);
     if (matching && run->count >= first->count) return proof->initial_count;
     if (matching && lexer->eof(lexer)) return proof->initial_count - first->count + run->count;
     return uncertain_proof(s, lexer, proof, matching);
@@ -543,7 +543,7 @@ static bool possible_closer(TSLexer *lexer, char delimiter, uint8_t modulo, bool
         if (strikethrough && delimiter != '~') while (lexer->lookahead == '~') lexer->advance(lexer, false);
         DelimiterFlanks flanks = delimiter_flanks(delimiter, is_whitespace(previous), is_punctuation(previous),
             lexer->eof(lexer) || is_whitespace(lexer->lookahead), is_punctuation(lexer->lookahead));
-        if (flanks.can_close && delimiter_pair_allowed(delimiter, opener_can_close, modulo, flanks.can_open, count % 3)) return true;
+        if (flanks.can_close && delimiter_pair_allowed(opener_can_close, modulo, flanks.can_open, count % 3)) return true;
         previous = delimiter;
     }
     return !lexer->eof(lexer);
@@ -555,7 +555,7 @@ static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run) 
     while (opener >= 0 && run->count) {
         PendingDelimiter *candidate = &proof->pending[opener];
         if (candidate->delimiter != run->delimiter ||
-            !delimiter_pair_allowed(run->delimiter, candidate->can_close, candidate->modulo, run->flanks.can_open, run->modulo)) {
+            !delimiter_pair_allowed(candidate->can_close, candidate->modulo, run->flanks.can_open, run->modulo)) {
             opener = candidate->previous;
             continue;
         }
@@ -585,7 +585,7 @@ static void pop_certified_opener(Scanner *s) {
     uint8_t opener = certified_opener(s, s->certified_depth - 1);
     assert(opener_delimiter(opener) == s->run_delimiter);
     assert(s->run_delimiter != '~' || (opener >= 14 ? 2 : 1) == s->run_modulo);
-    assert(delimiter_pair_allowed(s->run_delimiter, opener_can_close(opener), opener_modulo(opener), s->run_flank == 2, s->run_modulo));
+    assert(delimiter_pair_allowed(opener_can_close(opener), opener_modulo(opener), s->run_flank == 2, s->run_modulo));
     if (s->certified_depth == 1 && s->root_repetitions > 1) {
         s->root_repetitions--;
         return;
@@ -612,6 +612,7 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
     lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
     s->bracket_depth++;
+    s->flat_head_depth = s->bracket_depth;
     return true;
 }
 
@@ -626,6 +627,7 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
     lexer->result_symbol = following_label(lexer);
     if (!valid_symbols[lexer->result_symbol]) return false;
     if (s->bracket_depth) s->bracket_depth--;
+    if (s->flat_head_depth > s->bracket_depth) s->flat_head_depth = 0;
     return true;
 }
 
@@ -699,20 +701,20 @@ static int32_t context_character(uint8_t context) {
     return context == LAST_TOKEN_WHITESPACE ? ' ' : context == LAST_TOKEN_PUNCTUATION ? '.' : 'a';
 }
 
-static uint32_t certify_brackets(Scanner *s, TSLexer *lexer, DelimiterProof *proof, uint32_t result) {
-    if (!proof->pending_bracket) {
+static uint32_t certify_protected_suffix(Scanner *s, TSLexer *lexer, DelimiterProof *proof, uint32_t result) {
+    if (!proof->pending_bracket && !proof->pending_angle) {
         s->discard_offset = proof->discard_offset;
         return result;
     }
     while (proof->budget && !lexer->eof(lexer)) {
         ProofStep step = advance_proof_text(s, lexer, proof);
-        if (step == PROOF_UNCERTAIN) return UINT32_MAX;
+        if (step == PROOF_UNCERTAIN || step == PROOF_SCOPE_END) return uncertain_proof(s, lexer, proof, false);
         if (step == PROOF_DELIMITER) {
             proof->budget--;
             lexer->advance(lexer, false);
         }
     }
-    if (!lexer->eof(lexer)) return UINT32_MAX;
+    if (!lexer->eof(lexer)) return uncertain_proof(s, lexer, proof, false);
     s->discard_offset = proof->discard_offset;
     return result;
 }
@@ -753,14 +755,14 @@ static bool certified_closer(Scanner *s) {
     uint8_t opener = certified_opener(s, index);
     return opener_delimiter(opener) == s->run_delimiter &&
         (s->run_delimiter != '~' || (opener >= 14 ? 2 : 1) == s->run_modulo) &&
-        delimiter_pair_allowed(s->run_delimiter, opener_can_close(opener), opener_modulo(opener), s->run_flank == 2, s->run_modulo);
+        delimiter_pair_allowed(opener_can_close(opener), opener_modulo(opener), s->run_flank == 2, s->run_modulo);
 }
 
 static uint8_t certified_opener(Scanner *s, unsigned index) {
     return (s->certified_openers[index / 2] >> (4 * (index % 2))) & 15;
 }
 
-static bool delimiter_pair_allowed(char delimiter, bool opener_closes, uint8_t opener_modulo,
+static bool delimiter_pair_allowed(bool opener_closes, uint8_t opener_modulo,
                                    bool closer_opens, uint8_t closer_modulo) {
     return (!opener_closes && !closer_opens) ||
            (opener_modulo + closer_modulo) % 3 != 0 ||
@@ -779,7 +781,12 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     int32_t next = lexer->lookahead;
     if (next == '\\') return read_proof_escape(lexer, proof);
     if (next == '[') return read_proof_bracket(s, lexer, proof);
-    if (next == ']' && (s->bracket_depth || proof->pending_bracket)) return PROOF_UNCERTAIN;
+    if (next == ']' && proof->pending_bracket) return PROOF_UNCERTAIN;
+    if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
+    if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
+    if (next == '>' && proof->pending_angle) return PROOF_UNCERTAIN;
+    if (next == '<') proof->pending_angle = true;
+    if (next >= '0' && next <= '9') return read_proof_numeric_word(lexer, proof);
     if (proof_uncertain_character(next)) return PROOF_UNCERTAIN;
     if (next == '*' || next == '_' || (proof->strikethrough && next == '~')) return PROOF_DELIMITER;
     proof->budget--;
@@ -789,8 +796,7 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
 }
 
 static bool proof_uncertain_character(int32_t character) {
-    return (character >= '0' && character <= '9') ||
-           (character > 0 && character < 128 && strchr("<`$", character));
+    return character > 0 && character < 128 && strchr("`$", character);
 }
 
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
@@ -929,4 +935,14 @@ static ProofStep read_proof_escape(TSLexer *lexer, DelimiterProof *proof) {
 static bool is_punctuation(int32_t chr) {
     return (chr >= '!' && chr <= '/') || (chr >= ':' && chr <= '@') ||
            (chr >= '[' && chr <= '`') || (chr >= '{' && chr <= '~');
+}
+
+static ProofStep read_proof_numeric_word(TSLexer *lexer, DelimiterProof *proof) {
+    while ((lexer->lookahead >= '0' && lexer->lookahead <= '9') || lexer->lookahead == '_') {
+        if (!proof->budget) return PROOF_UNCERTAIN;
+        proof->budget--;
+        proof->previous = proof->emphasis_previous = lexer->lookahead;
+        lexer->advance(lexer, false);
+    }
+    return PROOF_TEXT;
 }

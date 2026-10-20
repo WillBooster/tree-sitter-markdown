@@ -172,7 +172,7 @@ module.exports = grammar(add_inline_rules({
             /<[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>/,
 
         _html_tag: $ => choice($._open_tag, $._closing_tag, $._html_comment, $._processing_instruction, $._declaration, $._cdata_section),
-        _open_tag: $ => token(/<[A-Za-z][A-Za-z0-9-]*([ \t\r\n]+[A-Za-z_:][A-Za-z0-9_.:\-]*([ \t\r\n]*=[ \t\r\n]*("[^"\x00]*"|'[^'\x00]*'|[^ \t\r\n"'=<>`]+)))*[ \t\r\n]*\/?>/),
+        _open_tag: $ => token(/<[A-Za-z][A-Za-z0-9-]*([ \t\r\n]+[A-Za-z_:][A-Za-z0-9_.:\-]*([ \t\r\n]*=[ \t\r\n]*("[^"]*"|'[^']*'|[^ \t\r\n"'=<>`]+)))*[ \t\r\n]*\/?>/),
         _closing_tag: $ => token(/<\/[A-Za-z][A-Za-z0-9-]*[ \t\r\n]*>/),
         _html_comment: $ => token(seq('<!--', optional(seq(choice(/[^->]/, seq('-', /[^>]/)), repeat(choice(/[^-]/, seq('-', /[^-]/))))), '-->')),
         _processing_instruction: $ => token(/<\?([^?]|\?+[^?>])*\?+>/),
