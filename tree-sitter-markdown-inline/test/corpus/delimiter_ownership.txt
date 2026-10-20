@@ -125,3 +125,41 @@ Nested emphasis remains inside strikethrough
       (emphasis_delimiter)
       (emphasis_delimiter))
     (emphasis_delimiter)))
+
+================================================================================
+Protected spans retain literal tildes
+================================================================================
+`~` $~$
+
+--------------------------------------------------------------------------------
+
+(inline
+  (code_span
+    (code_span_delimiter)
+    (code_span_delimiter))
+  (latex_block
+    (latex_span_delimiter)
+    (latex_span_delimiter)))
+
+================================================================================
+A single closing bracket does not terminate CDATA
+================================================================================
+<![CDATA[x]> *a* ]]>
+
+--------------------------------------------------------------------------------
+
+(inline
+  (html_tag))
+
+================================================================================
+Emphasis resumes after the actual CDATA terminator
+================================================================================
+<![CDATA[x]]> *a*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (html_tag)
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))

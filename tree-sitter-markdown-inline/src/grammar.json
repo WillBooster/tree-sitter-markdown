@@ -3094,7 +3094,7 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "<!\\[CDATA\\[([^\\]]|\\]+[^\\]>])*\\]+>"
+        "value": "<!\\[CDATA\\[([^\\]]|\\][^\\]]|\\]\\]+[^\\]>])*\\]\\]+>"
       }
     },
     "hard_line_break": {
@@ -3648,6 +3648,10 @@
         {
           "type": "STRING",
           "value": "_"
+        },
+        {
+          "type": "STRING",
+          "value": "~"
         }
       ]
     },

@@ -177,7 +177,7 @@ module.exports = grammar(add_inline_rules({
         _html_comment: $ => token(seq('<!--', optional(seq(choice(/[^->]/, seq('-', /[^>]/)), repeat(choice(/[^-]/, seq('-', /[^-]/))))), '-->')),
         _processing_instruction: $ => token(/<\?([^?]|\?+[^?>])*\?+>/),
         _declaration: $ => token(/<![A-Z]+[ \t\r\n][^>]*>/),
-        _cdata_section: $ => token(/<!\[CDATA\[([^\]]|\]+[^\]>])*\]+>/),
+        _cdata_section: $ => token(/<!\[CDATA\[([^\]]|\][^\]]|\]\]+[^\]>])*\]\]+>/),
 
         hard_line_break: $ => seq(choice('\\', $._whitespace_ge_2), $._soft_line_break),
         _text: $ => choice($._word, common.punctuation_without($, []), $._whitespace),
@@ -209,7 +209,7 @@ module.exports = grammar(add_inline_rules({
             $._literal_emphasis_run,
             ...(common.EXTENSION_STRIKETHROUGH ? [$._strikethrough_literal] : []),
         ),
-        _text_base: $ => choice($._text_base_no_emphasis, '*', '_'),
+        _text_base: $ => choice($._text_base_no_emphasis, '*', '_', '~'),
         _text_base_no_emphasis: $ => choice(
             $._word,
             common.punctuation_without($, ['[', ']', '*', '_', ...(common.EXTENSION_STRIKETHROUGH ? ['~'] : [])]),
