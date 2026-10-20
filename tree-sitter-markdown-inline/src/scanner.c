@@ -523,7 +523,6 @@ static EmphasisRole emphasis_role(Scanner *s, TSLexer *lexer, const bool *valid_
         if (!fresh_run) read_remaining_emphasis(s, lexer, strikethrough, following);
         s->run_proved = true;
         s->run_open_count = proved_open_count(s, lexer, strikethrough, following, valid_symbols);
-        assert(!s->certified_depth || s->run_open_count != UINT32_MAX);
     }
     if (!s->run_can_open) return EMPHASIS_ROLE_LITERAL;
     if (s->run_open_count == UINT32_MAX) return EMPHASIS_ROLE_CANDIDATE;
@@ -552,7 +551,7 @@ static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough
         proof.previous = '~';
     }
     while (!lexer->eof(lexer)) {
-        if (!proof.budget) return UINT32_MAX;
+        if (!proof.budget) return uncertain_proof(s, lexer, &proof, false);
         ProofStep step = advance_proof_text(s, lexer, &proof);
         if (step == PROOF_UNCERTAIN) return uncertain_proof(s, lexer, &proof, false);
         if (step == PROOF_SCOPE_END) return certify_protected_suffix(s, lexer, &proof, proof.matched_initial);
@@ -639,7 +638,8 @@ static bool possible_closer(TSLexer *lexer, char delimiter, uint8_t modulo, bool
         if (flanks.can_close && delimiter_pair_allowed(opener_can_close, modulo, flanks.can_open, count % 3)) return true;
         previous = delimiter;
     }
-    return !lexer->eof(lexer);
+    // Keeping every opener without a nearby closer as a candidate makes the parse stacks grow with the input.
+    return false;
 }
 
 static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run) {

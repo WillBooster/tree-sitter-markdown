@@ -651,3 +651,19 @@ a <?b <![CDATA[c <!D e
 --------------------------------------------------------------------------------
 
 (inline)
+
+================================================================================
+Certified openers whose closer becomes destination text do not abort
+================================================================================
+~![]](~*a[*]
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strikethrough
+    (emphasis_delimiter)
+    (image
+      (image_description))
+    (emphasis_delimiter))
+  (shortcut_link
+    (link_text)))

@@ -24,7 +24,8 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
   flanking, enforcing the CommonMark multiple-of-three restriction. Raw HTML is an atomic `html_tag` token; its
   anonymous punctuation children are no longer emitted. Single and double tilde runs each emit one `strikethrough`
   node; runs of three or more tildes remain literal. Tildes are transparent when determining asterisk/underscore
-  flanking, matching the GFM strikethrough extension.
+  flanking, matching the GFM strikethrough extension. An opener with no possible closer within roughly 2,000
+  characters stays literal, which keeps parsing linear for long paragraphs of unpaired delimiters.
 - Reference links remain syntactic candidates: the inline parser does not receive reference definitions. Potential
   shortcut links retain priority over crossing emphasis, including `*[foo*]`; consumers can resolve them against the
   block tree's definitions. Consequently, parsing an isolated inline fragment can differ from rendering that fragment
