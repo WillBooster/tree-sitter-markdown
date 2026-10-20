@@ -239,6 +239,7 @@ static bool opener_can_close(uint8_t opener);
 static uint8_t opener_modulo(uint8_t opener);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static bool proof_uncertain_character(int32_t character);
+static ProofStep read_proof_escape(TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
 static void read_transparent_tildes(TSLexer *lexer, DelimiterProof *proof,
                                       FutureDelimiter *run, FutureDelimiter *tildes);
@@ -704,11 +705,12 @@ static uint32_t certify_brackets(Scanner *s, TSLexer *lexer, DelimiterProof *pro
         return result;
     }
     while (proof->budget && !lexer->eof(lexer)) {
-        int32_t next = lexer->lookahead;
-        if (next > 0 && next < 128 && strchr("<`\\$", next)) return UINT32_MAX;
-        proof->budget--;
-        lexer->advance(lexer, false);
-        if (next == ']') return UINT32_MAX;
+        ProofStep step = advance_proof_text(s, lexer, proof);
+        if (step == PROOF_UNCERTAIN) return UINT32_MAX;
+        if (step == PROOF_DELIMITER) {
+            proof->budget--;
+            lexer->advance(lexer, false);
+        }
     }
     if (!lexer->eof(lexer)) return UINT32_MAX;
     s->discard_offset = proof->discard_offset;
@@ -775,6 +777,7 @@ static uint8_t opener_modulo(uint8_t opener) {
 
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
     int32_t next = lexer->lookahead;
+    if (next == '\\') return read_proof_escape(lexer, proof);
     if (next == '[') return read_proof_bracket(s, lexer, proof);
     if (next == ']' && (s->bracket_depth || proof->pending_bracket)) return PROOF_UNCERTAIN;
     if (proof_uncertain_character(next)) return PROOF_UNCERTAIN;
@@ -787,7 +790,7 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
 
 static bool proof_uncertain_character(int32_t character) {
     return (character >= '0' && character <= '9') ||
-           (character > 0 && character < 128 && strchr("<`\\$", character));
+           (character > 0 && character < 128 && strchr("<`$", character));
 }
 
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
@@ -872,10 +875,7 @@ static FutureDelimiter read_future_delimiter(unsigned *budget, TSLexer *lexer, i
     return run;
 }
 
-static bool is_punctuation(int32_t chr) {
-    return (chr >= '!' && chr <= '/') || (chr >= ':' && chr <= '@') ||
-           (chr >= '[' && chr <= '`') || (chr >= '{' && chr <= '~');
-}
+
 
 static bool is_whitespace(int32_t character) {
     return character == ' ' || character == '\t' || character == '\r' || character == '\n';
@@ -912,4 +912,21 @@ static void advance_tilde(Scanner *s) {
     if (!index) s->root_repetitions = 0;
     if (!--s->discarded_count) s->tilde_cursor = 0;
     s->run_suppressed = true;
+}
+
+static ProofStep read_proof_escape(TSLexer *lexer, DelimiterProof *proof) {
+    proof->budget--;
+    lexer->advance(lexer, false);
+    proof->previous = proof->emphasis_previous = '\\';
+    if (!is_punctuation(lexer->lookahead)) return PROOF_TEXT;
+    if (!proof->budget) return PROOF_UNCERTAIN;
+    proof->budget--;
+    proof->previous = proof->emphasis_previous = lexer->lookahead;
+    lexer->advance(lexer, false);
+    return PROOF_TEXT;
+}
+
+static bool is_punctuation(int32_t chr) {
+    return (chr >= '!' && chr <= '/') || (chr >= ':' && chr <= '@') ||
+           (chr >= '[' && chr <= '`') || (chr >= '{' && chr <= '~');
 }

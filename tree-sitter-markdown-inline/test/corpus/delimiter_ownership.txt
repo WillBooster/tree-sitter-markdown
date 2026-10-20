@@ -163,3 +163,59 @@ Emphasis resumes after the actual CDATA terminator
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+Nested empty brackets preserve certified ownership
+================================================================================
+_~[~[]_
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (strikethrough
+      (emphasis_delimiter)
+      (emphasis_delimiter))
+    (emphasis_delimiter)))
+
+================================================================================
+Mixed runs and empty brackets preserve certified ownership
+================================================================================
+_~**~**[]_**~~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (strikethrough
+      (emphasis_delimiter)
+      (emphasis_delimiter))
+    (emphasis_delimiter)))
+
+================================================================================
+Partial delimiter runs before a literal backslash
+================================================================================
+***__>*__\a
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Escaped underscores preserve original pairing
+================================================================================
+__\\\__.[~~____)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (backslash_escape)
+  (backslash_escape)
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))

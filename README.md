@@ -200,8 +200,8 @@ environment holds. The parsers also embed metadata from `tree-sitter.json`. Afte
   the cases of the tags and wiki-link extensions, which these parsers leave out;
 - an incremental-parsing check (`test/unit/incremental.test.ts`): `script/fuzz-corpus` runs `tree-sitter fuzz` for a
   grammar, which edits each of its corpus cases at random, reparses it, undoes the edits, and reparses again.
-  `TREE_SITTER_SEED`, `TREE_SITTER_ITERATIONS`, and `TREE_SITTER_EDITS` run other or more edits. It skips the cases that
-  `script/fuzz-corpus` excludes, which upstream's parser fails as well;
+  `TREE_SITTER_SEED`, `TREE_SITTER_ITERATIONS`, and `TREE_SITTER_EDITS` run other or more edits. It skips only the tag and wiki-link
+  extension cases listed in `script/corpus-exclusions`, matching the corpus check;
 - a check that the real-world Markdown files in `examples/` fail to parse with the block grammar exactly as listed in
   `script/known-failures.txt`. The first run clones the repositories. The example repositories are pinned to commits in
   `script/parse-examples`. After a grammar change or a moved pin alters that list, `script/parse-examples` rewrites it;
