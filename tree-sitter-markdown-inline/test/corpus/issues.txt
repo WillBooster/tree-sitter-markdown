@@ -784,3 +784,16 @@ A backtick inside raw HTML in link text does not open a span for the bracket sca
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+Escaped delimiters are no closers for uncertain openers
+================================================================================
+_[``~$ _`[\~\_]
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text
+      (backslash_escape)
+      (backslash_escape))))

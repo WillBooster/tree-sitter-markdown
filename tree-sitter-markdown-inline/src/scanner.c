@@ -182,6 +182,7 @@ typedef struct {
     bool active;
     bool found;
     bool after_tildes;
+    bool escaping;
     uint32_t count;
     int32_t previous;
 } CloserSearch;
@@ -661,8 +662,11 @@ static void search_closer(DelimiterProof *proof, int32_t character) {
         search->count = 0;
         search->after_tildes = false;
     }
-    if (character == first->delimiter) search->count = 1;
-    else if (character >= 0 && (!skips_tildes || character != '~')) search->previous = character;
+    // A backslash escape is one punctuation character, as `read_proof_escape` reads it.
+    bool escaped = search->escaping && is_punctuation(character);
+    search->escaping = character == '\\' && !escaped;
+    if (character == first->delimiter && !escaped) search->count = 1;
+    else if (character >= 0 && (escaped || !skips_tildes || character != '~')) search->previous = character;
 }
 
 static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run) {
