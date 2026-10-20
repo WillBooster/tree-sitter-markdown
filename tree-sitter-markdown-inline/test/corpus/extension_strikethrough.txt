@@ -8,9 +8,6 @@ Example 491 - https://github.github.com/gfm/#example-491
 (inline
   (strikethrough
     (emphasis_delimiter)
-    (strikethrough
-      (emphasis_delimiter)
-      (emphasis_delimiter))
     (emphasis_delimiter)))
 
 ================================================================================
@@ -26,7 +23,4 @@ new paragraph~~.
 (inline
   (strikethrough
     (emphasis_delimiter)
-    (strikethrough
-      (emphasis_delimiter)
-      (emphasis_delimiter))
     (emphasis_delimiter)))

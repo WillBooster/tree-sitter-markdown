@@ -19,6 +19,17 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x57420006`) and load only with that fork's runtime, major version 7: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
+- Inline emphasis and strikethrough preserve source punctuation and whitespace across edits, including boundaries
+  after links, code spans, HTML tags, and escapes. Emphasis pairs retain their original delimiter-run lengths and
+  flanking, enforcing the CommonMark multiple-of-three restriction. Raw HTML is an atomic `html_tag` token; its
+  anonymous punctuation children are no longer emitted. Single and double tilde runs each emit one `strikethrough`
+  node; runs of three or more tildes remain literal. Tildes are transparent when determining asterisk/underscore
+  flanking, matching the GFM strikethrough extension. An opener with no possible closer within roughly 1,000
+  characters stays literal, which bounds the parse work that long paragraphs of unpaired delimiters cause.
+- Reference links remain syntactic candidates: the inline parser does not receive reference definitions. Potential
+  shortcut links retain priority over crossing emphasis, including `*[foo*]`; consumers can resolve them against the
+  block tree's definitions. Consequently, parsing an isolated inline fragment can differ from rendering that fragment
+  as a complete document without definitions.
 - Underscore emphasis can end immediately after a digit, as in `_hello1_`. Intraword underscores around digits,
   such as `a_1_b_`, stay plain text instead of producing emphasis. Underscore runs that cannot open or close emphasis
   stay together as text, so punctuation after a digit does not open false emphasis in `1__-_`.
@@ -194,8 +205,8 @@ environment holds. The parsers also embed metadata from `tree-sitter.json`. Afte
   the cases of the tags and wiki-link extensions, which these parsers leave out;
 - an incremental-parsing check (`test/unit/incremental.test.ts`): `script/fuzz-corpus` runs `tree-sitter fuzz` for a
   grammar, which edits each of its corpus cases at random, reparses it, undoes the edits, and reparses again.
-  `TREE_SITTER_SEED`, `TREE_SITTER_ITERATIONS`, and `TREE_SITTER_EDITS` run other or more edits. It skips the cases that
-  `script/fuzz-corpus` excludes, which upstream's parser fails as well;
+  `TREE_SITTER_SEED`, `TREE_SITTER_ITERATIONS`, and `TREE_SITTER_EDITS` run other or more edits. It skips only the tag and wiki-link
+  extension cases listed in `script/corpus-exclusions`, matching the corpus check;
 - a check that the real-world Markdown files in `examples/` fail to parse with the block grammar exactly as listed in
   `script/known-failures.txt`. The first run clones the repositories. The example repositories are pinned to commits in
   `script/parse-examples`. After a grammar change or a moved pin alters that list, `script/parse-examples` rewrites it;

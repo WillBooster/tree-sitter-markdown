@@ -89,4 +89,313 @@ mod tests {
             .set_language(&INLINE_LANGUAGE.into())
             .expect("Error loading Markdown inline grammar");
     }
+
+    #[test]
+    fn inline_context_survives_boundary_edits() {
+        for source in [
+            "a_*_*",
+            "a_~_~",
+            "~a ~ b~",
+            "_~_~",
+            "*~*a",
+            "[~]*~*",
+            "[[~]]_~_",
+            "~a _b~~ c_ ~",
+            "~a *b*~~ c~",
+            "~*.***~~*~~",
+            "~~~a~~~",
+            "<a title=\"_a_\0\">",
+            "~~*a*~~",
+            "***__>*__\\a",
+            "__\\\\\\__.[~~____)",
+            "*[____*_(]",
+            "[**~1****1*]~",
+            "[____1____]",
+            "*___a_********<**",
+            "[[]*]*",
+            "[[]_]_",
+            "[[]~]~",
+            "_~[~[]_",
+            "_~**~**[]_**~~",
+            "[~a](u)~",
+            "[~a][ref]~",
+            "*[a **b**](u)*",
+            "\\*_a_",
+            "`x`_a_",
+            "<b>_a_",
+            "[x](u)_a_",
+            "[*_a_",
+            "[_*<a",
+            "[[*_a_",
+            "[*_a_]",
+            "[x] [*_a_",
+            "x_*.**",
+            ".__[ax_",
+            "<b>*[**",
+            "a***a",
+            "*_*_*",
+            "*___a",
+            "*_*.*_",
+            "*__*__",
+            "_*_[_*",
+            "[*_a_](u)",
+            "[***a***](u)",
+            "![***a***](u)",
+            "<!--_ note -->",
+            "<?_?>",
+            "<![CDATA[_]]>",
+        ] {
+            for included in [false, true] {
+                let prefix = usize::from(included);
+                let input = if included {
+                    format!("x{source}z")
+                } else {
+                    source.to_owned()
+                };
+                let mut parser = tree_sitter::Parser::new();
+                parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+                set_inline_range(&mut parser, prefix, source.len(), included);
+                let original = parser.parse(&input, None).unwrap();
+                assert!(!original.root_node().has_error(), "{source}");
+                for (inserted, removed) in [("x", 0), ("]", 0), ("", 1), ("*", 1)] {
+                    for offset in 0..=source.len() {
+                        if offset + removed > source.len() {
+                            continue;
+                        }
+                        let start = prefix + offset;
+                        let mut edited_input = input.clone();
+                        edited_input.replace_range(start..start + removed, inserted);
+                        let mut old_tree = original.clone();
+                        old_tree.edit(&inline_edit(start, removed, inserted.len()));
+                        set_inline_range(
+                            &mut parser,
+                            prefix,
+                            source.len() + inserted.len() - removed,
+                            included,
+                        );
+                        let mut edited = parser.parse(&edited_input, Some(&old_tree)).unwrap();
+                        let fresh = parser.parse(&edited_input, None).unwrap();
+                        assert_eq!(
+                            inline_nodes(&edited),
+                            inline_nodes(&fresh),
+                            "edit {source} at {offset}: insert {inserted:?}, remove {removed}, included={included}"
+                        );
+                        edited.edit(&inline_edit(start, inserted.len(), removed));
+                        set_inline_range(&mut parser, prefix, source.len(), included);
+                        let restored = parser.parse(&input, Some(&edited)).unwrap();
+                        assert_eq!(
+                            inline_nodes(&restored),
+                            inline_nodes(&original),
+                            "undo {source} at {offset}, included={included}"
+                        );
+                        assert_eq!(restored.root_node().range(), original.root_node().range());
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn inline_lookahead_tracks_logical_eof_changes() {
+        let input = "*a*";
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+        let range = |start, end| tree_sitter::Range {
+            start_byte: start,
+            end_byte: end,
+            start_point: tree_sitter::Point::new(0, start),
+            end_point: tree_sitter::Point::new(0, end),
+        };
+        parser
+            .set_included_ranges(&[range(0, 2), range(3, 3)])
+            .unwrap();
+        let mut old_tree = parser.parse(input, None).unwrap();
+        for ranges in [vec![range(0, 2)], vec![range(0, 2), range(2, 3)]] {
+            parser.set_included_ranges(&ranges).unwrap();
+            let incremental = parser.parse(input, Some(&old_tree)).unwrap();
+            let fresh = parser.parse(input, None).unwrap();
+            assert_eq!(
+                incremental.root_node().to_sexp(),
+                fresh.root_node().to_sexp()
+            );
+            assert_eq!(incremental.root_node().range(), fresh.root_node().range());
+            assert!(!incremental.root_node().has_error());
+            old_tree = incremental;
+        }
+        assert!(old_tree.root_node().to_sexp().contains("(emphasis "));
+    }
+
+    #[test]
+    fn inline_delimiter_runs_keep_all_pairs() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+        for delimiter in ["*", "_"] {
+            for count in [1023, 1024, 1025, 2048] {
+                let run = delimiter.repeat(count);
+                let source = format!("{run}a{run}");
+                let tree = parser.parse(&source, None).unwrap();
+                let sexp = tree.root_node().to_sexp();
+                assert!(!tree.root_node().has_error(), "{delimiter} × {count}");
+                assert_eq!(sexp.matches("(strong_emphasis ").count(), count / 2);
+                assert_eq!(sexp.matches("(emphasis ").count(), count % 2);
+            }
+        }
+    }
+
+    #[test]
+    fn inline_long_run_suffixes_reopen_at_the_root() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+        let source = format!("*a{}b{}", "*".repeat(1026), "*".repeat(1025));
+        let tree = parser.parse(&source, None).unwrap();
+        let sexp = tree.root_node().to_sexp();
+        assert!(!tree.root_node().has_error());
+        assert_eq!(sexp.matches("(strong_emphasis ").count(), 512);
+        assert_eq!(sexp.matches("(emphasis ").count(), 2);
+    }
+
+    #[test]
+    fn inline_partial_runs_use_the_matched_suffix() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+        for (source, kind, start, end) in [
+            ("***a*", "emphasis", 2, 5),
+            ("***a**", "strong_emphasis", 1, 6),
+            ("**a***", "strong_emphasis", 0, 5),
+        ] {
+            let tree = parser.parse(source, None).unwrap();
+            let node = tree.root_node().named_child(0).unwrap();
+            assert!(!tree.root_node().has_error(), "{source}");
+            assert_eq!(
+                (node.kind(), node.start_byte(), node.end_byte()),
+                (kind, start, end)
+            );
+        }
+    }
+
+    #[test]
+    fn inline_budget_boundaries_survive_edits() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+        for count in [1022, 1023, 1024, 1025] {
+            for inner in ["_b_", "`_b_`", "[b](u)", "<b>", "~b~", "~a _b~~ c_ ~"] {
+                let source = format!("*a{} {inner} c*", "x".repeat(count));
+                let original = parser.parse(&source, None).unwrap();
+                for offset in [2, count + 2, source.len() - 1] {
+                    let mut input = source.clone();
+                    input.insert(offset, '*');
+                    let mut old_tree = original.clone();
+                    old_tree.edit(&inline_edit(offset, 0, 1));
+                    let mut edited = parser.parse(&input, Some(&old_tree)).unwrap();
+                    let fresh = parser.parse(&input, None).unwrap();
+                    assert_eq!(
+                        inline_nodes(&edited),
+                        inline_nodes(&fresh),
+                        "{count} {inner} at {offset}"
+                    );
+                    edited.edit(&inline_edit(offset, 1, 0));
+                    let restored = parser.parse(&source, Some(&edited)).unwrap();
+                    assert_eq!(inline_nodes(&restored), inline_nodes(&original));
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "parser")]
+    #[test]
+    fn document_runs_can_close_then_open() {
+        let mut parser = MarkdownParser::default();
+        let mut inline_parser = tree_sitter::Parser::new();
+        inline_parser.set_language(&INLINE_LANGUAGE.into()).unwrap();
+        for source in ["~*.***~~*~~", "*_%___*o\n*_*[*]", "a *b* c"] {
+            let document = format!("{source}\n");
+            let tree = parser.parse(document.as_bytes(), None).unwrap();
+            let inline = inline_parser.parse(source, None).unwrap();
+            assert!(!tree.block_tree().root_node().has_error());
+            assert!(!inline.root_node().has_error());
+            assert_eq!(tree.inline_trees().len(), 1);
+            assert_eq!(inline_nodes(&tree.inline_trees()[0]), inline_nodes(&inline));
+        }
+    }
+
+    #[cfg(feature = "parser")]
+    #[test]
+    fn document_keeps_defined_shortcut_candidates() {
+        for (text, label) in [
+            ("*[foo*]", "foo*"),
+            ("*[____*_(]", "____*_("),
+            ("[**~1****1*]~", "**~1****1*"),
+            ("*foo [bar* baz]", "bar* baz"),
+            ("*_~[*]", "*"),
+            ("~_*[~]", "~"),
+            ("[~]*~*", "~"),
+        ] {
+            let source = format!("{text}\n\n[{label}]: /uri\n");
+            let mut parser = MarkdownParser::default();
+            let tree = parser.parse(source.as_bytes(), None).unwrap();
+            assert!(!tree.block_tree().root_node().has_error(), "{text}");
+            assert!(
+                inline_nodes(tree.block_tree())
+                    .iter()
+                    .any(|(kind, _)| kind == "link_reference_definition")
+            );
+            let inline = &tree.inline_trees()[0];
+            assert!(!inline.root_node().has_error(), "{text}");
+            let nodes = inline_nodes(inline);
+            let (_, range) = nodes
+                .iter()
+                .find(|(kind, _)| kind == "shortcut_link")
+                .unwrap();
+            assert_eq!(
+                &source[range.start_byte..range.end_byte],
+                format!("[{label}]")
+            );
+        }
+    }
+
+    fn inline_nodes(tree: &tree_sitter::Tree) -> Vec<(String, tree_sitter::Range)> {
+        let mut cursor = tree.walk();
+        let mut nodes = vec![];
+        loop {
+            nodes.push((cursor.node().kind().to_owned(), cursor.node().range()));
+            if cursor.goto_first_child() {
+                continue;
+            }
+            while !cursor.goto_next_sibling() {
+                if !cursor.goto_parent() {
+                    return nodes;
+                }
+            }
+        }
+    }
+
+    fn set_inline_range(
+        parser: &mut tree_sitter::Parser,
+        start: usize,
+        length: usize,
+        included: bool,
+    ) {
+        let ranges = if included {
+            vec![tree_sitter::Range {
+                start_byte: start,
+                end_byte: start + length,
+                start_point: tree_sitter::Point::new(0, start),
+                end_point: tree_sitter::Point::new(0, start + length),
+            }]
+        } else {
+            vec![]
+        };
+        parser.set_included_ranges(&ranges).unwrap();
+    }
+
+    fn inline_edit(start: usize, removed: usize, inserted: usize) -> tree_sitter::InputEdit {
+        tree_sitter::InputEdit {
+            start_byte: start,
+            old_end_byte: start + removed,
+            new_end_byte: start + inserted,
+            start_position: tree_sitter::Point::new(0, start),
+            old_end_position: tree_sitter::Point::new(0, start + removed),
+            new_end_position: tree_sitter::Point::new(0, start + inserted),
+        }
+    }
 }
