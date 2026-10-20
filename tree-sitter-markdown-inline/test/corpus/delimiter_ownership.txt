@@ -350,3 +350,40 @@ Uncertain openers before a nested reference candidate remain literal
     (shortcut_link
       (link_text))
     (emphasis_delimiter)))
+
+================================================================================
+Openers before consecutive reference candidates remain literal
+================================================================================
+_**a*a[a*_ a*]a[a]
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text))
+  (shortcut_link
+    (link_text)))
+
+================================================================================
+Long opener runs before a reference candidate and an escape remain literal
+================================================================================
+[****a[f]\*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text))
+  (backslash_escape))
+
+================================================================================
+Openers before an unclosed destination and an escape remain literal
+================================================================================
+*___[>__](\*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text))
+  (backslash_escape))
