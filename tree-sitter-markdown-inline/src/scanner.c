@@ -815,15 +815,14 @@ static TokenType following_label(TSLexer *lexer) {
     if (lexer->lookahead != '[') return CLOSE_BRACKET_NO_LABEL;
     lexer->advance(lexer, false);
     // `[]` completes a collapsed reference, but other whitespace-only brackets are not a label.
-    bool empty = true;
-    bool blank = true;
+    bool blank = lexer->lookahead != ']';
     for (unsigned remaining = CERTIFIED_LIMIT; remaining; remaining--) {
         if (lexer->eof(lexer)) return CLOSE_BRACKET_NO_LABEL;
         switch (lexer->lookahead) {
             case '[': return CLOSE_BRACKET_NO_LABEL;
             case 0: return CLOSE_BRACKET_UNKNOWN_LABEL;
             case ']':
-                if (blank && !empty) return CLOSE_BRACKET_NO_LABEL;
+                if (blank) return CLOSE_BRACKET_NO_LABEL;
                 lexer->advance(lexer, false);
                 return lexer->lookahead == '(' ? CLOSE_BRACKET_UNKNOWN_LABEL : CLOSE_BRACKET_WITH_LABEL;
             case '\\':
@@ -833,7 +832,6 @@ static TokenType following_label(TSLexer *lexer) {
                 blank = false;
                 break;
         }
-        empty = false;
         if (!is_whitespace(lexer->lookahead)) blank = false;
         lexer->advance(lexer, false);
     }
