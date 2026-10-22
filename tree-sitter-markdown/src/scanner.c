@@ -434,6 +434,12 @@ static bool match(Scanner *s, TSLexer *lexer, Block block) {
 
 static bool parse_fenced_code_block(Scanner *s, const char delimiter,
                                     TSLexer *lexer, const bool *valid_symbols) {
+    bool can_end = delimiter == '`' ? valid_symbols[FENCED_CODE_BLOCK_END_BACKTICK]
+                                    : valid_symbols[FENCED_CODE_BLOCK_END_TILDE];
+    bool can_start = delimiter == '`' ? valid_symbols[FENCED_CODE_BLOCK_START_BACKTICK]
+                                      : valid_symbols[FENCED_CODE_BLOCK_START_TILDE];
+    // Checking validity before counting the run keeps a long run linear: the parser calls this at every delimiter.
+    if (!can_end && !can_start) return false;
     uint8_t level = 0;
     while (lexer->lookahead == delimiter) {
         advance(s, lexer);
@@ -444,9 +450,7 @@ static bool parse_fenced_code_block(Scanner *s, const char delimiter,
     // interpretation. It can only close a fenced code block if the number of
     // backticks is at least the number of backticks of the opening delimiter.
     // Also it cannot be indented more than 3 spaces.
-    if ((delimiter == '`' ? valid_symbols[FENCED_CODE_BLOCK_END_BACKTICK]
-                          : valid_symbols[FENCED_CODE_BLOCK_END_TILDE]) &&
-        s->indentation < 4 && level >= s->fenced_code_block_delimiter_length) {
+    if (can_end && s->indentation < 4 && level >= s->fenced_code_block_delimiter_length) {
         while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
             advance(s, lexer);
         }
@@ -459,11 +463,7 @@ static bool parse_fenced_code_block(Scanner *s, const char delimiter,
             return true;
         }
     }
-    if (level < 3 ||
-        !(delimiter == '`' ? valid_symbols[FENCED_CODE_BLOCK_START_BACKTICK]
-                          : valid_symbols[FENCED_CODE_BLOCK_START_TILDE])) {
-        return false;
-    }
+    if (level < 3 || !can_start) return false;
     if (delimiter == '`') {
         while (lexer->lookahead != '\n' && lexer->lookahead != '\r' &&
                !lexer->eof(lexer)) {
@@ -485,6 +485,10 @@ static bool parse_fenced_code_block(Scanner *s, const char delimiter,
 static bool push_list_item(Scanner *s, uint8_t extra_indentation, size_t marker_digits);
 
 static bool parse_star(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
+    if (!valid_symbols[THEMATIC_BREAK] && !valid_symbols[LIST_MARKER_STAR] &&
+        !valid_symbols[LIST_MARKER_STAR_DONT_INTERRUPT]) {
+        return false;
+    }
     advance(s, lexer);
     mark_end(s, lexer);
     // Otherwise count the number of stars permitting whitespaces between them.
@@ -547,6 +551,7 @@ static bool parse_star(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
 
 static bool parse_thematic_break_underscore(Scanner *s, TSLexer *lexer,
                                             const bool *valid_symbols) {
+    if (!valid_symbols[THEMATIC_BREAK]) return false;
     advance(s, lexer);
     mark_end(s, lexer);
     size_t underscore_count = 1;
@@ -561,7 +566,7 @@ static bool parse_thematic_break_underscore(Scanner *s, TSLexer *lexer,
         }
     }
     bool line_end = lexer->lookahead == '\n' || lexer->lookahead == '\r' || lexer->eof(lexer);
-    if (underscore_count >= 3 && line_end && valid_symbols[THEMATIC_BREAK]) {
+    if (underscore_count >= 3 && line_end) {
         lexer->result_symbol = THEMATIC_BREAK;
         mark_end(s, lexer);
         s->indentation = 0;
