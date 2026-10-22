@@ -92,6 +92,7 @@ typedef enum {
     LITERAL_EMPHASIS_RUN,
     OPEN_BRACKET,
     UNCLOSED_OPEN_BRACKET,
+    OPEN_BRACKET_BLANK,
     CLOSE_BRACKET_NO_LABEL,
     CLOSE_BRACKET_WITH_LABEL,
     CLOSE_BRACKET_UNKNOWN_LABEL,
@@ -718,13 +719,16 @@ static void pop_certified_opener(Scanner *s) {
 }
 
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
-    if (!valid_symbols[OPEN_BRACKET] && !valid_symbols[UNCLOSED_OPEN_BRACKET]) return false;
+    if (!valid_symbols[OPEN_BRACKET] && !valid_symbols[UNCLOSED_OPEN_BRACKET] && !valid_symbols[OPEN_BRACKET_BLANK]) {
+        return false;
+    }
     lexer->advance(lexer, false);
     lexer->mark_end(lexer);
     s->context = LAST_TOKEN_PUNCTUATION;
     s->emphasis_context = LAST_TOKEN_PUNCTUATION;
     s->context_pending = is_inline_delimiter(lexer->lookahead);
     s->num_emphasis_delimiters_left = 0;
+    bool blank = false;
     if (!s->no_closing_bracket) {
         // Spans decide which `]` closes, and their extent depends on runs further on, so the text is read first.
         int32_t text[CERTIFIED_LIMIT];
@@ -734,8 +738,11 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
             lexer->advance(lexer, false);
         }
         s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length);
+        unsigned i = 0;
+        while (i < length && is_whitespace(text[i])) i++;
+        blank = i < length && text[i] == ']';
     }
-    lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : OPEN_BRACKET;
+    lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : blank ? OPEN_BRACKET_BLANK : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
     s->bracket_depth++;
     s->flat_head_depth = s->bracket_depth;
@@ -807,20 +814,27 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
 static TokenType following_label(TSLexer *lexer) {
     if (lexer->lookahead != '[') return CLOSE_BRACKET_NO_LABEL;
     lexer->advance(lexer, false);
+    // `[]` completes a collapsed reference, but other whitespace-only brackets are not a label.
+    bool empty = true;
+    bool blank = true;
     for (unsigned remaining = CERTIFIED_LIMIT; remaining; remaining--) {
         if (lexer->eof(lexer)) return CLOSE_BRACKET_NO_LABEL;
         switch (lexer->lookahead) {
             case '[': return CLOSE_BRACKET_NO_LABEL;
             case 0: return CLOSE_BRACKET_UNKNOWN_LABEL;
             case ']':
+                if (blank && !empty) return CLOSE_BRACKET_NO_LABEL;
                 lexer->advance(lexer, false);
                 return lexer->lookahead == '(' ? CLOSE_BRACKET_UNKNOWN_LABEL : CLOSE_BRACKET_WITH_LABEL;
             case '\\':
                 lexer->advance(lexer, false);
                 if (remaining == 1 || lexer->eof(lexer)) return CLOSE_BRACKET_UNKNOWN_LABEL;
                 remaining--;
+                blank = false;
                 break;
         }
+        empty = false;
+        if (!is_whitespace(lexer->lookahead)) blank = false;
         lexer->advance(lexer, false);
     }
     return CLOSE_BRACKET_UNKNOWN_LABEL;

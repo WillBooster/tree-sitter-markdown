@@ -638,8 +638,6 @@ __![]](__[*<>
   (strong_emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)
-    (image
-      (image_description))
     (emphasis_delimiter)
     (emphasis_delimiter)))
 
@@ -662,8 +660,6 @@ Certified openers whose closer becomes destination text do not abort
 (inline
   (strikethrough
     (emphasis_delimiter)
-    (image
-      (image_description))
     (emphasis_delimiter))
   (shortcut_link
     (link_text)))
@@ -809,3 +805,22 @@ A longer backtick run after an unclosed one opens the span that owns a bracket
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+Whitespace-only brackets are not link labels
+================================================================================
+[ ] [][] [ ][] [foo][ ] ![ ] ![foo][ ] [ ](x) [ ][foo]
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text))
+  (image
+    (image_description))
+  (inline_link
+    (link_text)
+    (link_destination))
+  (full_reference_link
+    (link_text)
+    (link_label)))

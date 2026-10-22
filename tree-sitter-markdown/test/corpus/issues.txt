@@ -757,3 +757,20 @@ List-like text in nested indented code retains code precedence
           (block_continuation))
         (block_continuation)
         (indented_code_block)))))
+
+================================================================================
+Whitespace-only link labels do not define references
+================================================================================
+[
+ ]: /uri
+
+[ ]: /uri
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (paragraph
+      (inline))
+    (paragraph
+      (inline))))

@@ -41,6 +41,7 @@ module.exports = grammar(add_inline_rules({
         $._literal_emphasis_run,
         $._open_bracket,
         $._unclosed_open_bracket,
+        $._open_bracket_blank,
         $._close_bracket_no_label,
         $._close_bracket_with_label,
         $._close_bracket_unknown_label,
@@ -82,14 +83,14 @@ module.exports = grammar(add_inline_rules({
             alias($._latex_span_close, $.latex_span_delimiter),
         ),
 
-        shortcut_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, $._link_text_non_empty_no_label),
+        shortcut_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, $._link_text_non_blank_no_label),
         full_reference_link: $ => prec.dynamic(2 * PRECEDENCE_LEVEL_LINK, seq(
             $._link_text_with_label,
             $.link_label
         )),
         collapsed_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq(
-            $._link_text_with_label,
-            '[',
+            $._link_text_non_blank_with_label,
+            alias($._open_bracket_blank, '['),
             ']'
         )),
         inline_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq(
@@ -160,9 +161,9 @@ module.exports = grammar(add_inline_rules({
             )),
             ')'
         )),
-        _image_shortcut_link: $ => prec.dynamic(3 * PRECEDENCE_LEVEL_LINK, $._image_description_non_empty_no_label),
+        _image_shortcut_link: $ => prec.dynamic(3 * PRECEDENCE_LEVEL_LINK, $._image_description_non_blank_no_label),
         _image_full_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq($._image_description_with_label, $.link_label)),
-        _image_collapsed_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq($._image_description_with_label, '[', ']')),
+        _image_collapsed_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq($._image_description_non_blank_with_label, alias($._open_bracket_blank, '['), ']')),
 
         // Autolinks. Uri autolinks actually accept protocolls of arbitrary length which does not
         // align with the spec. This is because the binary for the grammar gets to large if done
@@ -191,6 +192,7 @@ module.exports = grammar(add_inline_rules({
         _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
         _digits: $ => new RegExp('[0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
         _soft_line_break: $ => seq($._newline_token, optional($._last_token_whitespace)),
+        _blank_text: $ => repeat1(choice($._whitespace, $._soft_line_break)),
 
         _inline_base: $ => choice(
             $.image,
@@ -352,7 +354,7 @@ function with_context(rule) {
 
 function replace_bracket(rule, $, requiresClose) {
     if (rule.type === 'STRING' && rule.value === ']') return alias(choice($._close_bracket_no_label, $._close_bracket_with_label, $._close_bracket_unknown_label), ']');
-    if (rule.type === 'STRING' && rule.value === '[') return alias(requiresClose ? $._open_bracket : choice($._open_bracket, $._unclosed_open_bracket), '[');
+    if (rule.type === 'STRING' && rule.value === '[') return alias(requiresClose ? $._open_bracket : choice($._open_bracket, $._unclosed_open_bracket, $._open_bracket_blank), '[');
     if (rule.content) return {...rule, content: replace_bracket(rule.content, $, requiresClose)};
     if (rule.members) return {...rule, members: rule.members.map(member => replace_bracket(member, $, requiresClose))};
     return rule;
@@ -360,31 +362,36 @@ function replace_bracket(rule, $, requiresClose) {
 
 function addReferenceHeads(grammar, conflicts) {
     for (const kind of ['link_text', 'image_description']) for (const label of ['no_label', 'with_label']) {
-        const nonempty = `_${kind}_non_empty_${label}`;
-        grammar.rules[nonempty] = $ => referenceHead($, kind, label);
+        const nonBlank = `_${kind}_non_blank_${label}`;
+        grammar.rules[nonBlank] = $ => referenceHead($, kind, label);
         grammar.rules[`_${kind}_${label}`] = $ => prec.dynamic(
             (kind === 'image_description' ? 3 : 1) * PRECEDENCE_LEVEL_LINK,
-            choice($[nonempty], referenceHead($, kind, label, true))
+            choice($[nonBlank], referenceHead($, kind, label, true))
         );
     }
     for (const suffix of ['', '_no_tilde']) for (const label of ['no_label', 'with_label']) conflicts.push(['_inline_element' + suffix, '_link_text_' + label]);
     for (const suffix of ['', '_no_tilde']) conflicts.push(
-        ['_inline_element' + suffix, '_link_text_non_empty_no_label', '_link_text_non_empty_with_label'],
+        ['_inline_element' + suffix, '_link_text_non_blank_no_label', '_link_text_non_blank_with_label'],
         ['_inline_element' + suffix, '_link_text_no_label', '_link_text_with_label'],
     );
     conflicts.push(
-        ['_text_base_no_emphasis', '_image_description_non_empty_no_label', '_image_description_no_label', '_image_description_non_empty_with_label', '_image_description_with_label'],
-        ['_link_text_non_empty_no_label', '_link_text_non_empty_with_label'],
-        ['_image_description_non_empty_no_label', '_image_description_non_empty_with_label'],
+        ['_text_base_no_emphasis', '_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
+        ['_text_base_no_emphasis', '_image_description_no_label', '_image_description_with_label'],
+        ['_link_text_non_blank_no_label', '_link_text_non_blank_with_label'],
+        ['_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
     );
 }
 
-function referenceHead($, kind, label, empty = false) {
+// A head whose brackets enclose only whitespace cannot be a link label, so only inline links and full references accept
+// it, and the scanner's `_open_bracket_blank` marks it.
+function referenceHead($, kind, label, blank = false) {
     const image = kind === 'image_description';
     const close = alias(choice($['_close_bracket_' + label], $._close_bracket_unknown_label), ']');
     return seq(
-        ...(image ? ['!'] : []), '[',
-        ...(empty ? [] : [alias(image ? $._inline : $._inline_no_link, $[kind])]),
+        ...(image ? ['!'] : []),
+        ...(blank
+            ? [alias($._open_bracket_blank, '['), optional(alias($._blank_text, $[kind]))]
+            : ['[', alias(image ? $._inline : $._inline_no_link, $[kind])]),
         image ? prec(1, close) : close,
     );
 }

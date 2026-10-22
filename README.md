@@ -45,6 +45,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - HTML heading tags `h1` through `h6`, including closing and mixed-case forms, start HTML blocks.
 - Malformed HTML tags such as `<hr/x>` and `<div/ x>` remain paragraph text; a slash immediately after the tag name must complete `/>`.
 - Link reference definitions labelled `[x]` or `[X]` are recognized even with task-list support enabled.
+- Brackets that enclose only whitespace, such as `[ ]` or a pair holding only a line ending, are never link labels: they form no shortcut, collapsed, or full reference link and no link reference definition. An empty or whitespace-only link text still forms an inline link or the text of a full reference link.
 - HTML declarations end on the first line containing `>`, leaving subsequent Markdown outside the HTML block.
 - Short HTML comments such as `<!-->` and `<!--->` end on their opening line. Malformed `<!-` prefixes remain ordinary text.
 - Block containers nest to a maximum depth of 255. Additional quote, list, code, or HTML block openers remain literal text inside the deepest container.
