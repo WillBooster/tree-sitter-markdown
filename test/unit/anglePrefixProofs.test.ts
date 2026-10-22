@@ -108,6 +108,44 @@ for (const source of [
   });
 }
 
+for (const [domain, valid] of [
+  ['x'.repeat(63), true],
+  ['x'.repeat(64), false],
+  ['x'.repeat(63) + '.y', true],
+  ['x.' + 'y'.repeat(64), false],
+  ['x' + '-'.repeat(61) + 'x', true],
+  ['x' + '-'.repeat(62) + 'x', false],
+] as const) {
+  test(`email label boundaries preserve delimiters: ${domain}`, () => {
+    const source = '*<a*b@' + domain + '>';
+    const tree = parser.parse(source)!;
+    try {
+      expect(tree.rootNode.hasError).toBe(false);
+      expect(query.captures(tree.rootNode).map(({ node }) => [node.type, node.startIndex, node.endIndex])).toEqual(
+        valid ? [['email_autolink', 1, source.length]] : [['emphasis', 0, 4]]
+      );
+    } finally {
+      tree.delete();
+    }
+  });
+}
+
+test('extending an email label past its limit and undoing agrees with fresh parsing', () => {
+  const source = '*<a*b@' + 'x'.repeat(63) + '>';
+  const end = source.indexOf('>');
+  let tree = parser.parse(source)!;
+  try {
+    const original = snapshot(tree.rootNode);
+    const changed = source.slice(0, end) + 'x' + source.slice(end);
+    tree = edit(tree, changed, end, 0, 1);
+    expect(tree.rootNode.descendantsOfType('emphasis').map((node) => node.text)).toEqual(['*<a*']);
+    tree = edit(tree, source, end, 1, 0);
+    expect(snapshot(tree.rootNode)).toEqual(original);
+  } finally {
+    tree.delete();
+  }
+});
+
 test('editing an impossible tag into an unquoted attribute and undoing preserves full trees and ranges', () => {
   const source = '*<a ~>*~ [ok](target) **tail**';
   let tree = parser.parse(source)!;

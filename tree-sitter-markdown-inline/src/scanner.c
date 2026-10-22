@@ -214,6 +214,7 @@ typedef enum {
     ANGLE_EMAIL_DOMAIN_START = 1 << 21,
     ANGLE_EMAIL_DOMAIN = 1 << 22,
     ANGLE_EMAIL_HYPHEN = 1 << 23,
+    ANGLE_EMAIL_LENGTH_SHIFT = 24,
     ANGLE_HTML_MASK = (1 << 16) - 1,
 } ProofAngle;
 
@@ -1134,14 +1135,13 @@ static ProofAngle next_uri_angle(ProofAngle angle, int32_t next) {
 }
 
 static ProofAngle next_email_angle(ProofAngle angle, int32_t next) {
-    if (angle & ANGLE_EMAIL_LOCAL) {
-        if (next == '@') return ANGLE_EMAIL_DOMAIN_START;
-        return is_email_local(next) ? ANGLE_EMAIL_LOCAL : ANGLE_NONE;
+    if ((angle & ANGLE_EMAIL_LOCAL) && next == '@') return ANGLE_EMAIL_DOMAIN_START;
+    if (angle & ANGLE_EMAIL_LOCAL) return is_email_local(next) ? ANGLE_EMAIL_LOCAL : ANGLE_NONE;
+    bool label_character = is_ascii_alphanumeric(next) || (next == '-' && !(angle & ANGLE_EMAIL_DOMAIN_START));
+    unsigned length = angle >> ANGLE_EMAIL_LENGTH_SHIFT;
+    if ((angle & (ANGLE_EMAIL_DOMAIN_START | ANGLE_EMAIL_DOMAIN | ANGLE_EMAIL_HYPHEN)) && label_character && length < 63) {
+        return (next == '-' ? ANGLE_EMAIL_HYPHEN : ANGLE_EMAIL_DOMAIN) | ((length + 1) << ANGLE_EMAIL_LENGTH_SHIFT);
     }
-    if ((angle & (ANGLE_EMAIL_DOMAIN_START | ANGLE_EMAIL_DOMAIN | ANGLE_EMAIL_HYPHEN)) && is_ascii_alphanumeric(next)) {
-        return ANGLE_EMAIL_DOMAIN;
-    }
-    if ((angle & (ANGLE_EMAIL_DOMAIN | ANGLE_EMAIL_HYPHEN)) && next == '-') return ANGLE_EMAIL_HYPHEN;
     if ((angle & ANGLE_EMAIL_DOMAIN) && next == '.') return ANGLE_EMAIL_DOMAIN_START;
     if ((angle & ANGLE_EMAIL_DOMAIN) && next == '>') return ANGLE_COMPLETE;
     return ANGLE_NONE;
