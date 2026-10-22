@@ -92,9 +92,11 @@ typedef enum {
     LITERAL_EMPHASIS_RUN,
     OPEN_BRACKET,
     UNCLOSED_OPEN_BRACKET,
+    OPEN_BRACKET_BLANK,
     CLOSE_BRACKET_NO_LABEL,
     CLOSE_BRACKET_WITH_LABEL,
     CLOSE_BRACKET_UNKNOWN_LABEL,
+    CLOSE_BRACKET_NESTED,
     HTML_SPECIAL,
     HTML_SPECIAL_OPENER
 } TokenType;
@@ -116,7 +118,7 @@ typedef enum {
 static const uint8_t CONTEXT_WORD = 0;
 static const uint8_t STATE_EMPHASIS_DELIMITER_IS_OPEN = 0x1 << 2;
 
-enum { CERTIFIED_LIMIT = 1024 };
+enum { CERTIFIED_LIMIT = 1024, BLANK_PARENT_DEPTHS = 256 };
 
 typedef struct {
     uint8_t state;
@@ -128,6 +130,9 @@ typedef struct {
     uint8_t unterminated_html;
     uint32_t bracket_depth;
     uint32_t flat_head_depth;
+    // Bit `d - 1` marks that the open bracket at depth `d` directly holds a whitespace-only bracket pair. The scanner
+    // state has a fixed size, so deeper brackets are not tracked and their heads can still become links.
+    uint8_t blank_parents[BLANK_PARENT_DEPTHS / 8];
     uint8_t code_span_delimiter_length;
     uint8_t latex_span_delimiter_length;
     uint32_t num_emphasis_delimiters_left;
@@ -259,7 +264,10 @@ static bool record_emphasis_role(Scanner *s, EmphasisRole role);
 static void pop_certified_opener(Scanner *s);
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
+static bool is_blank_parent(Scanner *s, uint32_t depth);
+static void set_blank_parent(Scanner *s, uint32_t depth, bool blank);
 static bool closes_bracket(const int32_t *text, unsigned length);
+static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer);
 static unsigned span_end(const int32_t *text, unsigned length, unsigned start);
 static TokenType following_label(TSLexer *lexer);
 static unsigned serialize(Scanner *s, char *buffer);
@@ -718,13 +726,16 @@ static void pop_certified_opener(Scanner *s) {
 }
 
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
-    if (!valid_symbols[OPEN_BRACKET] && !valid_symbols[UNCLOSED_OPEN_BRACKET]) return false;
+    if (!valid_symbols[OPEN_BRACKET] && !valid_symbols[UNCLOSED_OPEN_BRACKET] && !valid_symbols[OPEN_BRACKET_BLANK]) {
+        return false;
+    }
     lexer->advance(lexer, false);
     lexer->mark_end(lexer);
     s->context = LAST_TOKEN_PUNCTUATION;
     s->emphasis_context = LAST_TOKEN_PUNCTUATION;
     s->context_pending = is_inline_delimiter(lexer->lookahead);
     s->num_emphasis_delimiters_left = 0;
+    bool blank = false;
     if (!s->no_closing_bracket) {
         // Spans decide which `]` closes, and their extent depends on runs further on, so the text is read first.
         int32_t text[CERTIFIED_LIMIT];
@@ -733,11 +744,14 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
             text[length] = lexer->lookahead;
             lexer->advance(lexer, false);
         }
+        blank = encloses_only_whitespace(text, length, lexer);
         s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length);
     }
-    lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : OPEN_BRACKET;
+    lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : blank ? OPEN_BRACKET_BLANK : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
+    if (blank) set_blank_parent(s, s->bracket_depth, true);
     s->bracket_depth++;
+    set_blank_parent(s, s->bracket_depth, false);
     s->flat_head_depth = s->bracket_depth;
     return true;
 }
@@ -790,37 +804,70 @@ static unsigned span_end(const int32_t *text, unsigned length, unsigned start) {
 }
 
 static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
-    if (!valid_symbols[CLOSE_BRACKET_NO_LABEL] && !valid_symbols[CLOSE_BRACKET_WITH_LABEL] && !valid_symbols[CLOSE_BRACKET_UNKNOWN_LABEL]) return false;
+    if (!valid_symbols[CLOSE_BRACKET_NO_LABEL] && !valid_symbols[CLOSE_BRACKET_WITH_LABEL] &&
+        !valid_symbols[CLOSE_BRACKET_UNKNOWN_LABEL] && !valid_symbols[CLOSE_BRACKET_NESTED]) {
+        return false;
+    }
     lexer->advance(lexer, false);
     lexer->mark_end(lexer);
     s->context = LAST_TOKEN_PUNCTUATION;
     s->emphasis_context = LAST_TOKEN_PUNCTUATION;
     s->context_pending = is_inline_delimiter(lexer->lookahead);
     s->num_emphasis_delimiters_left = 0;
-    lexer->result_symbol = following_label(lexer);
+    // A head holding a whitespace-only bracket pair cannot be a link label.
+    bool nested = is_blank_parent(s, s->bracket_depth);
+    lexer->result_symbol = nested && valid_symbols[CLOSE_BRACKET_NESTED] ? CLOSE_BRACKET_NESTED : following_label(lexer);
     if (!valid_symbols[lexer->result_symbol]) return false;
+    set_blank_parent(s, s->bracket_depth, false);
     if (s->bracket_depth) s->bracket_depth--;
     if (s->flat_head_depth > s->bracket_depth) s->flat_head_depth = 0;
     return true;
 }
 
+static bool is_blank_parent(Scanner *s, uint32_t depth) {
+    if (!depth || depth > BLANK_PARENT_DEPTHS) return false;
+    return s->blank_parents[(depth - 1) / 8] & (1 << ((depth - 1) % 8));
+}
+
+static void set_blank_parent(Scanner *s, uint32_t depth, bool blank) {
+    if (!depth || depth > BLANK_PARENT_DEPTHS) return;
+    uint8_t bit = 1 << ((depth - 1) % 8);
+    if (blank) s->blank_parents[(depth - 1) / 8] |= bit;
+    else s->blank_parents[(depth - 1) / 8] &= ~bit;
+}
+
+// Reports whether only whitespace precedes the first `]` in `text`, the text read after a `[`, and the input after it,
+// which it reads on through whitespace.
+static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer) {
+    unsigned i = 0;
+    while (i < length && is_whitespace(text[i])) i++;
+    if (i < length) return text[i] == ']';
+    while (is_whitespace(lexer->lookahead)) lexer->advance(lexer, false);
+    return lexer->lookahead == ']';
+}
+
 static TokenType following_label(TSLexer *lexer) {
     if (lexer->lookahead != '[') return CLOSE_BRACKET_NO_LABEL;
     lexer->advance(lexer, false);
+    // `[]` completes a collapsed reference, but other whitespace-only brackets are not a label.
+    bool blank = lexer->lookahead != ']';
     for (unsigned remaining = CERTIFIED_LIMIT; remaining; remaining--) {
         if (lexer->eof(lexer)) return CLOSE_BRACKET_NO_LABEL;
         switch (lexer->lookahead) {
             case '[': return CLOSE_BRACKET_NO_LABEL;
             case 0: return CLOSE_BRACKET_UNKNOWN_LABEL;
             case ']':
+                if (blank) return CLOSE_BRACKET_NO_LABEL;
                 lexer->advance(lexer, false);
                 return lexer->lookahead == '(' ? CLOSE_BRACKET_UNKNOWN_LABEL : CLOSE_BRACKET_WITH_LABEL;
             case '\\':
                 lexer->advance(lexer, false);
                 if (remaining == 1 || lexer->eof(lexer)) return CLOSE_BRACKET_UNKNOWN_LABEL;
                 remaining--;
+                blank = false;
                 break;
         }
+        if (!is_whitespace(lexer->lookahead)) blank = false;
         lexer->advance(lexer, false);
     }
     return CLOSE_BRACKET_UNKNOWN_LABEL;

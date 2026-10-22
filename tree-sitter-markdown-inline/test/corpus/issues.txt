@@ -638,8 +638,6 @@ __![]](__[*<>
   (strong_emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)
-    (image
-      (image_description))
     (emphasis_delimiter)
     (emphasis_delimiter)))
 
@@ -662,8 +660,6 @@ Certified openers whose closer becomes destination text do not abort
 (inline
   (strikethrough
     (emphasis_delimiter)
-    (image
-      (image_description))
     (emphasis_delimiter))
   (shortcut_link
     (link_text)))
@@ -809,3 +805,108 @@ A longer backtick run after an unclosed one opens the span that owns a bracket
   (code_span
     (code_span_delimiter)
     (code_span_delimiter)))
+
+================================================================================
+Whitespace-only brackets are not link labels
+================================================================================
+[ ] [][] [ ][] [foo][ ] ![ ] ![foo][ ] [ ](x) [ ][foo]
+
+--------------------------------------------------------------------------------
+
+(inline
+  (shortcut_link
+    (link_text))
+  (image
+    (image_description))
+  (inline_link
+    (link_text)
+    (link_destination))
+  (full_reference_link
+    (link_text)
+    (link_label)))
+
+================================================================================
+Whitespace-only brackets balance inside link text and image descriptions
+================================================================================
+![a [ ] b](x) [see [ ] here](y) [a [] b](z) ![c [ ] d][r] [e [ ] f] [[]*]*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (image
+    (image_description)
+    (link_destination))
+  (inline_link
+    (link_text)
+    (link_destination))
+  (inline_link
+    (link_text)
+    (link_destination))
+  (image
+    (image_description)
+    (link_label))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Whitespace-only link text keeps its hard line break
+================================================================================
+[  
+](x)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (inline_link
+    (link_text
+      (hard_line_break))
+    (link_destination)))
+
+================================================================================
+Brackets around a blank image or nested label keep the enclosing reference
+================================================================================
+![a[b]c][] [a![ ]b](x) [c [] ![d [] e](y) f][]
+
+--------------------------------------------------------------------------------
+
+(inline
+  (image
+    (image_description
+      (shortcut_link
+        (link_text))))
+  (inline_link
+    (link_text)
+    (link_destination))
+  (image
+    (image_description)
+    (link_destination)))
+
+================================================================================
+A shortcut image inside link text holding a whitespace-only pair stays an image
+================================================================================
+[a [] ![b] c](x)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (inline_link
+    (link_text
+      (image
+        (image_description)))
+    (link_destination)))
+
+================================================================================
+A blank inline link inside an image description stays a link
+================================================================================
+![c [ ](x) d](y)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (image
+    (image_description
+      (inline_link
+        (link_text)
+        (link_destination)))
+    (link_destination)))

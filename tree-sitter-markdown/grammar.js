@@ -25,9 +25,15 @@ module.exports = grammar({
 
         ...common.rules,
         _last_token_punctuation: $ => choice(), // needed for compatability with common rules
-        link_label: $ => common.EXTENSION_TASK_LIST
-            ? choice(common.rules.link_label($), /\[[xX]\]/)
-            : common.rules.link_label($),
+        // Unlike the inline grammar, whose scanner marks whitespace-only brackets, this grammar requires a character
+        // other than whitespace itself.
+        link_label: $ => {
+            const blank = choice($._whitespace, $._soft_line_break);
+            const other = choice($._word, common.punctuation_without($, ['[', ']']), $.backslash_escape,
+                $.entity_reference, $.numeric_character_reference);
+            const label = seq('[', repeat(blank), other, repeat(choice(blank, other)), ']');
+            return common.EXTENSION_TASK_LIST ? choice(label, /\[[xX]\]/) : label;
+        },
 
         // BLOCK STRUCTURE
 
