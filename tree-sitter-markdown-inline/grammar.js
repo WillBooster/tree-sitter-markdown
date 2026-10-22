@@ -15,12 +15,13 @@ const LITERAL_BRACKET_RULES = ['code_span', 'latex_block', 'link_destination', '
 const PUNCTUATION_CHARACTERS_REGEX = '!-/:-@\\[-`\\{-~';
 // Characters above U+007F that CommonMark counts as punctuation or whitespace when deciding whether a delimiter run is
 // left- or right-flanking. They are tokens of their own so that the scanner learns what precedes a delimiter run.
-const UNICODE_PUNCTUATION_REGEX = [...require('fs')
-    .readFileSync(require('path').join(__dirname, 'src/unicode_punctuation.h'), 'utf8')
+const UNICODE_TABLES = require('fs').readFileSync(require('path').join(__dirname, 'src/unicode.h'), 'utf8');
+const unicodeClass = name => [...UNICODE_TABLES.slice(UNICODE_TABLES.indexOf(name)).split('};')[0]
     .matchAll(/\{(0x[0-9A-F]+), (0x[0-9A-F]+)\}/g)]
     .map(([, start, end]) => `\\x{${start.slice(2)}}-\\x{${end.slice(2)}}`)
     .join('');
-const UNICODE_WHITESPACE_REGEX = '\\x{A0}\\x{1680}\\x{2000}-\\x{200A}\\x{202F}\\x{205F}\\x{3000}';
+const UNICODE_PUNCTUATION_REGEX = unicodeClass('UNICODE_PUNCTUATION');
+const UNICODE_WHITESPACE_REGEX = unicodeClass('UNICODE_WHITESPACE');
 const NOT_WORD_REGEX = PUNCTUATION_CHARACTERS_REGEX + UNICODE_PUNCTUATION_REGEX + UNICODE_WHITESPACE_REGEX + ' \\t\\n\\r';
 
 module.exports = grammar(add_inline_rules({

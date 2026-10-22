@@ -1,6 +1,15 @@
-// Unicode 17.0 code points above U+007F in the general categories P (punctuation) and S (symbols),
-// which CommonMark counts as punctuation when deciding whether a delimiter run is left- or right-flanking.
-// tree-sitter-markdown-inline/grammar.js reads these ranges, so keep one range per line in this form.
+// Unicode 17.0 code points above U+007F that CommonMark counts as punctuation (general categories P and S) or as
+// whitespace (category Zs) when deciding whether a delimiter run is left- or right-flanking.
+// tree-sitter-markdown-inline/grammar.js reads these tables, so keep their names and one range per line in this form.
+static const int32_t UNICODE_WHITESPACE[][2] = {
+    {0x00A0, 0x00A0},
+    {0x1680, 0x1680},
+    {0x2000, 0x200A},
+    {0x202F, 0x202F},
+    {0x205F, 0x205F},
+    {0x3000, 0x3000},
+};
+
 static const int32_t UNICODE_PUNCTUATION[][2] = {
     {0x00A1, 0x00A9},
     {0x00AB, 0x00AC},

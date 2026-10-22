@@ -27,7 +27,7 @@ export function generationInputMtime(root: string, grammar: Grammar): number {
     path.join(root, 'common/html_entities.json'),
     path.join(root, grammar, 'grammar.js'),
     // The inline grammar reads its Unicode punctuation from the scanner's header.
-    ...(grammar === 'tree-sitter-markdown-inline' ? [path.join(root, grammar, 'src/unicode_punctuation.h')] : []),
+    ...(grammar === 'tree-sitter-markdown-inline' ? [path.join(root, grammar, 'src/unicode.h')] : []),
     corpus,
     ...fs.readdirSync(corpus, { recursive: true, encoding: 'utf8' }).map((file) => path.join(corpus, file)),
     ...examples.map((file) => path.join(root, file)),

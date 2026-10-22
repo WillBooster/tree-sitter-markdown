@@ -1,5 +1,5 @@
 #include "tree_sitter/parser.h"
-#include "unicode_punctuation.h"
+#include "unicode.h"
 #include <string.h>
 #include <stddef.h>
 #include <assert.h>
@@ -302,6 +302,7 @@ static bool is_punctuation(int32_t chr);
 static bool is_whitespace(int32_t character);
 static bool is_flanking_whitespace(int32_t character);
 static bool is_flanking_punctuation(int32_t character);
+static bool in_unicode_table(const int32_t (*table)[2], unsigned length, int32_t character);
 static DelimiterFlanks delimiter_flanks(char delimiter, bool previous_space, bool previous_punctuation,
                                        bool next_space, bool next_punctuation);
 static bool is_inline_delimiter(int32_t character);
@@ -1157,23 +1158,24 @@ static bool is_whitespace(int32_t character) {
     return character == ' ' || character == '\t' || character == '\r' || character == '\n';
 }
 
-// CommonMark's Unicode whitespace: the Zs category, tab, and line endings. The grammar's `_unicode_whitespace` matches
-// the same code points above U+007F.
+// CommonMark's Unicode whitespace: the Zs category, tab, and line endings.
 static bool is_flanking_whitespace(int32_t character) {
-    return is_whitespace(character) || character == 0x00A0 || character == 0x1680 ||
-           (character >= 0x2000 && character <= 0x200A) || character == 0x202F || character == 0x205F ||
-           character == 0x3000;
+    return is_whitespace(character) || in_unicode_table(UNICODE_WHITESPACE, sizeof(UNICODE_WHITESPACE) / sizeof(*UNICODE_WHITESPACE), character);
 }
 
 static bool is_flanking_punctuation(int32_t character) {
     if (character < 0x80) return is_punctuation(character);
+    return in_unicode_table(UNICODE_PUNCTUATION, sizeof(UNICODE_PUNCTUATION) / sizeof(*UNICODE_PUNCTUATION), character);
+}
+
+static bool in_unicode_table(const int32_t (*table)[2], unsigned length, int32_t character) {
     unsigned low = 0;
-    unsigned high = sizeof(UNICODE_PUNCTUATION) / sizeof(*UNICODE_PUNCTUATION);
+    unsigned high = length;
     while (low < high) {
         unsigned middle = (low + high) / 2;
-        if (character < UNICODE_PUNCTUATION[middle][0]) {
+        if (character < table[middle][0]) {
             high = middle;
-        } else if (character > UNICODE_PUNCTUATION[middle][1]) {
+        } else if (character > table[middle][1]) {
             low = middle + 1;
         } else {
             return true;

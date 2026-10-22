@@ -32,7 +32,7 @@ fn main() {
     }
     println!(
         "cargo:rerun-if-changed={}",
-        inline_dir.join("unicode_punctuation.h").display()
+        inline_dir.join("unicode.h").display()
     );
 
     c_config.compile("tree-sitter-markdown");
