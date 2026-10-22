@@ -51,6 +51,15 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
           expect(largeFastest / smallFastest, JSON.stringify({ padding, samples })).toBeLessThan(18);
         }
       });
+      for (const delimiter of ['*', '_', '`', '~', '* ']) {
+        test(
+          `parses a long ${JSON.stringify(delimiter)} run in a paragraph in linear time`,
+          { timeout: 60_000 },
+          () => {
+            expectLinearParsing(parser, delimiter, (run) => `a\n${run}x${run}\n`);
+          }
+        );
+      }
       test('does not rescan a long blank suffix for every closing list depth', { timeout: 60_000 }, () => {
         const shallow = listWithBlankSuffix(25);
         const deep = listWithBlankSuffix(250);
@@ -89,9 +98,9 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
   });
 }
 
-function expectLinearParsing(parser: Parser, line: string): void {
-  const small = line.repeat(2000);
-  const large = line.repeat(20_000);
+function expectLinearParsing(parser: Parser, line: string, wrap = (lines: string): string => lines): void {
+  const small = wrap(line.repeat(2000));
+  const large = wrap(line.repeat(20_000));
   parseCpuTime(parser, large);
   parseCpuTime(parser, large);
   let smallFastest = Infinity;
