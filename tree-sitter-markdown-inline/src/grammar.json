@@ -1762,8 +1762,12 @@
             "type": "SEQ",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "_link_text_non_blank_with_label"
+                "type": "PREC_DYNAMIC",
+                "value": 100,
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_link_text_non_blank_with_label"
+                }
               },
               {
                 "type": "ALIAS",
@@ -2581,8 +2585,12 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "SYMBOL",
-            "name": "_image_description_non_blank_with_label"
+            "type": "PREC_DYNAMIC",
+            "value": 300,
+            "content": {
+              "type": "SYMBOL",
+              "name": "_image_description_non_blank_with_label"
+            }
           },
           {
             "type": "ALIAS",
@@ -9175,68 +9183,13 @@
     ],
     [
       "_inline_element",
-      "_link_text_no_label"
-    ],
-    [
-      "_inline_element",
-      "_link_text_with_label"
-    ],
-    [
-      "_inline_element_no_tilde",
-      "_link_text_no_label"
-    ],
-    [
-      "_inline_element_no_tilde",
-      "_link_text_with_label"
-    ],
-    [
-      "_inline_element",
       "_link_text_non_blank_no_label",
-      "_link_text_non_blank_with_label"
-    ],
-    [
-      "_inline_element",
       "_link_text_no_label",
+      "_link_text_non_blank_with_label",
       "_link_text_with_label"
     ],
     [
       "_inline_element_no_tilde",
-      "_link_text_non_blank_no_label",
-      "_link_text_non_blank_with_label"
-    ],
-    [
-      "_inline_element_no_tilde",
-      "_link_text_no_label",
-      "_link_text_with_label"
-    ],
-    [
-      "_text_base_no_emphasis",
-      "_image_description_non_blank_no_label",
-      "_image_description_non_blank_with_label"
-    ],
-    [
-      "_text_base_no_emphasis",
-      "_image_description_no_label",
-      "_image_description_with_label"
-    ],
-    [
-      "_link_text_non_blank_no_label",
-      "_link_text_non_blank_with_label"
-    ],
-    [
-      "_blank_brackets",
-      "_link_text_no_label"
-    ],
-    [
-      "_blank_brackets",
-      "_link_text_with_label"
-    ],
-    [
-      "_image_description_non_blank_no_label",
-      "_image_description_non_blank_with_label"
-    ],
-    [
-      "_inline_element",
       "_link_text_non_blank_no_label",
       "_link_text_no_label",
       "_link_text_non_blank_with_label",
@@ -9250,10 +9203,24 @@
       "_image_description_with_label"
     ],
     [
-      "_inline_element_no_tilde",
+      "_text_base_no_emphasis",
+      "_image_description_no_label",
+      "_image_description_with_label"
+    ],
+    [
       "_link_text_non_blank_no_label",
-      "_link_text_no_label",
-      "_link_text_non_blank_with_label",
+      "_link_text_non_blank_with_label"
+    ],
+    [
+      "_image_description_non_blank_no_label",
+      "_image_description_non_blank_with_label"
+    ],
+    [
+      "_blank_brackets",
+      "_link_text_no_label"
+    ],
+    [
+      "_blank_brackets",
       "_link_text_with_label"
     ]
   ],

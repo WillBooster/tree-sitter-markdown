@@ -862,3 +862,19 @@ Whitespace-only link text keeps its hard line break
     (link_text
       (hard_line_break))
     (link_destination)))
+
+================================================================================
+Brackets around a blank image or nested label keep the enclosing reference
+================================================================================
+![a[b]c][] [a![ ]b](x)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (image
+    (image_description
+      (shortcut_link
+        (link_text))))
+  (inline_link
+    (link_text)
+    (link_destination)))

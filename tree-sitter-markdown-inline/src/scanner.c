@@ -741,8 +741,8 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
             text[length] = lexer->lookahead;
             lexer->advance(lexer, false);
         }
-        s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length);
         blank = encloses_only_whitespace(text, length, lexer);
+        s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length);
     }
     lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : blank ? OPEN_BRACKET_BLANK : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
@@ -820,7 +820,8 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
     return true;
 }
 
-// Reports whether only whitespace precedes the first `]` in `text`, the text read after a `[`, and the input after it.
+// Reports whether only whitespace precedes the first `]` in `text`, the text read after a `[`, and the input after it,
+// which it reads on through whitespace.
 static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer) {
     unsigned i = 0;
     while (i < length && is_whitespace(text[i])) i++;

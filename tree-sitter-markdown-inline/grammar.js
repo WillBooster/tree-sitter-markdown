@@ -90,7 +90,7 @@ module.exports = grammar(add_inline_rules({
             $.link_label
         )),
         collapsed_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq(
-            $._link_text_non_blank_with_label,
+            prec.dynamic(PRECEDENCE_LEVEL_LINK, $._link_text_non_blank_with_label),
             alias($._open_bracket_blank, '['),
             ']'
         )),
@@ -164,7 +164,7 @@ module.exports = grammar(add_inline_rules({
         )),
         _image_shortcut_link: $ => prec.dynamic(3 * PRECEDENCE_LEVEL_LINK, $._image_description_non_blank_no_label),
         _image_full_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq($._image_description_with_label, $.link_label)),
-        _image_collapsed_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq($._image_description_non_blank_with_label, alias($._open_bracket_blank, '['), ']')),
+        _image_collapsed_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq(prec.dynamic(3 * PRECEDENCE_LEVEL_LINK, $._image_description_non_blank_with_label), alias($._open_bracket_blank, '['), ']')),
 
         // Autolinks. Uri autolinks actually accept protocolls of arbitrary length which does not
         // align with the spec. This is because the binary for the grammar gets to large if done
@@ -373,21 +373,15 @@ function addReferenceHeads(grammar, conflicts) {
             choice($[nonBlank], referenceHead($, kind, label, 'blank'), referenceHead($, kind, label, 'nested'))
         );
     }
-    for (const suffix of ['', '_no_tilde']) for (const label of ['no_label', 'with_label']) conflicts.push(['_inline_element' + suffix, '_link_text_' + label]);
-    for (const suffix of ['', '_no_tilde']) conflicts.push(
-        ['_inline_element' + suffix, '_link_text_non_blank_no_label', '_link_text_non_blank_with_label'],
-        ['_inline_element' + suffix, '_link_text_no_label', '_link_text_with_label'],
-    );
+    const heads = kind => [`_${kind}_non_blank_no_label`, `_${kind}_no_label`, `_${kind}_non_blank_with_label`, `_${kind}_with_label`];
+    for (const suffix of ['', '_no_tilde']) conflicts.push(['_inline_element' + suffix, ...heads('link_text')]);
     conflicts.push(
-        ['_text_base_no_emphasis', '_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
+        ['_text_base_no_emphasis', ...heads('image_description')],
         ['_text_base_no_emphasis', '_image_description_no_label', '_image_description_with_label'],
         ['_link_text_non_blank_no_label', '_link_text_non_blank_with_label'],
+        ['_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
         ['_blank_brackets', '_link_text_no_label'],
         ['_blank_brackets', '_link_text_with_label'],
-        ['_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
-        ['_inline_element', '_link_text_non_blank_no_label', '_link_text_no_label', '_link_text_non_blank_with_label', '_link_text_with_label'],
-        ['_text_base_no_emphasis', '_image_description_non_blank_no_label', '_image_description_no_label', '_image_description_non_blank_with_label', '_image_description_with_label'],
-        ['_inline_element_no_tilde', '_link_text_non_blank_no_label', '_link_text_no_label', '_link_text_non_blank_with_label', '_link_text_with_label'],
     );
 }
 
