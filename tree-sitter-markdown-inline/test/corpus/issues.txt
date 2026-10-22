@@ -824,3 +824,41 @@ Whitespace-only brackets are not link labels
   (full_reference_link
     (link_text)
     (link_label)))
+
+================================================================================
+Whitespace-only brackets balance inside link text and image descriptions
+================================================================================
+![a [ ] b](x) [see [ ] here](y) [a [] b](z) ![c [ ] d][r] [e [ ] f] [[]*]*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (image
+    (image_description)
+    (link_destination))
+  (inline_link
+    (link_text)
+    (link_destination))
+  (inline_link
+    (link_text)
+    (link_destination))
+  (image
+    (image_description)
+    (link_label))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Whitespace-only link text keeps its hard line break
+================================================================================
+[  
+](x)
+
+--------------------------------------------------------------------------------
+
+(inline
+  (inline_link
+    (link_text
+      (hard_line_break))
+    (link_destination)))

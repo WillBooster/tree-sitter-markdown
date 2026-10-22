@@ -45,6 +45,7 @@ module.exports = grammar(add_inline_rules({
         $._close_bracket_no_label,
         $._close_bracket_with_label,
         $._close_bracket_unknown_label,
+        $._close_bracket_nested,
         // Processing instructions, declarations, and CDATA sections, which the scanner reads so that it can remember a
         // missing terminator instead of rescanning the rest of the input at every later opener.
         $._html_special,
@@ -192,7 +193,9 @@ module.exports = grammar(add_inline_rules({
         _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
         _digits: $ => new RegExp('[0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
         _soft_line_break: $ => seq($._newline_token, optional($._last_token_whitespace)),
-        _blank_text: $ => repeat1(choice($._whitespace, $._soft_line_break)),
+        _blank_text: $ => repeat1(choice($._whitespace, $._soft_line_break, $.hard_line_break)),
+        // Whitespace-only brackets are no link, but they still balance inside link text and image descriptions.
+        _blank_brackets: $ => seq(alias($._open_bracket_blank, '['), optional($._blank_text), ']', optional($._last_token_punctuation)),
 
         _inline_base: $ => choice(
             $.image,
@@ -301,6 +304,7 @@ function inlineElements($, suffixLink, link, noTilde) {
         ]),
         ...(common.EXTENSION_STRIKETHROUGH ? [alias($['_strikethrough' + suffixLink], $.strikethrough)] : []),
         ...(noTilde ? [] : [$._strikethrough_open]),
+        $._blank_brackets,
         ...(link ? [
             $.shortcut_link, $.full_reference_link, $.collapsed_reference_link, $.inline_link,
             seq(choice('[', ']'), optional($._last_token_punctuation)),
@@ -353,8 +357,8 @@ function with_context(rule) {
 }
 
 function replace_bracket(rule, $, requiresClose) {
-    if (rule.type === 'STRING' && rule.value === ']') return alias(choice($._close_bracket_no_label, $._close_bracket_with_label, $._close_bracket_unknown_label), ']');
-    if (rule.type === 'STRING' && rule.value === '[') return alias(requiresClose ? $._open_bracket : choice($._open_bracket, $._unclosed_open_bracket, $._open_bracket_blank), '[');
+    if (rule.type === 'STRING' && rule.value === ']') return alias(choice($._close_bracket_no_label, $._close_bracket_with_label, $._close_bracket_unknown_label, $._close_bracket_nested), ']');
+    if (rule.type === 'STRING' && rule.value === '[') return alias(requiresClose ? $._open_bracket : choice($._open_bracket, $._unclosed_open_bracket), '[');
     if (rule.content) return {...rule, content: replace_bracket(rule.content, $, requiresClose)};
     if (rule.members) return {...rule, members: rule.members.map(member => replace_bracket(member, $, requiresClose))};
     return rule;
@@ -366,7 +370,7 @@ function addReferenceHeads(grammar, conflicts) {
         grammar.rules[nonBlank] = $ => referenceHead($, kind, label);
         grammar.rules[`_${kind}_${label}`] = $ => prec.dynamic(
             (kind === 'image_description' ? 3 : 1) * PRECEDENCE_LEVEL_LINK,
-            choice($[nonBlank], referenceHead($, kind, label, true))
+            choice($[nonBlank], referenceHead($, kind, label, 'blank'), referenceHead($, kind, label, 'nested'))
         );
     }
     for (const suffix of ['', '_no_tilde']) for (const label of ['no_label', 'with_label']) conflicts.push(['_inline_element' + suffix, '_link_text_' + label]);
@@ -378,20 +382,29 @@ function addReferenceHeads(grammar, conflicts) {
         ['_text_base_no_emphasis', '_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
         ['_text_base_no_emphasis', '_image_description_no_label', '_image_description_with_label'],
         ['_link_text_non_blank_no_label', '_link_text_non_blank_with_label'],
+        ['_blank_brackets', '_link_text_no_label'],
+        ['_blank_brackets', '_link_text_with_label'],
         ['_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
+        ['_inline_element', '_link_text_non_blank_no_label', '_link_text_no_label', '_link_text_non_blank_with_label', '_link_text_with_label'],
+        ['_text_base_no_emphasis', '_image_description_non_blank_no_label', '_image_description_no_label', '_image_description_non_blank_with_label', '_image_description_with_label'],
+        ['_inline_element_no_tilde', '_link_text_non_blank_no_label', '_link_text_no_label', '_link_text_non_blank_with_label', '_link_text_with_label'],
     );
 }
 
-// A head whose brackets enclose only whitespace cannot be a link label, so only inline links and full references accept
-// it, and the scanner's `_open_bracket_blank` marks it.
-function referenceHead($, kind, label, blank = false) {
+// A head that encloses only whitespace, whose `[` the scanner marks as `_open_bracket_blank`, or that holds a
+// whitespace-only bracket pair, whose `]` the scanner marks as `_close_bracket_nested`, cannot be a link label, so only
+// inline links and full references accept it.
+function referenceHead($, kind, label, variant) {
     const image = kind === 'image_description';
-    const close = alias(choice($['_close_bracket_' + label], $._close_bracket_unknown_label), ']');
+    const content = alias(image ? $._inline : $._inline_no_link, $[kind]);
+    const close = variant === 'nested'
+        ? alias($._close_bracket_nested, ']')
+        : alias(choice($['_close_bracket_' + label], $._close_bracket_unknown_label), ']');
     return seq(
         ...(image ? ['!'] : []),
-        ...(blank
+        ...(variant === 'blank'
             ? [alias($._open_bracket_blank, '['), optional(alias($._blank_text, $[kind]))]
-            : ['[', alias(image ? $._inline : $._inline_no_link, $[kind])]),
+            : ['[', content]),
         image ? prec(1, close) : close,
     );
 }
