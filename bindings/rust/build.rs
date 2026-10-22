@@ -30,7 +30,10 @@ fn main() {
         c_config.file(&path);
         println!("cargo:rerun-if-changed={}", path.display());
     }
-    println!("cargo:rerun-if-changed={}", inline_dir.join("unicode_punctuation.h").display());
+    println!(
+        "cargo:rerun-if-changed={}",
+        inline_dir.join("unicode_punctuation.h").display()
+    );
 
     c_config.compile("tree-sitter-markdown");
 }
