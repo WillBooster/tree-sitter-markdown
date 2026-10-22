@@ -86,6 +86,11 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
           expectLinearParsing(parser, line);
         });
       }
+      for (const line of ['*<a ~>*~ ', '*<a title="~>*">x</a>*~ ']) {
+        test(`parses repeated angle prefixes ${JSON.stringify(line)} in linear time`, { timeout: 60_000 }, () => {
+          expectLinearParsing(parser, line);
+        });
+      }
       for (const line of ['a <?a\n', 'a <![CDATA[a\n', 'a <!X a\n']) {
         test(
           `parses repeated unterminated raw HTML ${JSON.stringify(line)} in linear time`,
