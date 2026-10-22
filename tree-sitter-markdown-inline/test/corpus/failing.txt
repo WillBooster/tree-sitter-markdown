@@ -207,15 +207,3 @@ Example 588 - https://github.github.com/gfm/#example-588
   (image
     (image_description)
     (link_destination)))
-
-================================================================================
-Example 635 - https://github.github.com/gfm/#example-635
-:skip
-================================================================================
-<a foo="bar" bam = 'baz <em>"</em>'
-_boolean zoop:33=zoop:33 />
-
---------------------------------------------------------------------------------
-
-(inline
-  (html_tag))
