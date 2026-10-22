@@ -8437,10 +8437,6 @@
                   "members": [
                     {
                       "type": "SYMBOL",
-                      "name": "_close_bracket_nested"
-                    },
-                    {
-                      "type": "SYMBOL",
                       "name": "_close_bracket_no_label"
                     },
                     {
@@ -8478,13 +8474,8 @@
               {
                 "type": "ALIAS",
                 "content": {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "_close_bracket_nested"
-                    }
-                  ]
+                  "type": "SYMBOL",
+                  "name": "_close_bracket_nested"
                 },
                 "named": false,
                 "value": "]"
@@ -8581,10 +8572,6 @@
                   "members": [
                     {
                       "type": "SYMBOL",
-                      "name": "_close_bracket_nested"
-                    },
-                    {
-                      "type": "SYMBOL",
                       "name": "_close_bracket_with_label"
                     },
                     {
@@ -8622,13 +8609,8 @@
               {
                 "type": "ALIAS",
                 "content": {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "_close_bracket_nested"
-                    }
-                  ]
+                  "type": "SYMBOL",
+                  "name": "_close_bracket_nested"
                 },
                 "named": false,
                 "value": "]"
@@ -8740,10 +8722,6 @@
                     "members": [
                       {
                         "type": "SYMBOL",
-                        "name": "_close_bracket_nested"
-                      },
-                      {
-                        "type": "SYMBOL",
                         "name": "_close_bracket_no_label"
                       },
                       {
@@ -8789,13 +8767,8 @@
                 "content": {
                   "type": "ALIAS",
                   "content": {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "_close_bracket_nested"
-                      }
-                    ]
+                    "type": "SYMBOL",
+                    "name": "_close_bracket_nested"
                   },
                   "named": false,
                   "value": "]"
@@ -8908,10 +8881,6 @@
                     "members": [
                       {
                         "type": "SYMBOL",
-                        "name": "_close_bracket_nested"
-                      },
-                      {
-                        "type": "SYMBOL",
                         "name": "_close_bracket_with_label"
                       },
                       {
@@ -8957,13 +8926,8 @@
                 "content": {
                   "type": "ALIAS",
                   "content": {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "_close_bracket_nested"
-                      }
-                    ]
+                    "type": "SYMBOL",
+                    "name": "_close_bracket_nested"
                   },
                   "named": false,
                   "value": "]"

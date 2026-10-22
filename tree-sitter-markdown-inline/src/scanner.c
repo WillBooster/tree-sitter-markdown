@@ -264,7 +264,7 @@ static bool record_emphasis_role(Scanner *s, EmphasisRole role);
 static void pop_certified_opener(Scanner *s);
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
-static bool inside_blank_parent(Scanner *s, uint32_t depth);
+static bool is_blank_parent(Scanner *s, uint32_t depth);
 static void set_blank_parent(Scanner *s, uint32_t depth, bool blank);
 static bool closes_bracket(const int32_t *text, unsigned length);
 static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer);
@@ -814,9 +814,8 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
     s->emphasis_context = LAST_TOKEN_PUNCTUATION;
     s->context_pending = is_inline_delimiter(lexer->lookahead);
     s->num_emphasis_delimiters_left = 0;
-    // A head holding a whitespace-only bracket pair cannot be a link label, and neither can a head inside it: the
-    // grammar can read an inner `[` as text, and then this `]` closes the enclosing head.
-    bool nested = inside_blank_parent(s, s->bracket_depth);
+    // A head holding a whitespace-only bracket pair cannot be a link label.
+    bool nested = is_blank_parent(s, s->bracket_depth);
     lexer->result_symbol = nested && valid_symbols[CLOSE_BRACKET_NESTED] ? CLOSE_BRACKET_NESTED : following_label(lexer);
     if (!valid_symbols[lexer->result_symbol]) return false;
     set_blank_parent(s, s->bracket_depth, false);
@@ -825,12 +824,9 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
     return true;
 }
 
-static bool inside_blank_parent(Scanner *s, uint32_t depth) {
-    if (depth > BLANK_PARENT_DEPTHS) depth = BLANK_PARENT_DEPTHS;
-    for (uint32_t i = 0; i < depth; i++) {
-        if (s->blank_parents[i / 8] & (1 << (i % 8))) return true;
-    }
-    return false;
+static bool is_blank_parent(Scanner *s, uint32_t depth) {
+    if (!depth || depth > BLANK_PARENT_DEPTHS) return false;
+    return s->blank_parents[(depth - 1) / 8] & (1 << ((depth - 1) % 8));
 }
 
 static void set_blank_parent(Scanner *s, uint32_t depth, bool blank) {

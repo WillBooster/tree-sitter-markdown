@@ -883,16 +883,18 @@ Brackets around a blank image or nested label keep the enclosing reference
     (link_destination)))
 
 ================================================================================
-A head holding a whitespace-only pair cannot close at an inner bracket
+A shortcut image inside link text holding a whitespace-only pair stays an image
 ================================================================================
-![a [ ][r] b]
+[a [] ![b] c](x)
 
 --------------------------------------------------------------------------------
 
 (inline
-  (full_reference_link
-    (link_text)
-    (link_label)))
+  (inline_link
+    (link_text
+      (image
+        (image_description)))
+    (link_destination)))
 
 ================================================================================
 A blank inline link inside an image description stays a link
