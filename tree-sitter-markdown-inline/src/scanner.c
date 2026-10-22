@@ -130,10 +130,9 @@ typedef struct {
     uint8_t unterminated_html;
     uint32_t bracket_depth;
     uint32_t flat_head_depth;
-    // Bit `d - 1` marks that the open bracket at depth `d` directly holds a whitespace-only bracket pair; one flag
-    // stands for every deeper bracket.
+    // Bit `d - 1` marks that the open bracket at depth `d` directly holds a whitespace-only bracket pair. The scanner
+    // state has a fixed size, so deeper brackets are not tracked and their heads can still become links.
     uint8_t blank_parents[BLANK_PARENT_DEPTHS / 8];
-    bool deep_blank_parent;
     uint8_t code_span_delimiter_length;
     uint8_t latex_span_delimiter_length;
     uint32_t num_emphasis_delimiters_left;
@@ -821,24 +820,17 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
     if (!valid_symbols[lexer->result_symbol]) return false;
     set_blank_parent(s, s->bracket_depth, false);
     if (s->bracket_depth) s->bracket_depth--;
-    if (s->bracket_depth <= BLANK_PARENT_DEPTHS) s->deep_blank_parent = false;
     if (s->flat_head_depth > s->bracket_depth) s->flat_head_depth = 0;
     return true;
 }
 
 static bool is_blank_parent(Scanner *s, uint32_t depth) {
-    if (!depth) return false;
-    if (depth > BLANK_PARENT_DEPTHS) return s->deep_blank_parent;
+    if (!depth || depth > BLANK_PARENT_DEPTHS) return false;
     return s->blank_parents[(depth - 1) / 8] & (1 << ((depth - 1) % 8));
 }
 
-// Brackets beyond the tracked depths share one mark, which `parse_close_bracket` clears once they are all closed.
 static void set_blank_parent(Scanner *s, uint32_t depth, bool blank) {
-    if (!depth) return;
-    if (depth > BLANK_PARENT_DEPTHS) {
-        if (blank) s->deep_blank_parent = true;
-        return;
-    }
+    if (!depth || depth > BLANK_PARENT_DEPTHS) return;
     uint8_t bit = 1 << ((depth - 1) % 8);
     if (blank) s->blank_parents[(depth - 1) / 8] |= bit;
     else s->blank_parents[(depth - 1) / 8] &= ~bit;
