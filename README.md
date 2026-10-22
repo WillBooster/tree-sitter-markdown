@@ -44,6 +44,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
 - Empty pipe-table header and body cells parse without missing nodes. Zero-content cells retain their separators without a named cell node, so a header can have no cell children; a lone `|` on a body line ends the table; rows such as `| text` retain their cell content.
 - Optional closing hash sequences in ATX headings are separate `atx_heading_closing_sequence` nodes, outside the heading’s inline content.
 - HTML heading tags `h1` through `h6`, including closing and mixed-case forms, start HTML blocks.
+- Raw HTML follows CommonMark 0.31.2 where it differs from the GFM 0.29 spec: `<textarea>` starts an HTML block that ends at a closing `pre`, `script`, `style`, or `textarea` tag, `<search>` starts an HTML block while `<source>` no longer does, and inline comments may contain `--`, with `<!-->` and `<!--->` complete comments.
 - Malformed HTML tags such as `<hr/x>` and `<div/ x>` remain paragraph text; a slash immediately after the tag name must complete `/>`.
 - Link reference definitions labelled `[x]` or `[X]` are recognized even with task-list support enabled.
 - Brackets that enclose only whitespace, such as `[ ]` or a pair holding only a line ending, are never link labels: they form no shortcut, collapsed, or full reference link and no link reference definition. An empty or whitespace-only link text still forms an inline link or the text of a full reference link.

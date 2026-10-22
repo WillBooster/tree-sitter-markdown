@@ -109,10 +109,10 @@ static uint8_t list_item_indentation(Block block) {
     return (uint8_t)(block - LIST_ITEM + 2);
 }
 
-#define NUM_HTML_TAG_NAMES_RULE_1 3
+#define NUM_HTML_TAG_NAMES_RULE_1 4
 
 static const char *const HTML_TAG_NAMES_RULE_1[NUM_HTML_TAG_NAMES_RULE_1] = {
-    "pre", "script", "style"};
+    "pre", "script", "style", "textarea"};
 
 #define NUM_HTML_TAG_NAMES_RULE_7 62
 
@@ -125,7 +125,7 @@ static const char *const HTML_TAG_NAMES_RULE_7[NUM_HTML_TAG_NAMES_RULE_7] = {
     "h6",       "head",       "header", "hr",       "html",     "iframe",
     "legend",   "li",         "link",   "main",     "menu",     "menuitem",
     "nav",      "noframes",   "ol",     "optgroup", "option",   "p",
-    "param",    "section",    "source", "summary",  "table",    "tbody",
+    "param",    "search",     "section", "summary", "table",    "tbody",
     "td",       "tfoot",      "th",     "thead",    "title",    "tr",
     "track",    "ul"};
 

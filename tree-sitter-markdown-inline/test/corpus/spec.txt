@@ -3808,23 +3808,26 @@ comment - with hyphen -->
   (html_tag))
 
 ================================================================================
-Example 645 - https://github.github.com/gfm/#example-645
+Example 645 - https://github.github.com/gfm/#example-645 (CommonMark 0.31.2 allows `--` in comments)
 ================================================================================
 foo <!-- not a comment -- two hyphens -->
 
 --------------------------------------------------------------------------------
 
-(inline)
+(inline
+  (html_tag))
 
 ================================================================================
-Example 646 - https://github.github.com/gfm/#example-646
+Example 646 - https://github.github.com/gfm/#example-646 (CommonMark 0.31.2 comments `<!-->` and `<!--->`)
 ================================================================================
 foo <!--> foo -->
 foo <!-- foo--->
 
 --------------------------------------------------------------------------------
 
-(inline)
+(inline
+  (html_tag)
+  (html_tag))
 
 ================================================================================
 Example 647 - https://github.github.com/gfm/#example-647

@@ -774,3 +774,41 @@ Whitespace-only link labels do not define references
       (inline))
     (paragraph
       (inline))))
+
+================================================================================
+Textarea elements start HTML blocks that continue across blank lines
+================================================================================
+<textarea>
+
+*foo*
+
+</textarea>
+*bar*
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block
+      (block_continuation)
+      (block_continuation)
+      (block_continuation)
+      (block_continuation))
+    (paragraph
+      (inline))))
+
+================================================================================
+Search elements start HTML blocks and source elements do not
+================================================================================
+<search> *foo*
+
+<source src="a"> *bar*
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block
+      (block_continuation))
+    (paragraph
+      (inline))))
