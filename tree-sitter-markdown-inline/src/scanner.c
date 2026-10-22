@@ -244,6 +244,14 @@ typedef struct {
     bool oversized;
 } FutureDelimiter;
 
+typedef struct {
+    TSLexer lexer;
+    TSLexer *source;
+    int32_t characters[CERTIFIED_LIMIT];
+    unsigned cursor;
+    unsigned length;
+} ProofLexer;
+
 typedef enum {
     PROOF_DELIMITER,
     PROOF_TEXT,
@@ -306,7 +314,10 @@ static bool delimiter_pair_allowed(bool opener_closes, uint8_t opener_modulo,
                                    bool closer_opens, uint8_t closer_modulo);
 static bool opener_can_close(uint8_t opener);
 static uint8_t opener_modulo(uint8_t opener);
+static void advance_proof_lexer(TSLexer *lexer, bool skip);
+static bool proof_lexer_eof(const TSLexer *lexer);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
+static bool read_proof_angle(TSLexer *lexer, DelimiterProof *proof, bool *invalid);
 static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t delimiter);
 static ProofAngle opening_angle(int32_t next);
 static ProofAngle next_angle(ProofAngle angle, int32_t next);
@@ -602,7 +613,10 @@ static void read_remaining_emphasis(Scanner *s, TSLexer *lexer, bool strikethrou
     }
 }
 
-static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols) {
+static uint32_t proved_open_count(Scanner *s, TSLexer *source, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols) {
+    ProofLexer input = {.source = source, .lexer = {.lookahead = source->lookahead,
+        .advance = advance_proof_lexer, .eof = proof_lexer_eof}};
+    TSLexer *lexer = &input.lexer;
     uint32_t count = s->num_emphasis_delimiters_left + 1;
     DelimiterProof proof = {.used = 1, .top = 0, .initial_count = count, .budget = CERTIFIED_LIMIT,
         .strikethrough = strikethrough, .scope_symbols = scope_symbols, .previous = s->run_delimiter,
@@ -807,7 +821,7 @@ static bool closes_bracket(const int32_t *text, unsigned length) {
         if (character == ']') return true;
         i++;
         if (character == '<' && !angle) angle = opening_angle(i < length ? text[i] : -1);
-        if (character == '\\' && i < length && is_punctuation(text[i])) i++;
+        if (!angle && character == '\\' && i < length && is_punctuation(text[i])) i++;
     }
     return false;
 }
@@ -1030,14 +1044,39 @@ static uint8_t opener_modulo(uint8_t opener) {
     return opener >= 12 ? (opener >= 14 ? 2 : 1) : opener % 3;
 }
 
+// Proofs only read lookahead, advance, and EOF. Retaining their bounded window lets a failed tag probe replay its
+// characters as ordinary Markdown without rewinding the parser's lexer or losing a possible delimiter.
+static void advance_proof_lexer(TSLexer *lexer, bool skip) {
+    ProofLexer *input = (ProofLexer *)lexer;
+    if (input->cursor < input->length) {
+        input->cursor++;
+    } else {
+        if (input->length < CERTIFIED_LIMIT) {
+            input->characters[input->length++] = lexer->lookahead;
+            input->cursor++;
+        }
+        input->source->advance(input->source, skip);
+    }
+    lexer->lookahead = input->cursor < input->length ? input->characters[input->cursor] : input->source->lookahead;
+}
+
+static bool proof_lexer_eof(const TSLexer *lexer) {
+    const ProofLexer *input = (const ProofLexer *)lexer;
+    return input->cursor == input->length && input->source->eof(input->source);
+}
+
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
     int32_t next = lexer->lookahead;
-    if (next == '\\') return read_proof_escape(lexer, proof);
-    if (next == '[') return read_proof_bracket(s, lexer, proof);
-    if (next == ']' && proof->pending_bracket) return PROOF_UNCERTAIN;
-    if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
-    if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
+    bool invalid_angle = false;
+    if (next == '<' && !next_angle(proof->angle, next) && read_proof_angle(lexer, proof, &invalid_angle)) return PROOF_TEXT;
     proof->angle = next_angle(proof->angle, next);
+    if (!proof->angle) {
+        if (next == '\\') return read_proof_escape(lexer, proof);
+        if (next == '[') return read_proof_bracket(s, lexer, proof);
+        if (next == ']' && proof->pending_bracket) return PROOF_UNCERTAIN;
+        if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
+        if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
+    }
     if (next == '>' && proof->angle) return PROOF_UNCERTAIN;
     if (next == '`' || next == '$') return proof->angle ? PROOF_UNCERTAIN : read_proof_span(lexer, proof, next);
     if (next == '*' || next == '_' || (proof->strikethrough && next == '~')) return PROOF_DELIMITER;
@@ -1045,8 +1084,31 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     proof->previous = proof->emphasis_previous = next;
     lexer->advance(lexer, false);
     // A `<` inside a tag or processing instruction still belongs to that construct.
-    if (next == '<' && !proof->angle) proof->angle = opening_angle(lexer->lookahead);
+    if (next == '<' && !proof->angle && !invalid_angle) proof->angle = opening_angle(lexer->lookahead);
     return PROOF_TEXT;
+}
+
+static bool read_proof_angle(TSLexer *lexer, DelimiterProof *proof, bool *invalid) {
+    ProofLexer *input = (ProofLexer *)lexer;
+    unsigned start = input->cursor;
+    unsigned remaining = proof->budget;
+    lexer->advance(lexer, false);
+    remaining--;
+    ProofAngle angle = opening_angle(lexer->lookahead);
+    while (angle && !(angle & ANGLE_SPECIAL) && remaining && !lexer->eof(lexer)) {
+        angle = next_angle(angle, lexer->lookahead);
+        lexer->advance(lexer, false);
+        remaining--;
+        if (angle != ANGLE_COMPLETE) continue;
+        proof->angle = ANGLE_NONE;
+        proof->budget = remaining;
+        proof->previous = proof->emphasis_previous = '>';
+        return true;
+    }
+    *invalid = !(angle & ANGLE_SPECIAL) && (!angle || lexer->eof(lexer));
+    input->cursor = start;
+    lexer->lookahead = input->characters[start];
+    return false;
 }
 
 static ProofAngle opening_angle(int32_t next) {

@@ -86,7 +86,7 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
           expectLinearParsing(parser, line);
         });
       }
-      for (const line of ['*<a ~>*~ ', '*<a title="~>*">x</a>*~ ']) {
+      for (const line of ['*<a ~>*~ ', '*<a title="~>*">x</a>*~ ', '*<b>*.* ']) {
         test(`parses repeated angle prefixes ${JSON.stringify(line)} in linear time`, { timeout: 60_000 }, () => {
           expectLinearParsing(parser, line);
         });

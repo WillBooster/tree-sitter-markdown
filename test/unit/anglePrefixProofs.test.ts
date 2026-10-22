@@ -22,6 +22,7 @@ for (const source of [
   '*<ht:bad space~>*~',
   '*<m:~>*~',
   '*<a@~>*~',
+  '*<a x="~>*~',
 ]) {
   test(`impossible angle prefix stays emphasis: ${source}`, () => {
     const following = ' [ok](target) **tail**';
@@ -63,6 +64,50 @@ for (const [source, type, content] of [
   });
 }
 
+for (const [source, type, content] of [
+  ['*<b>*.*', 'emphasis', '*<b>*'],
+  ['**<b>**.**', 'strong_emphasis', '**<b>**'],
+  ['*<br>*.*', 'emphasis', '*<br>*'],
+  ['*<a title="~>*">x</a>*.*', 'emphasis', '*<a title="~>*">x</a>*'],
+  ['*<http:*foo*>*.*', 'emphasis', '*<http:*foo*>*'],
+  ['*<a*b@c.d>*.*', 'emphasis', '*<a*b@c.d>*'],
+] as const) {
+  test(`complete angle construct is atomic: ${source}`, () => {
+    const tree = parser.parse(source)!;
+    try {
+      expect(tree.rootNode.hasError).toBe(false);
+      expect(tree.rootNode.descendantsOfType(type).map((node) => [node.text, node.startIndex, node.endIndex])).toEqual([
+        [content, 0, content.length],
+      ]);
+      expect(tree.rootNode.descendantsOfType('strikethrough')).toHaveLength(0);
+    } finally {
+      tree.delete();
+    }
+  });
+}
+
+for (const source of [
+  '*<a title="*">',
+  '*<a title="_~">',
+  '*<http:*>',
+  '*<a*b@c.d>',
+  String.raw`*<a x="a\" y="*">`,
+  String.raw`*<a x="\" y="~*">`,
+  '*<a x=[ y="*">',
+]) {
+  test(`delimiters inside an atomic construct do not certify an unclosed opener: ${source}`, () => {
+    const tree = parser.parse(source)!;
+    try {
+      expect(tree.rootNode.hasError).toBe(false);
+      expect(tree.rootNode.descendantsOfType(['emphasis', 'strong_emphasis', 'strikethrough'])).toHaveLength(0);
+      expect(tree.rootNode.namedChildCount).toBe(1);
+      expect(tree.rootNode.namedChild(0)?.text).toBe(source.slice(1));
+    } finally {
+      tree.delete();
+    }
+  });
+}
+
 test('editing an impossible tag into an unquoted attribute and undoing preserves full trees and ranges', () => {
   const source = '*<a ~>*~ [ok](target) **tail**';
   let tree = parser.parse(source)!;
@@ -72,6 +117,34 @@ test('editing an impossible tag into an unquoted attribute and undoing preserves
     tree = edit(tree, changed, 4, 0, 2);
     expect(tree.rootNode.descendantsOfType('html_tag').map((node) => node.text)).toEqual(['<a x=~>']);
     tree = edit(tree, source, 4, 2, 0);
+    expect(snapshot(tree.rootNode)).toEqual(original);
+  } finally {
+    tree.delete();
+  }
+});
+
+test('HTML quote boundaries keep bracket lookahead from losing an inline link', () => {
+  const source = '[<a x="a\\" y="`">](u) `';
+  const tree = parser.parse(source)!;
+  try {
+    expect(tree.rootNode.hasError).toBe(false);
+    expect(tree.rootNode.descendantsOfType('inline_link').map((node) => node.text)).toEqual([source.slice(0, -2)]);
+    expect(tree.rootNode.descendantsOfType('link_destination').map((node) => node.text)).toEqual(['u']);
+    expect(tree.rootNode.descendantsOfType('html_tag').map((node) => node.text)).toEqual([source.slice(1, -6)]);
+  } finally {
+    tree.delete();
+  }
+});
+
+test('removing a quote from a tag and undoing agrees with fresh parsing', () => {
+  const source = '*<a title="*">*.* [ok](target)';
+  const quote = source.indexOf('"');
+  let tree = parser.parse(source)!;
+  try {
+    const original = snapshot(tree.rootNode);
+    const changed = source.slice(0, quote) + source.slice(quote + 1);
+    tree = edit(tree, changed, quote, 1, 0);
+    tree = edit(tree, source, quote, 0, 1);
     expect(snapshot(tree.rootNode)).toEqual(original);
   } finally {
     tree.delete();

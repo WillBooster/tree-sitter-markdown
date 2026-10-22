@@ -999,3 +999,41 @@ Quoted HTML attribute contents retain delimiter protection
     (html_tag)
     (html_tag)
     (emphasis_delimiter)))
+
+================================================================================
+Complete tags do not redirect their surrounding emphasis
+================================================================================
+*<b>*.*
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (html_tag)
+    (emphasis_delimiter)))
+
+================================================================================
+Complete tags do not redirect their surrounding strong emphasis
+================================================================================
+**<b>**.**
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strong_emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)
+    (html_tag)
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Delimiters inside a complete tag do not close an outer opener
+================================================================================
+*<a title="*">
+
+--------------------------------------------------------------------------------
+
+(inline
+  (html_tag))
