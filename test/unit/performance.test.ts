@@ -56,7 +56,8 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
           `parses a long ${JSON.stringify(delimiter)} run in a paragraph in linear time`,
           { timeout: 60_000 },
           () => {
-            expectLinearParsing(parser, delimiter, (run) => `a\n${run}x${run}\n`);
+            // A run is read faster than a line, so it needs more repetitions for a measurable CPU time.
+            expectLinearParsing(parser, delimiter, (run) => `a\n${run}x${run}\n`, 20_000);
           }
         );
       }
@@ -98,9 +99,14 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
   });
 }
 
-function expectLinearParsing(parser: Parser, line: string, wrap = (lines: string): string => lines): void {
-  const small = wrap(line.repeat(2000));
-  const large = wrap(line.repeat(20_000));
+function expectLinearParsing(
+  parser: Parser,
+  line: string,
+  wrap = (lines: string): string => lines,
+  smallCount = 2000
+): void {
+  const small = wrap(line.repeat(smallCount));
+  const large = wrap(line.repeat(smallCount * 10));
   parseCpuTime(parser, large);
   parseCpuTime(parser, large);
   let smallFastest = Infinity;
