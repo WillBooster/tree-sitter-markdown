@@ -264,6 +264,7 @@ static void pop_certified_opener(Scanner *s);
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool closes_bracket(const int32_t *text, unsigned length);
+static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer);
 static unsigned span_end(const int32_t *text, unsigned length, unsigned start);
 static TokenType following_label(TSLexer *lexer);
 static unsigned serialize(Scanner *s, char *buffer);
@@ -741,11 +742,7 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
             lexer->advance(lexer, false);
         }
         s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length);
-        unsigned i = 0;
-        while (i < length && is_whitespace(text[i])) i++;
-        // The read text can end inside a long run of whitespace, whose end decides whether the bracket is blank.
-        while (i == length && is_whitespace(lexer->lookahead)) lexer->advance(lexer, false);
-        blank = i < length ? text[i] == ']' : lexer->lookahead == ']';
+        blank = encloses_only_whitespace(text, length, lexer);
     }
     lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : blank ? OPEN_BRACKET_BLANK : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
@@ -821,6 +818,15 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
     if (s->bracket_depth) s->bracket_depth--;
     if (s->flat_head_depth > s->bracket_depth) s->flat_head_depth = 0;
     return true;
+}
+
+// Reports whether only whitespace precedes the first `]` in `text`, the text read after a `[`, and the input after it.
+static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer) {
+    unsigned i = 0;
+    while (i < length && is_whitespace(text[i])) i++;
+    if (i < length) return text[i] == ']';
+    while (is_whitespace(lexer->lookahead)) lexer->advance(lexer, false);
+    return lexer->lookahead == ']';
 }
 
 static TokenType following_label(TSLexer *lexer) {
