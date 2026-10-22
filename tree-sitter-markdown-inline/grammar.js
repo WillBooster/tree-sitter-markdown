@@ -385,15 +385,16 @@ function addReferenceHeads(grammar, conflicts) {
     );
 }
 
-// A head that encloses only whitespace, whose `[` the scanner marks as `_open_bracket_blank`, or that holds a
-// whitespace-only bracket pair, whose `]` the scanner marks as `_close_bracket_nested`, cannot be a link label, so only
-// inline links and full references accept it.
+// A head that encloses only whitespace, whose `[` the scanner marks as `_open_bracket_blank`, or that holds or lies
+// inside a head holding a whitespace-only bracket pair, whose `]` the scanner marks as `_close_bracket_nested`, cannot
+// be a link label, so only inline links and full references accept it.
 function referenceHead($, kind, label, variant) {
     const image = kind === 'image_description';
     const content = alias(image ? $._inline : $._inline_no_link, $[kind]);
-    const close = variant === 'nested'
-        ? alias($._close_bracket_nested, ']')
-        : alias(choice($['_close_bracket_' + label], $._close_bracket_unknown_label), ']');
+    const close = alias(choice(
+        ...(variant ? [$._close_bracket_nested] : []),
+        ...(variant === 'nested' ? [] : [$['_close_bracket_' + label], $._close_bracket_unknown_label]),
+    ), ']');
     return seq(
         ...(image ? ['!'] : []),
         ...(variant === 'blank'
