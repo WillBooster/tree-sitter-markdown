@@ -866,7 +866,7 @@ Whitespace-only link text keeps its hard line break
 ================================================================================
 Brackets around a blank image or nested label keep the enclosing reference
 ================================================================================
-![a[b]c][] [a![ ]b](x)
+![a[b]c][] [a![ ]b](x) [c [] ![d [] e](y) f][]
 
 --------------------------------------------------------------------------------
 
@@ -877,4 +877,7 @@ Brackets around a blank image or nested label keep the enclosing reference
         (link_text))))
   (inline_link
     (link_text)
+    (link_destination))
+  (image
+    (image_description)
     (link_destination)))

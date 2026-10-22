@@ -130,8 +130,8 @@ typedef struct {
     uint8_t unterminated_html;
     uint32_t bracket_depth;
     uint32_t flat_head_depth;
-    // The depth of the innermost open bracket that directly holds a whitespace-only bracket pair, or 0.
-    uint32_t blank_parent_depth;
+    // Bit `d - 1` marks that the open bracket at depth `d`, up to 32, directly holds a whitespace-only bracket pair.
+    uint32_t blank_parents;
     uint8_t code_span_delimiter_length;
     uint8_t latex_span_delimiter_length;
     uint32_t num_emphasis_delimiters_left;
@@ -722,6 +722,11 @@ static void pop_certified_opener(Scanner *s) {
     s->root_group_opening = true;
 }
 
+// Deeper brackets are not tracked, so their heads can still be shortcut links.
+static uint32_t depth_bit(uint32_t depth) {
+    return depth >= 1 && depth <= 32 ? 1u << (depth - 1) : 0;
+}
+
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     if (!valid_symbols[OPEN_BRACKET] && !valid_symbols[UNCLOSED_OPEN_BRACKET] && !valid_symbols[OPEN_BRACKET_BLANK]) {
         return false;
@@ -746,8 +751,9 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
     }
     lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : blank ? OPEN_BRACKET_BLANK : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
-    if (blank) s->blank_parent_depth = s->bracket_depth;
+    if (blank) s->blank_parents |= depth_bit(s->bracket_depth);
     s->bracket_depth++;
+    s->blank_parents &= ~depth_bit(s->bracket_depth);
     s->flat_head_depth = s->bracket_depth;
     return true;
 }
@@ -811,10 +817,10 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
     s->context_pending = is_inline_delimiter(lexer->lookahead);
     s->num_emphasis_delimiters_left = 0;
     // A head holding a whitespace-only bracket pair cannot be a link label.
-    bool nested = s->bracket_depth && s->blank_parent_depth == s->bracket_depth;
+    bool nested = s->blank_parents & depth_bit(s->bracket_depth);
     lexer->result_symbol = nested && valid_symbols[CLOSE_BRACKET_NESTED] ? CLOSE_BRACKET_NESTED : following_label(lexer);
     if (!valid_symbols[lexer->result_symbol]) return false;
-    if (s->blank_parent_depth >= s->bracket_depth) s->blank_parent_depth = 0;
+    s->blank_parents &= ~depth_bit(s->bracket_depth);
     if (s->bracket_depth) s->bracket_depth--;
     if (s->flat_head_depth > s->bracket_depth) s->flat_head_depth = 0;
     return true;
