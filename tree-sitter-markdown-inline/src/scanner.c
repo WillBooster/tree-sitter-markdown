@@ -740,7 +740,9 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
         s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length);
         unsigned i = 0;
         while (i < length && is_whitespace(text[i])) i++;
-        blank = i < length && text[i] == ']';
+        // The read text can end inside a long run of whitespace, whose end decides whether the bracket is blank.
+        while (i == length && is_whitespace(lexer->lookahead)) lexer->advance(lexer, false);
+        blank = i < length ? text[i] == ']' : lexer->lookahead == ']';
     }
     lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : blank ? OPEN_BRACKET_BLANK : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
