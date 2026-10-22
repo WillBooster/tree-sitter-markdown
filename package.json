@@ -23,6 +23,7 @@
     "tree-sitter-markdown-inline/queries/*.scm",
     "tree-sitter-markdown/src/node-types.json",
     "tree-sitter-markdown-inline/src/node-types.json",
+    "tree-sitter-markdown-inline/src/unicode_punctuation.h",
     "tree-sitter.json",
     "*.wasm"
   ],

@@ -13,6 +13,15 @@ const PRECEDENCE_LEVEL_LINK = 100;
 const LITERAL_BRACKET_RULES = ['code_span', 'latex_block', 'link_destination', '_link_destination_parenthesis', '_text_no_angle', 'link_title'];
 
 const PUNCTUATION_CHARACTERS_REGEX = '!-/:-@\\[-`\\{-~';
+// Characters above U+007F that CommonMark counts as punctuation or whitespace when deciding whether a delimiter run is
+// left- or right-flanking. They are tokens of their own so that the scanner learns what precedes a delimiter run.
+const UNICODE_PUNCTUATION_REGEX = [...require('fs')
+    .readFileSync(require('path').join(__dirname, 'src/unicode_punctuation.h'), 'utf8')
+    .matchAll(/\{(0x[0-9A-F]+), (0x[0-9A-F]+)\}/g)]
+    .map(([, start, end]) => `\\x{${start.slice(2)}}-\\x{${end.slice(2)}}`)
+    .join('');
+const UNICODE_WHITESPACE_REGEX = '\\x{A0}\\x{1680}\\x{2000}-\\x{200A}\\x{202F}\\x{205F}\\x{3000}';
+const NOT_WORD_REGEX = PUNCTUATION_CHARACTERS_REGEX + UNICODE_PUNCTUATION_REGEX + UNICODE_WHITESPACE_REGEX + ' \\t\\n\\r';
 
 module.exports = grammar(add_inline_rules({
     name: 'markdown_inline',
@@ -189,9 +198,12 @@ module.exports = grammar(add_inline_rules({
         _whitespace_ge_2: $ => /\t| [ \t]+/,
         _whitespace: $ => seq(choice($._whitespace_ge_2, / /), optional($._last_token_whitespace)),
 
-        _word: $ => choice($._word_no_digit, $._digits),
-        _word_no_digit: $ => new RegExp('[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
-        _digits: $ => new RegExp('[0-9]+(_+[^' + PUNCTUATION_CHARACTERS_REGEX + ' \\t\\n\\r]+)*'),
+        _word: $ => choice($._word_no_digit, $._digits, $._unicode_punctuation, $._unicode_whitespace),
+        // Rust syntax, since the class names code points above U+FFFF.
+        _word_no_digit: $ => new RustRegex('[^' + NOT_WORD_REGEX + '0-9]+(_+[^' + NOT_WORD_REGEX + ']+)*'),
+        _digits: $ => new RustRegex('[0-9]+(_+[^' + NOT_WORD_REGEX + ']+)*'),
+        _unicode_punctuation: $ => seq(new RustRegex('[' + UNICODE_PUNCTUATION_REGEX + ']'), optional($._last_token_punctuation)),
+        _unicode_whitespace: $ => seq(new RustRegex('[' + UNICODE_WHITESPACE_REGEX + ']'), optional($._last_token_whitespace)),
         _soft_line_break: $ => seq($._newline_token, optional($._last_token_whitespace)),
         _blank_text: $ => repeat1(choice($._whitespace, $._soft_line_break, $.hard_line_break)),
         // Whitespace-only brackets are no link, but they still balance inside link text and image descriptions.

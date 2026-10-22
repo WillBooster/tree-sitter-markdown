@@ -30,6 +30,7 @@ runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do,
   shortcut links retain priority over crossing emphasis, including `*[foo*]`; consumers can resolve them against the
   block tree's definitions. Consequently, parsing an isolated inline fragment can differ from rendering that fragment
   as a complete document without definitions.
+- Delimiter-run flanking treats every Unicode punctuation or symbol character (general categories P and S) as punctuation and every Unicode space separator (category Zs) as whitespace, as CommonMark 0.31 does; upstream recognizes only ASCII ones. For example, `**「重要」**` after a letter stays literal.
 - Underscore emphasis can end immediately after a digit, as in `_hello1_`. Intraword underscores around digits,
   such as `a_1_b_`, stay plain text instead of producing emphasis. Underscore runs that cannot open or close emphasis
   stay together as text, so punctuation after a digit does not open false emphasis in `1__-_`.

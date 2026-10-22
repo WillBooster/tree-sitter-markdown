@@ -1,4 +1,5 @@
 #include "tree_sitter/parser.h"
+#include "unicode_punctuation.h"
 #include <string.h>
 #include <stddef.h>
 #include <assert.h>
@@ -299,6 +300,8 @@ static void read_emphasis_run(Scanner *s, TSLexer *lexer, char delimiter,
 static FutureDelimiter read_future_delimiter(unsigned *budget, TSLexer *lexer, int32_t previous);
 static bool is_punctuation(int32_t chr);
 static bool is_whitespace(int32_t character);
+static bool is_flanking_whitespace(int32_t character);
+static bool is_flanking_punctuation(int32_t character);
 static DelimiterFlanks delimiter_flanks(char delimiter, bool previous_space, bool previous_punctuation,
                                        bool next_space, bool next_punctuation);
 static bool is_inline_delimiter(int32_t character);
@@ -661,8 +664,9 @@ static void search_closer(DelimiterProof *proof, int32_t character) {
             search->after_tildes = true;
             return;
         }
-        DelimiterFlanks flanks = delimiter_flanks(first->delimiter, is_whitespace(search->previous),
-            is_punctuation(search->previous), character < 0 || is_whitespace(character), is_punctuation(character));
+        DelimiterFlanks flanks = delimiter_flanks(first->delimiter, is_flanking_whitespace(search->previous),
+            is_flanking_punctuation(search->previous), character < 0 || is_flanking_whitespace(character),
+            is_flanking_punctuation(character));
         search->found = flanks.can_close &&
             delimiter_pair_allowed(first->can_close, first->modulo, flanks.can_open, search->count % 3);
         search->previous = first->delimiter;
@@ -1082,8 +1086,9 @@ static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *
 static void read_transparent_tildes(TSLexer *lexer, DelimiterProof *proof,
                                       FutureDelimiter *run, FutureDelimiter *tildes) {
     if (lexer->lookahead == '~') *tildes = read_future_delimiter(&proof->budget, lexer, run->delimiter);
-    run->flanks = delimiter_flanks(run->delimiter, is_whitespace(proof->emphasis_previous), is_punctuation(proof->emphasis_previous),
-        lexer->eof(lexer) || is_whitespace(lexer->lookahead), is_punctuation(lexer->lookahead));
+    run->flanks = delimiter_flanks(run->delimiter, is_flanking_whitespace(proof->emphasis_previous),
+        is_flanking_punctuation(proof->emphasis_previous),
+        lexer->eof(lexer) || is_flanking_whitespace(lexer->lookahead), is_flanking_punctuation(lexer->lookahead));
 }
 
 static bool consume_emphasis_run(Scanner *s, TSLexer *lexer, char delimiter,
@@ -1119,7 +1124,7 @@ static void read_emphasis_run(Scanner *s, TSLexer *lexer, char delimiter,
     uint8_t context = delimiter == '~' ? s->context : s->emphasis_context;
     DelimiterFlanks flanks = delimiter_flanks(delimiter, context == LAST_TOKEN_WHITESPACE,
         context == LAST_TOKEN_PUNCTUATION,
-        lexer->eof(lexer) || is_whitespace(lexer->lookahead), is_punctuation(lexer->lookahead));
+        lexer->eof(lexer) || is_flanking_whitespace(lexer->lookahead), is_flanking_punctuation(lexer->lookahead));
     if (delimiter == '~' && count > 2) flanks = (DelimiterFlanks){0};
     s->run_delimiter = delimiter;
     s->num_emphasis_delimiters_left = count - 1;
@@ -1140,8 +1145,8 @@ static FutureDelimiter read_future_delimiter(unsigned *budget, TSLexer *lexer, i
         else run.oversized = true;
     } while (lexer->lookahead == run.delimiter);
     run.modulo = run.count % 3;
-    run.flanks = delimiter_flanks(run.delimiter, is_whitespace(previous), is_punctuation(previous),
-        lexer->eof(lexer) || is_whitespace(lexer->lookahead), is_punctuation(lexer->lookahead));
+    run.flanks = delimiter_flanks(run.delimiter, is_flanking_whitespace(previous), is_flanking_punctuation(previous),
+        lexer->eof(lexer) || is_flanking_whitespace(lexer->lookahead), is_flanking_punctuation(lexer->lookahead));
     if (run.delimiter == '~' && run.count > 2) run.flanks = (DelimiterFlanks){0};
     return run;
 }
@@ -1150,6 +1155,31 @@ static FutureDelimiter read_future_delimiter(unsigned *budget, TSLexer *lexer, i
 
 static bool is_whitespace(int32_t character) {
     return character == ' ' || character == '\t' || character == '\r' || character == '\n';
+}
+
+// CommonMark's Unicode whitespace: the Zs category, tab, and line endings. The grammar's `_unicode_whitespace` matches
+// the same code points above U+007F.
+static bool is_flanking_whitespace(int32_t character) {
+    return is_whitespace(character) || character == 0x00A0 || character == 0x1680 ||
+           (character >= 0x2000 && character <= 0x200A) || character == 0x202F || character == 0x205F ||
+           character == 0x3000;
+}
+
+static bool is_flanking_punctuation(int32_t character) {
+    if (character < 0x80) return is_punctuation(character);
+    unsigned low = 0;
+    unsigned high = sizeof(UNICODE_PUNCTUATION) / sizeof(*UNICODE_PUNCTUATION);
+    while (low < high) {
+        unsigned middle = (low + high) / 2;
+        if (character < UNICODE_PUNCTUATION[middle][0]) {
+            high = middle;
+        } else if (character > UNICODE_PUNCTUATION[middle][1]) {
+            low = middle + 1;
+        } else {
+            return true;
+        }
+    }
+    return false;
 }
 
 static DelimiterFlanks delimiter_flanks(char delimiter, bool previous_space, bool previous_punctuation,
