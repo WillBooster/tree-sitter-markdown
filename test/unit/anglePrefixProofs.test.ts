@@ -175,6 +175,43 @@ test('HTML quote boundaries keep bracket lookahead from losing an inline link', 
 });
 
 for (const marker of ['!', '?']) {
+  test(`unfinished special angle prefixes preserve escaped delimiters: ${marker}`, () => {
+    const source = `*<${marker}x \\* *a*`;
+    let tree = parser.parse(source)!;
+    try {
+      expect(tree.rootNode.hasError).toBe(false);
+      expect(tree.rootNode.descendantsOfType('backslash_escape').map((node) => node.text)).toEqual([String.raw`\*`]);
+      expect(query.captures(tree.rootNode).map(({ node }) => [node.text, node.startIndex, node.endIndex])).toEqual([
+        ['*a*', 8, 11],
+      ]);
+      const original = snapshot(tree.rootNode);
+      tree = edit(tree, source.slice(0, 2) + 'a' + source.slice(3), 2, 1, 1);
+      tree = edit(tree, source, 2, 1, 1);
+      expect(snapshot(tree.rootNode)).toEqual(original);
+    } finally {
+      tree.delete();
+    }
+  });
+
+  test(`unfinished special angle prefixes preserve following links: ${marker}`, () => {
+    const source = `*<${marker}x [a*](u)`;
+    let tree = parser.parse(source)!;
+    try {
+      expect(tree.rootNode.hasError).toBe(false);
+      expect(
+        tree.rootNode.descendantsOfType('inline_link').map((node) => [node.text, node.startIndex, node.endIndex])
+      ).toEqual([['[a*](u)', 5, 12]]);
+      expect(tree.rootNode.descendantsOfType('link_destination').map((node) => node.text)).toEqual(['u']);
+      expect(query.captures(tree.rootNode)).toHaveLength(0);
+      const original = snapshot(tree.rootNode);
+      tree = edit(tree, source.slice(0, 2) + 'a' + source.slice(3), 2, 1, 1);
+      tree = edit(tree, source, 2, 1, 1);
+      expect(snapshot(tree.rootNode)).toEqual(original);
+    } finally {
+      tree.delete();
+    }
+  });
+
   test(`unfinished special angle prefixes preserve the enclosing link: ${marker}`, () => {
     const source = `[*<${marker}x](u)*`;
     let tree = parser.parse(source)!;

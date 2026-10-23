@@ -1071,10 +1071,8 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     bool invalid_angle = false;
     if (next == '<' && !next_angle(proof->angle, next) && read_proof_angle(lexer, proof, &invalid_angle)) return PROOF_TEXT;
     proof->angle = next_angle(proof->angle, next);
-    if (!proof->angle) {
-        if (next == '\\') return read_proof_escape(lexer, proof);
-        if (next == '[') return read_proof_bracket(s, lexer, proof);
-    }
+    if (next == '\\') return read_proof_escape(lexer, proof);
+    if (next == '[') return read_proof_bracket(s, lexer, proof);
     if (next == ']' && proof->pending_bracket) return PROOF_UNCERTAIN;
     if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
     if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
