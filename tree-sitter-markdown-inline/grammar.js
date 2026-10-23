@@ -191,7 +191,7 @@ module.exports = grammar(add_inline_rules({
         _html_tag: $ => choice($._open_tag, $._closing_tag, $._html_comment, $._html_special),
         _open_tag: $ => token(/<[A-Za-z][A-Za-z0-9-]*([ \t\r\n]+[A-Za-z_:][A-Za-z0-9_.:\-]*([ \t\r\n]*=[ \t\r\n]*("[^"]*"|'[^']*'|[^ \t\r\n"'=<>`]+))?)*[ \t\r\n]*\/?>/),
         _closing_tag: $ => token(/<\/[A-Za-z][A-Za-z0-9-]*[ \t\r\n]*>/),
-        _html_comment: $ => token(/<!--(-?>|([^-]|-[^-]|--+[^->])*--+>)/),
+        _html_comment: $ => token(/<!--(-?>|(([^->]|-[^->]|--+[^->])([^-]|-[^-]|--+[^->])*)?--+>)/),
 
         hard_line_break: $ => seq(choice('\\', $._whitespace_ge_2), $._soft_line_break),
         _text: $ => choice($._word, common.punctuation_without($, []), $._whitespace),

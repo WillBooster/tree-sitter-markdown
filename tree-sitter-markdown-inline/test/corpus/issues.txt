@@ -1037,3 +1037,23 @@ Delimiters inside a complete tag do not close an outer opener
 
 (inline
   (html_tag))
+
+================================================================================
+Short HTML comments end before a later comment terminator
+================================================================================
+a <!--> *b* --> c <!---> *d* --> <!----> <!----e--> <!-- f -- g -->
+
+--------------------------------------------------------------------------------
+
+(inline
+  (html_tag)
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter))
+  (html_tag)
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter))
+  (html_tag)
+  (html_tag)
+  (html_tag))
