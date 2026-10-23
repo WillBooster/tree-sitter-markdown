@@ -174,6 +174,27 @@ test('HTML quote boundaries keep bracket lookahead from losing an inline link', 
   }
 });
 
+for (const marker of ['!', '?']) {
+  test(`unfinished special angle prefixes preserve the enclosing link: ${marker}`, () => {
+    const source = `[*<${marker}x](u)*`;
+    let tree = parser.parse(source)!;
+    try {
+      expect(tree.rootNode.hasError).toBe(false);
+      expect(
+        tree.rootNode.descendantsOfType('inline_link').map((node) => [node.text, node.startIndex, node.endIndex])
+      ).toEqual([[source.slice(0, -1), 0, source.length - 1]]);
+      expect(tree.rootNode.descendantsOfType('link_destination').map((node) => node.text)).toEqual(['u']);
+      expect(query.captures(tree.rootNode)).toHaveLength(0);
+      const original = snapshot(tree.rootNode);
+      tree = edit(tree, source.slice(0, 3) + 'a' + source.slice(4), 3, 1, 1);
+      tree = edit(tree, source, 3, 1, 1);
+      expect(snapshot(tree.rootNode)).toEqual(original);
+    } finally {
+      tree.delete();
+    }
+  });
+}
+
 test('removing a quote from a tag and undoing agrees with fresh parsing', () => {
   const source = '*<a title="*">*.* [ok](target)';
   const quote = source.indexOf('"');

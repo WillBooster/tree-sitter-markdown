@@ -1074,10 +1074,10 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     if (!proof->angle) {
         if (next == '\\') return read_proof_escape(lexer, proof);
         if (next == '[') return read_proof_bracket(s, lexer, proof);
-        if (next == ']' && proof->pending_bracket) return PROOF_UNCERTAIN;
-        if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
-        if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
     }
+    if (next == ']' && proof->pending_bracket) return PROOF_UNCERTAIN;
+    if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
+    if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
     if (next == '>' && proof->angle) return PROOF_UNCERTAIN;
     if (next == '`' || next == '$') return proof->angle ? PROOF_UNCERTAIN : read_proof_span(lexer, proof, next);
     if (next == '*' || next == '_' || (proof->strikethrough && next == '~')) return PROOF_DELIMITER;
