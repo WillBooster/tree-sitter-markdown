@@ -189,10 +189,33 @@ typedef struct {
 
 // How far a `<` read by a delimiter proof can still begin raw HTML or an autolink, whose contents are not emphasis text.
 typedef enum {
-    ANGLE_NONE,
-    ANGLE_HTML_OR_URI,
-    ANGLE_EMAIL_LOCAL,
-    ANGLE_EMAIL_DOMAIN,
+    ANGLE_NONE = 0,
+    ANGLE_TAG_START = 1 << 0,
+    ANGLE_TAG_NAME = 1 << 1,
+    ANGLE_ATTRIBUTES = 1 << 2,
+    ANGLE_ATTRIBUTE_NAME = 1 << 3,
+    ANGLE_AFTER_ATTRIBUTE = 1 << 4,
+    ANGLE_VALUE_START = 1 << 5,
+    ANGLE_UNQUOTED_VALUE = 1 << 6,
+    ANGLE_SINGLE_QUOTED_VALUE = 1 << 7,
+    ANGLE_DOUBLE_QUOTED_VALUE = 1 << 8,
+    ANGLE_AFTER_VALUE = 1 << 9,
+    ANGLE_CLOSE_START = 1 << 10,
+    ANGLE_CLOSE_NAME = 1 << 11,
+    ANGLE_CLOSE_SPACE = 1 << 12,
+    ANGLE_SELF_CLOSE = 1 << 13,
+    ANGLE_SPECIAL = 1 << 14,
+    ANGLE_COMPLETE = 1 << 15,
+    ANGLE_URI_FIRST = 1 << 16,
+    ANGLE_URI_ONE = 1 << 17,
+    ANGLE_URI_SCHEME = 1 << 18,
+    ANGLE_URI_BODY = 1 << 19,
+    ANGLE_EMAIL_LOCAL = 1 << 20,
+    ANGLE_EMAIL_DOMAIN_START = 1 << 21,
+    ANGLE_EMAIL_DOMAIN = 1 << 22,
+    ANGLE_EMAIL_HYPHEN = 1 << 23,
+    ANGLE_EMAIL_LENGTH_SHIFT = 24,
+    ANGLE_HTML_MASK = (1 << 16) - 1,
 } ProofAngle;
 
 typedef struct {
@@ -221,6 +244,14 @@ typedef struct {
     DelimiterFlanks flanks;
     bool oversized;
 } FutureDelimiter;
+
+typedef struct {
+    TSLexer lexer;
+    TSLexer *source;
+    int32_t characters[CERTIFIED_LIMIT];
+    unsigned cursor;
+    unsigned length;
+} ProofLexer;
 
 typedef enum {
     PROOF_DELIMITER,
@@ -284,10 +315,23 @@ static bool delimiter_pair_allowed(bool opener_closes, uint8_t opener_modulo,
                                    bool closer_opens, uint8_t closer_modulo);
 static bool opener_can_close(uint8_t opener);
 static uint8_t opener_modulo(uint8_t opener);
+static void advance_proof_lexer(TSLexer *lexer, bool skip);
+static bool proof_lexer_eof(const TSLexer *lexer);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
+static bool read_proof_angle(TSLexer *lexer, DelimiterProof *proof, bool *invalid);
 static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t delimiter);
 static ProofAngle opening_angle(int32_t next);
 static ProofAngle next_angle(ProofAngle angle, int32_t next);
+static ProofAngle next_uri_angle(ProofAngle angle, int32_t next);
+static ProofAngle next_email_angle(ProofAngle angle, int32_t next);
+static ProofAngle next_html_angle(ProofAngle angle, int32_t next);
+static ProofAngle next_tag_angle(ProofAngle angle, int32_t next);
+static ProofAngle next_attribute_angle(ProofAngle angle, int32_t next);
+static ProofAngle next_value_angle(ProofAngle angle, int32_t next);
+static bool is_ascii_letter(int32_t character);
+static bool is_ascii_alphanumeric(int32_t character);
+static bool is_attribute_start(int32_t character);
+static bool is_unquoted_value(int32_t character);
 static bool is_email_local(int32_t character);
 static ProofStep read_proof_escape(TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
@@ -570,7 +614,10 @@ static void read_remaining_emphasis(Scanner *s, TSLexer *lexer, bool strikethrou
     }
 }
 
-static uint32_t proved_open_count(Scanner *s, TSLexer *lexer, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols) {
+static uint32_t proved_open_count(Scanner *s, TSLexer *source, bool strikethrough, FutureDelimiter *following, const bool *scope_symbols) {
+    ProofLexer input = {.source = source, .lexer = {.lookahead = source->lookahead,
+        .advance = advance_proof_lexer, .eof = proof_lexer_eof}};
+    TSLexer *lexer = &input.lexer;
     uint32_t count = s->num_emphasis_delimiters_left + 1;
     DelimiterProof proof = {.used = 1, .top = 0, .initial_count = count, .budget = CERTIFIED_LIMIT,
         .strikethrough = strikethrough, .scope_symbols = scope_symbols, .previous = s->run_delimiter,
@@ -775,7 +822,7 @@ static bool closes_bracket(const int32_t *text, unsigned length) {
         if (character == ']') return true;
         i++;
         if (character == '<' && !angle) angle = opening_angle(i < length ? text[i] : -1);
-        if (character == '\\' && i < length && is_punctuation(text[i])) i++;
+        if (!angle && character == '\\' && i < length && is_punctuation(text[i])) i++;
     }
     return false;
 }
@@ -998,14 +1045,37 @@ static uint8_t opener_modulo(uint8_t opener) {
     return opener >= 12 ? (opener >= 14 ? 2 : 1) : opener % 3;
 }
 
+// Proofs only read lookahead, advance, and EOF. Retaining their bounded window lets a failed tag probe replay its
+// characters as ordinary Markdown without rewinding the parser's lexer or losing a possible delimiter.
+static void advance_proof_lexer(TSLexer *lexer, bool skip) {
+    ProofLexer *input = (ProofLexer *)lexer;
+    if (input->cursor < input->length) {
+        input->cursor++;
+    } else {
+        if (input->length < CERTIFIED_LIMIT) {
+            input->characters[input->length++] = lexer->lookahead;
+            input->cursor++;
+        }
+        input->source->advance(input->source, skip);
+    }
+    lexer->lookahead = input->cursor < input->length ? input->characters[input->cursor] : input->source->lookahead;
+}
+
+static bool proof_lexer_eof(const TSLexer *lexer) {
+    const ProofLexer *input = (const ProofLexer *)lexer;
+    return input->cursor == input->length && input->source->eof(input->source);
+}
+
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
     int32_t next = lexer->lookahead;
+    bool invalid_angle = false;
+    if (next == '<' && !next_angle(proof->angle, next) && read_proof_angle(lexer, proof, &invalid_angle)) return PROOF_TEXT;
+    proof->angle = next_angle(proof->angle, next);
     if (next == '\\') return read_proof_escape(lexer, proof);
     if (next == '[') return read_proof_bracket(s, lexer, proof);
     if (next == ']' && proof->pending_bracket) return PROOF_UNCERTAIN;
     if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
     if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
-    proof->angle = next_angle(proof->angle, next);
     if (next == '>' && proof->angle) return PROOF_UNCERTAIN;
     if (next == '`' || next == '$') return proof->angle ? PROOF_UNCERTAIN : read_proof_span(lexer, proof, next);
     if (next == '*' || next == '_' || (proof->strikethrough && next == '~')) return PROOF_DELIMITER;
@@ -1013,21 +1083,148 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     proof->previous = proof->emphasis_previous = next;
     lexer->advance(lexer, false);
     // A `<` inside a tag or processing instruction still belongs to that construct.
-    if (next == '<' && !proof->angle) proof->angle = opening_angle(lexer->lookahead);
+    if (next == '<' && !proof->angle && !invalid_angle) proof->angle = opening_angle(lexer->lookahead);
     return PROOF_TEXT;
 }
 
-static ProofAngle opening_angle(int32_t next) {
-    if ((next >= 'A' && next <= 'Z') || (next >= 'a' && next <= 'z') || next == '/' || next == '!' || next == '?') {
-        return ANGLE_HTML_OR_URI;
+static bool read_proof_angle(TSLexer *lexer, DelimiterProof *proof, bool *invalid) {
+    ProofLexer *input = (ProofLexer *)lexer;
+    unsigned start = input->cursor;
+    unsigned remaining = proof->budget;
+    lexer->advance(lexer, false);
+    remaining--;
+    ProofAngle angle = opening_angle(lexer->lookahead);
+    while (angle && !(angle & ANGLE_SPECIAL) && remaining && !lexer->eof(lexer)) {
+        angle = next_angle(angle, lexer->lookahead);
+        lexer->advance(lexer, false);
+        remaining--;
+        if (angle != ANGLE_COMPLETE) continue;
+        proof->angle = ANGLE_NONE;
+        proof->budget = remaining;
+        proof->previous = proof->emphasis_previous = '>';
+        return true;
     }
-    return is_email_local(next) ? ANGLE_EMAIL_LOCAL : ANGLE_NONE;
+    *invalid = !(angle & ANGLE_SPECIAL) && (!angle || lexer->eof(lexer));
+    input->cursor = start;
+    lexer->lookahead = input->characters[start];
+    return false;
+}
+
+static ProofAngle opening_angle(int32_t next) {
+    ProofAngle angle = is_email_local(next) ? ANGLE_EMAIL_LOCAL : ANGLE_NONE;
+    if (is_ascii_letter(next)) angle |= ANGLE_TAG_START | ANGLE_URI_FIRST;
+    if (next == '/' || next == '!' || next == '?') angle |= ANGLE_TAG_START;
+    return angle;
 }
 
 static ProofAngle next_angle(ProofAngle angle, int32_t next) {
-    if (angle == ANGLE_EMAIL_LOCAL) return next == '@' ? ANGLE_EMAIL_DOMAIN : is_email_local(next) ? angle : ANGLE_NONE;
-    if (angle != ANGLE_EMAIL_DOMAIN || next == '>' || next == '.' || next == '-') return angle;
-    return (next >= '0' && next <= '9') || (next >= 'A' && next <= 'Z') || (next >= 'a' && next <= 'z') ? angle : ANGLE_NONE;
+    return next_html_angle(angle & ANGLE_HTML_MASK, next) | next_uri_angle(angle, next) | next_email_angle(angle, next);
+}
+
+static ProofAngle next_uri_angle(ProofAngle angle, int32_t next) {
+    bool scheme_character = is_ascii_alphanumeric(next) || next == '+' || next == '.' || next == '-';
+    if ((angle & ANGLE_URI_FIRST) && is_ascii_letter(next)) return ANGLE_URI_ONE;
+    if ((angle & (ANGLE_URI_ONE | ANGLE_URI_SCHEME)) && scheme_character) return ANGLE_URI_SCHEME;
+    if ((angle & ANGLE_URI_SCHEME) && next == ':') return ANGLE_URI_BODY;
+    if ((angle & ANGLE_URI_BODY) && next != '<' && !is_whitespace(next)) {
+        return next == '>' ? ANGLE_COMPLETE : ANGLE_URI_BODY;
+    }
+    return ANGLE_NONE;
+}
+
+static ProofAngle next_email_angle(ProofAngle angle, int32_t next) {
+    if ((angle & ANGLE_EMAIL_LOCAL) && next == '@') return ANGLE_EMAIL_DOMAIN_START;
+    if (angle & ANGLE_EMAIL_LOCAL) return is_email_local(next) ? ANGLE_EMAIL_LOCAL : ANGLE_NONE;
+    bool label_character = is_ascii_alphanumeric(next) || (next == '-' && !(angle & ANGLE_EMAIL_DOMAIN_START));
+    unsigned length = angle >> ANGLE_EMAIL_LENGTH_SHIFT;
+    if ((angle & (ANGLE_EMAIL_DOMAIN_START | ANGLE_EMAIL_DOMAIN | ANGLE_EMAIL_HYPHEN)) && label_character && length < 63) {
+        return (next == '-' ? ANGLE_EMAIL_HYPHEN : ANGLE_EMAIL_DOMAIN) | ((length + 1) << ANGLE_EMAIL_LENGTH_SHIFT);
+    }
+    if ((angle & ANGLE_EMAIL_DOMAIN) && next == '.') return ANGLE_EMAIL_DOMAIN_START;
+    if ((angle & ANGLE_EMAIL_DOMAIN) && next == '>') return ANGLE_COMPLETE;
+    return ANGLE_NONE;
+}
+
+static ProofAngle next_html_angle(ProofAngle angle, int32_t next) {
+    switch (angle) {
+        case ANGLE_ATTRIBUTES:
+        case ANGLE_AFTER_ATTRIBUTE:
+        case ANGLE_ATTRIBUTE_NAME:
+            return next_attribute_angle(angle, next);
+        case ANGLE_VALUE_START:
+        case ANGLE_UNQUOTED_VALUE:
+        case ANGLE_SINGLE_QUOTED_VALUE:
+        case ANGLE_DOUBLE_QUOTED_VALUE:
+        case ANGLE_AFTER_VALUE:
+            return next_value_angle(angle, next);
+        default:
+            return next_tag_angle(angle, next);
+    }
+}
+
+static ProofAngle next_tag_angle(ProofAngle angle, int32_t next) {
+    switch (angle) {
+        case ANGLE_TAG_START:
+            if (is_ascii_letter(next)) return ANGLE_TAG_NAME;
+            if (next == '/') return ANGLE_CLOSE_START;
+            return next == '!' || next == '?' ? ANGLE_SPECIAL : ANGLE_NONE;
+        case ANGLE_TAG_NAME:
+        case ANGLE_CLOSE_NAME:
+            if (is_ascii_alphanumeric(next) || next == '-') return angle;
+            if (is_whitespace(next)) return angle == ANGLE_TAG_NAME ? ANGLE_ATTRIBUTES : ANGLE_CLOSE_SPACE;
+            if (next == '/' && angle == ANGLE_TAG_NAME) return ANGLE_SELF_CLOSE;
+            return next == '>' ? ANGLE_COMPLETE : ANGLE_NONE;
+        case ANGLE_CLOSE_START:
+            return is_ascii_letter(next) ? ANGLE_CLOSE_NAME : ANGLE_NONE;
+        case ANGLE_CLOSE_SPACE:
+            if (is_whitespace(next)) return angle;
+            return next == '>' ? ANGLE_COMPLETE : ANGLE_NONE;
+        case ANGLE_SELF_CLOSE:
+            return next == '>' ? ANGLE_COMPLETE : ANGLE_NONE;
+        case ANGLE_SPECIAL:
+            return angle;
+        default:
+            return ANGLE_NONE;
+    }
+}
+
+static ProofAngle next_attribute_angle(ProofAngle angle, int32_t next) {
+    if (is_whitespace(next)) return angle == ANGLE_ATTRIBUTE_NAME ? ANGLE_AFTER_ATTRIBUTE : angle;
+    if (is_attribute_start(next)) return ANGLE_ATTRIBUTE_NAME;
+    if (angle == ANGLE_ATTRIBUTE_NAME && ((next >= '0' && next <= '9') || next == '.' || next == '-')) return angle;
+    if (next == '=' && angle != ANGLE_ATTRIBUTES) return ANGLE_VALUE_START;
+    if (next == '/') return ANGLE_SELF_CLOSE;
+    return next == '>' ? ANGLE_COMPLETE : ANGLE_NONE;
+}
+
+static ProofAngle next_value_angle(ProofAngle angle, int32_t next) {
+    if (angle == ANGLE_SINGLE_QUOTED_VALUE) return next == '\'' ? ANGLE_AFTER_VALUE : angle;
+    if (angle == ANGLE_DOUBLE_QUOTED_VALUE) return next == '"' ? ANGLE_AFTER_VALUE : angle;
+    if (is_whitespace(next)) return angle == ANGLE_VALUE_START ? angle : ANGLE_ATTRIBUTES;
+    if (angle == ANGLE_VALUE_START) {
+        if (next == '\'') return ANGLE_SINGLE_QUOTED_VALUE;
+        if (next == '"') return ANGLE_DOUBLE_QUOTED_VALUE;
+    } else {
+        if (next == '>') return ANGLE_COMPLETE;
+        if (angle == ANGLE_AFTER_VALUE) return next == '/' ? ANGLE_SELF_CLOSE : ANGLE_NONE;
+    }
+    return is_unquoted_value(next) ? ANGLE_UNQUOTED_VALUE : ANGLE_NONE;
+}
+
+static bool is_ascii_letter(int32_t character) {
+    return (character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z');
+}
+
+static bool is_ascii_alphanumeric(int32_t character) {
+    return is_ascii_letter(character) || (character >= '0' && character <= '9');
+}
+
+static bool is_attribute_start(int32_t character) {
+    return is_ascii_letter(character) || character == '_' || character == ':';
+}
+
+static bool is_unquoted_value(int32_t character) {
+    return !is_whitespace(character) && (character == 0 || character >= 128 || !strchr("\"'=<>`", character));
 }
 
 static bool is_email_local(int32_t character) {
