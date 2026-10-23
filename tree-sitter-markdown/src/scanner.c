@@ -1022,7 +1022,8 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
             for (size_t i = 0; i < NUM_HTML_TAG_NAMES_RULE_1; i++) {
                 if (strcmp(name, HTML_TAG_NAMES_RULE_1[i]) == 0) {
                     if (starting_slash) {
-                        if (valid_symbols[HTML_BLOCK_1_END]) {
+                        // The end condition is the literal end tag, such as `</pre>`, without whitespace before `>`.
+                        if (valid_symbols[HTML_BLOCK_1_END] && lexer->lookahead == '>') {
                             lexer->result_symbol = HTML_BLOCK_1_END;
                             return true;
                         }

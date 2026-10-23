@@ -812,3 +812,23 @@ Search elements start HTML blocks and source elements do not
       (block_continuation))
     (paragraph
       (inline))))
+
+================================================================================
+Only a literal end tag ends a raw HTML block
+================================================================================
+<pre>
+</textarea >
+*foo*
+</pre>
+*bar*
+
+--------------------------------------------------------------------------------
+
+(document
+  (section
+    (html_block
+      (block_continuation)
+      (block_continuation)
+      (block_continuation))
+    (paragraph
+      (inline))))
