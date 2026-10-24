@@ -109,10 +109,10 @@ static uint8_t list_item_indentation(Block block) {
     return (uint8_t)(block - LIST_ITEM + 2);
 }
 
-#define NUM_HTML_TAG_NAMES_RULE_1 3
+#define NUM_HTML_TAG_NAMES_RULE_1 4
 
 static const char *const HTML_TAG_NAMES_RULE_1[NUM_HTML_TAG_NAMES_RULE_1] = {
-    "pre", "script", "style"};
+    "pre", "script", "style", "textarea"};
 
 #define NUM_HTML_TAG_NAMES_RULE_7 62
 
@@ -125,7 +125,7 @@ static const char *const HTML_TAG_NAMES_RULE_7[NUM_HTML_TAG_NAMES_RULE_7] = {
     "h6",       "head",       "header", "hr",       "html",     "iframe",
     "legend",   "li",         "link",   "main",     "menu",     "menuitem",
     "nav",      "noframes",   "ol",     "optgroup", "option",   "p",
-    "param",    "section",    "source", "summary",  "table",    "tbody",
+    "param",    "search",     "section", "summary", "table",    "tbody",
     "td",       "tfoot",      "th",     "thead",    "title",    "tr",
     "track",    "ul"};
 
@@ -1022,7 +1022,8 @@ static bool parse_html_block(Scanner *s, TSLexer *lexer,
             for (size_t i = 0; i < NUM_HTML_TAG_NAMES_RULE_1; i++) {
                 if (strcmp(name, HTML_TAG_NAMES_RULE_1[i]) == 0) {
                     if (starting_slash) {
-                        if (valid_symbols[HTML_BLOCK_1_END]) {
+                        // The end condition is the literal end tag, such as `</pre>`, without whitespace before `>`.
+                        if (valid_symbols[HTML_BLOCK_1_END] && lexer->lookahead == '>') {
                             lexer->result_symbol = HTML_BLOCK_1_END;
                             return true;
                         }
