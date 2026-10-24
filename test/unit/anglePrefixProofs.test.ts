@@ -1,7 +1,7 @@
-import { afterAll, expect, test } from 'vitest';
 import path from 'node:path';
 
 import { Edit, Language, type Node, Parser, Query, type Tree } from '@willbooster/web-tree-sitter';
+import { afterAll, expect, test } from 'vitest';
 
 const Root = path.resolve(import.meta.dirname, '../..');
 await Parser.init();
