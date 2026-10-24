@@ -2,8 +2,8 @@ import { Language, Parser } from '@willbooster/web-tree-sitter';
 import runtimeUrl from '@willbooster/web-tree-sitter/web-tree-sitter.wasm?url';
 import { expect, test } from 'vitest';
 
-import markdownInlineUrl from '../../tree-sitter-markdown_inline.wasm?url';
 import markdownUrl from '../../tree-sitter-markdown.wasm?url';
+import markdownInlineUrl from '../../tree-sitter-markdown_inline.wasm?url';
 import { ExpectedTrees } from '../fixtures/parse.js';
 
 const Urls = { markdown: markdownUrl, markdown_inline: markdownInlineUrl };
