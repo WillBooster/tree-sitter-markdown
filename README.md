@@ -5,7 +5,7 @@
 [![Test](https://github.com/WillBooster/tree-sitter-markdown/actions/workflows/test.yml/badge.svg)](https://github.com/WillBooster/tree-sitter-markdown/actions/workflows/test.yml)
 [![Test rust](https://github.com/WillBooster/tree-sitter-markdown/actions/workflows/test-rust.yml/badge.svg)](https://github.com/WillBooster/tree-sitter-markdown/actions/workflows/test-rust.yml)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
-[![wbfy](https://img.shields.io/badge/wbfy-20.43.2-1e90ff.svg)](https://github.com/WillBooster/shared/tree/main/packages/wbfy)
+[![wbfy](https://img.shields.io/badge/wbfy-20.48.9-1e90ff.svg)](https://github.com/WillBooster/shared/tree/main/packages/wbfy)
 [![crates.io](https://img.shields.io/crates/v/willbooster-tree-sitter-md.svg)](https://crates.io/crates/willbooster-tree-sitter-md)
 
 Markdown grammars for [tree-sitter](https://github.com/tree-sitter/tree-sitter), forked from
@@ -82,6 +82,7 @@ paths:
 
 ```js
 import { fileURLToPath } from 'node:url';
+
 import { Language, Parser } from '@willbooster/web-tree-sitter';
 
 await Parser.init();
@@ -119,10 +120,10 @@ for (const node of tree.rootNode.descendantsOfType(['inline', 'pipe_table_cell']
 In browsers, serve the `.wasm` files and load them by URL (the example uses Vite's `?url` imports):
 
 ```js
-import { Language, Parser } from '@willbooster/web-tree-sitter';
-import runtimeUrl from '@willbooster/web-tree-sitter/web-tree-sitter.wasm?url';
 import markdownUrl from '@willbooster/tree-sitter-markdown/tree-sitter-markdown.wasm?url';
 import markdownInlineUrl from '@willbooster/tree-sitter-markdown/tree-sitter-markdown_inline.wasm?url';
+import { Language, Parser } from '@willbooster/web-tree-sitter';
+import runtimeUrl from '@willbooster/web-tree-sitter/web-tree-sitter.wasm?url';
 
 await Parser.init({ locateFile: () => runtimeUrl });
 const blockParser = new Parser();
@@ -135,10 +136,10 @@ Cloudflare Workers do not allow compiling Wasm at run time, so import the `.wasm
 Node.js compatibility:
 
 ```js
-import { Language, Parser } from '@willbooster/web-tree-sitter';
-import runtime from '@willbooster/web-tree-sitter/web-tree-sitter.wasm';
 import markdown from '@willbooster/tree-sitter-markdown/tree-sitter-markdown.wasm';
 import markdownInline from '@willbooster/tree-sitter-markdown/tree-sitter-markdown_inline.wasm';
+import { Language, Parser } from '@willbooster/web-tree-sitter';
+import runtime from '@willbooster/web-tree-sitter/web-tree-sitter.wasm';
 
 await Parser.init({ wasmModule: runtime });
 const blockParser = new Parser();
