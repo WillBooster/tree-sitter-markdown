@@ -160,7 +160,7 @@ fuzzed with:
 ```toml
 [dependencies]
 tree-sitter = { package = "willbooster-tree-sitter", version = "15.0.0" }
-tree-sitter-md = { package = "willbooster-tree-sitter-md", version = "7" }
+tree-sitter-md = { package = "willbooster-tree-sitter-md", version = "9" }
 ```
 
 ```rust
