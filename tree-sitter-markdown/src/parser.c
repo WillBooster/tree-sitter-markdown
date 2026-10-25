@@ -7,7 +7,7 @@
 #endif
 
 #define TS_GENERATION_PROFILED 1
-#define LANGUAGE_VERSION 0x57420009
+#define LANGUAGE_VERSION 0x5742000b
 #define STATE_COUNT 1114
 #define LARGE_STATE_COUNT 128
 #define LEX_STATE_COUNT 2079
@@ -1702,1121 +1702,16 @@ static const uint16_t ts_non_terminal_alias_map[] = {
   0,
 };
 
-static const TSStateId ts_primary_state_ids[STATE_COUNT] = {
-  [0] = 0,
-  [1] = 1,
-  [2] = 2,
-  [3] = 3,
-  [4] = 4,
-  [5] = 5,
-  [6] = 6,
-  [7] = 7,
-  [8] = 8,
-  [9] = 9,
-  [10] = 10,
-  [11] = 11,
-  [12] = 12,
-  [13] = 13,
-  [14] = 14,
-  [15] = 10,
-  [16] = 11,
-  [17] = 12,
-  [18] = 13,
-  [19] = 19,
-  [20] = 20,
-  [21] = 8,
-  [22] = 9,
-  [23] = 11,
-  [24] = 24,
-  [25] = 25,
-  [26] = 11,
-  [27] = 27,
-  [28] = 28,
-  [29] = 29,
-  [30] = 30,
-  [31] = 31,
-  [32] = 32,
-  [33] = 33,
-  [34] = 34,
-  [35] = 35,
-  [36] = 11,
-  [37] = 37,
-  [38] = 38,
-  [39] = 39,
-  [40] = 40,
-  [41] = 41,
-  [42] = 42,
-  [43] = 43,
-  [44] = 44,
-  [45] = 45,
-  [46] = 11,
-  [47] = 27,
-  [48] = 48,
-  [49] = 8,
-  [50] = 50,
-  [51] = 11,
-  [52] = 27,
-  [53] = 24,
-  [54] = 54,
-  [55] = 11,
-  [56] = 56,
-  [57] = 34,
-  [58] = 58,
-  [59] = 59,
-  [60] = 60,
-  [61] = 61,
-  [62] = 62,
-  [63] = 8,
-  [64] = 9,
-  [65] = 62,
-  [66] = 66,
-  [67] = 67,
-  [68] = 68,
-  [69] = 69,
-  [70] = 70,
-  [71] = 71,
-  [72] = 72,
-  [73] = 73,
-  [74] = 74,
-  [75] = 75,
-  [76] = 76,
-  [77] = 77,
-  [78] = 35,
-  [79] = 69,
-  [80] = 80,
-  [81] = 81,
-  [82] = 82,
-  [83] = 83,
-  [84] = 84,
-  [85] = 85,
-  [86] = 27,
-  [87] = 87,
-  [88] = 88,
-  [89] = 89,
-  [90] = 80,
-  [91] = 91,
-  [92] = 92,
-  [93] = 93,
-  [94] = 94,
-  [95] = 45,
-  [96] = 11,
-  [97] = 27,
-  [98] = 9,
-  [99] = 76,
-  [100] = 77,
-  [101] = 101,
-  [102] = 102,
-  [103] = 103,
-  [104] = 104,
-  [105] = 105,
-  [106] = 106,
-  [107] = 107,
-  [108] = 108,
-  [109] = 109,
-  [110] = 41,
-  [111] = 111,
-  [112] = 112,
-  [113] = 27,
-  [114] = 114,
-  [115] = 32,
-  [116] = 116,
-  [117] = 117,
-  [118] = 118,
-  [119] = 119,
-  [120] = 120,
-  [121] = 121,
-  [122] = 48,
-  [123] = 123,
-  [124] = 124,
-  [125] = 125,
-  [126] = 39,
-  [127] = 40,
-  [128] = 128,
-  [129] = 11,
-  [130] = 27,
-  [131] = 121,
-  [132] = 132,
-  [133] = 133,
-  [134] = 73,
-  [135] = 8,
-  [136] = 9,
-  [137] = 137,
-  [138] = 34,
-  [139] = 11,
-  [140] = 24,
-  [141] = 141,
-  [142] = 142,
-  [143] = 70,
-  [144] = 144,
-  [145] = 145,
-  [146] = 146,
-  [147] = 8,
-  [148] = 9,
-  [149] = 149,
-  [150] = 150,
-  [151] = 151,
-  [152] = 152,
-  [153] = 153,
-  [154] = 60,
-  [155] = 61,
-  [156] = 156,
-  [157] = 157,
-  [158] = 158,
-  [159] = 159,
-  [160] = 160,
-  [161] = 161,
-  [162] = 162,
-  [163] = 163,
-  [164] = 132,
-  [165] = 165,
-  [166] = 166,
-  [167] = 167,
-  [168] = 168,
-  [169] = 67,
-  [170] = 170,
-  [171] = 117,
-  [172] = 118,
-  [173] = 11,
-  [174] = 174,
-  [175] = 175,
-  [176] = 176,
-  [177] = 177,
-  [178] = 178,
-  [179] = 179,
-  [180] = 180,
-  [181] = 181,
-  [182] = 182,
-  [183] = 183,
-  [184] = 27,
-  [185] = 185,
-  [186] = 186,
-  [187] = 187,
-  [188] = 188,
-  [189] = 189,
-  [190] = 190,
-  [191] = 191,
-  [192] = 192,
-  [193] = 193,
-  [194] = 194,
-  [195] = 195,
-  [196] = 196,
-  [197] = 197,
-  [198] = 198,
-  [199] = 199,
-  [200] = 200,
-  [201] = 201,
-  [202] = 11,
-  [203] = 203,
-  [204] = 204,
-  [205] = 205,
-  [206] = 206,
-  [207] = 207,
-  [208] = 208,
-  [209] = 209,
-  [210] = 165,
-  [211] = 166,
-  [212] = 212,
-  [213] = 213,
-  [214] = 120,
-  [215] = 200,
-  [216] = 216,
-  [217] = 217,
-  [218] = 218,
-  [219] = 208,
-  [220] = 209,
-  [221] = 221,
-  [222] = 222,
-  [223] = 223,
-  [224] = 224,
-  [225] = 225,
-  [226] = 226,
-  [227] = 227,
-  [228] = 228,
-  [229] = 229,
-  [230] = 230,
-  [231] = 231,
-  [232] = 232,
-  [233] = 233,
-  [234] = 234,
-  [235] = 235,
-  [236] = 236,
-  [237] = 237,
-  [238] = 238,
-  [239] = 239,
-  [240] = 240,
-  [241] = 12,
-  [242] = 242,
-  [243] = 10,
-  [244] = 244,
-  [245] = 245,
-  [246] = 246,
-  [247] = 11,
-  [248] = 27,
-  [249] = 249,
-  [250] = 250,
-  [251] = 251,
-  [252] = 25,
-  [253] = 8,
-  [254] = 9,
-  [255] = 255,
-  [256] = 256,
-  [257] = 257,
-  [258] = 258,
-  [259] = 259,
-  [260] = 260,
-  [261] = 261,
-  [262] = 262,
-  [263] = 263,
-  [264] = 264,
-  [265] = 44,
-  [266] = 266,
-  [267] = 146,
-  [268] = 105,
-  [269] = 269,
-  [270] = 270,
-  [271] = 271,
-  [272] = 44,
-  [273] = 273,
-  [274] = 274,
-  [275] = 137,
-  [276] = 276,
-  [277] = 277,
-  [278] = 278,
-  [279] = 279,
-  [280] = 260,
-  [281] = 262,
-  [282] = 282,
-  [283] = 283,
-  [284] = 284,
-  [285] = 285,
-  [286] = 286,
-  [287] = 287,
-  [288] = 288,
-  [289] = 289,
-  [290] = 290,
-  [291] = 291,
-  [292] = 292,
-  [293] = 177,
-  [294] = 153,
-  [295] = 151,
-  [296] = 152,
-  [297] = 297,
-  [298] = 298,
-  [299] = 299,
-  [300] = 300,
-  [301] = 301,
-  [302] = 104,
-  [303] = 303,
-  [304] = 304,
-  [305] = 305,
-  [306] = 306,
-  [307] = 307,
-  [308] = 308,
-  [309] = 112,
-  [310] = 82,
-  [311] = 311,
-  [312] = 106,
-  [313] = 313,
-  [314] = 314,
-  [315] = 315,
-  [316] = 316,
-  [317] = 111,
-  [318] = 318,
-  [319] = 31,
-  [320] = 75,
-  [321] = 321,
-  [322] = 84,
-  [323] = 85,
-  [324] = 42,
-  [325] = 87,
-  [326] = 326,
-  [327] = 178,
-  [328] = 328,
-  [329] = 329,
-  [330] = 330,
-  [331] = 56,
-  [332] = 332,
-  [333] = 333,
-  [334] = 334,
-  [335] = 335,
-  [336] = 336,
-  [337] = 337,
-  [338] = 338,
-  [339] = 339,
-  [340] = 340,
-  [341] = 341,
-  [342] = 342,
-  [343] = 343,
-  [344] = 344,
-  [345] = 43,
-  [346] = 346,
-  [347] = 88,
-  [348] = 348,
-  [349] = 349,
-  [350] = 179,
-  [351] = 68,
-  [352] = 92,
-  [353] = 353,
-  [354] = 354,
-  [355] = 187,
-  [356] = 356,
-  [357] = 357,
-  [358] = 358,
-  [359] = 102,
-  [360] = 109,
-  [361] = 361,
-  [362] = 93,
-  [363] = 191,
-  [364] = 229,
-  [365] = 44,
-  [366] = 366,
-  [367] = 27,
-  [368] = 368,
-  [369] = 72,
-  [370] = 370,
-  [371] = 371,
-  [372] = 372,
-  [373] = 373,
-  [374] = 374,
-  [375] = 101,
-  [376] = 376,
-  [377] = 377,
-  [378] = 378,
-  [379] = 201,
-  [380] = 380,
-  [381] = 123,
-  [382] = 382,
-  [383] = 383,
-  [384] = 384,
-  [385] = 385,
-  [386] = 386,
-  [387] = 44,
-  [388] = 388,
-  [389] = 389,
-  [390] = 188,
-  [391] = 391,
-  [392] = 392,
-  [393] = 393,
-  [394] = 394,
-  [395] = 395,
-  [396] = 192,
-  [397] = 314,
-  [398] = 285,
-  [399] = 285,
-  [400] = 400,
-  [401] = 401,
-  [402] = 174,
-  [403] = 403,
-  [404] = 193,
-  [405] = 125,
-  [406] = 370,
-  [407] = 407,
-  [408] = 408,
-  [409] = 409,
-  [410] = 410,
-  [411] = 411,
-  [412] = 27,
-  [413] = 413,
-  [414] = 414,
-  [415] = 415,
-  [416] = 416,
-  [417] = 417,
-  [418] = 418,
-  [419] = 419,
-  [420] = 195,
-  [421] = 421,
-  [422] = 422,
-  [423] = 423,
-  [424] = 424,
-  [425] = 425,
-  [426] = 426,
-  [427] = 427,
-  [428] = 428,
-  [429] = 429,
-  [430] = 430,
-  [431] = 431,
-  [432] = 432,
-  [433] = 261,
-  [434] = 305,
-  [435] = 435,
-  [436] = 436,
-  [437] = 437,
-  [438] = 438,
-  [439] = 439,
-  [440] = 440,
-  [441] = 441,
-  [442] = 442,
-  [443] = 443,
-  [444] = 444,
-  [445] = 445,
-  [446] = 446,
-  [447] = 447,
-  [448] = 448,
-  [449] = 449,
-  [450] = 145,
-  [451] = 451,
-  [452] = 89,
-  [453] = 328,
-  [454] = 266,
-  [455] = 455,
-  [456] = 144,
-  [457] = 308,
-  [458] = 458,
-  [459] = 459,
-  [460] = 460,
-  [461] = 461,
-  [462] = 460,
-  [463] = 199,
-  [464] = 464,
-  [465] = 465,
-  [466] = 466,
-  [467] = 467,
-  [468] = 468,
-  [469] = 469,
-  [470] = 470,
-  [471] = 471,
-  [472] = 472,
-  [473] = 473,
-  [474] = 474,
-  [475] = 475,
-  [476] = 476,
-  [477] = 477,
-  [478] = 478,
-  [479] = 269,
-  [480] = 114,
-  [481] = 314,
-  [482] = 482,
-  [483] = 251,
-  [484] = 484,
-  [485] = 485,
-  [486] = 486,
-  [487] = 487,
-  [488] = 488,
-  [489] = 489,
-  [490] = 490,
-  [491] = 491,
-  [492] = 492,
-  [493] = 493,
-  [494] = 494,
-  [495] = 495,
-  [496] = 496,
-  [497] = 497,
-  [498] = 498,
-  [499] = 291,
-  [500] = 500,
-  [501] = 501,
-  [502] = 502,
-  [503] = 503,
-  [504] = 504,
-  [505] = 505,
-  [506] = 506,
-  [507] = 507,
-  [508] = 508,
-  [509] = 509,
-  [510] = 510,
-  [511] = 511,
-  [512] = 91,
-  [513] = 513,
-  [514] = 514,
-  [515] = 515,
-  [516] = 516,
-  [517] = 517,
-  [518] = 150,
-  [519] = 519,
-  [520] = 520,
-  [521] = 521,
-  [522] = 522,
-  [523] = 523,
-  [524] = 524,
-  [525] = 525,
-  [526] = 526,
-  [527] = 161,
-  [528] = 528,
-  [529] = 348,
-  [530] = 198,
-  [531] = 531,
-  [532] = 421,
-  [533] = 157,
-  [534] = 279,
-  [535] = 528,
-  [536] = 531,
-  [537] = 537,
-  [538] = 538,
-  [539] = 539,
-  [540] = 540,
-  [541] = 541,
-  [542] = 542,
-  [543] = 543,
-  [544] = 544,
-  [545] = 545,
-  [546] = 546,
-  [547] = 540,
-  [548] = 538,
-  [549] = 539,
-  [550] = 545,
-  [551] = 541,
-  [552] = 542,
-  [553] = 543,
-  [554] = 544,
-  [555] = 537,
-  [556] = 546,
-  [557] = 557,
-  [558] = 558,
-  [559] = 557,
-  [560] = 558,
-  [561] = 561,
-  [562] = 196,
-  [563] = 304,
-  [564] = 303,
-  [565] = 321,
-  [566] = 258,
-  [567] = 567,
-  [568] = 349,
-  [569] = 569,
-  [570] = 569,
-  [571] = 571,
-  [572] = 571,
-  [573] = 567,
-  [574] = 259,
-  [575] = 575,
-  [576] = 576,
-  [577] = 577,
-  [578] = 576,
-  [579] = 577,
-  [580] = 575,
-  [581] = 423,
-  [582] = 424,
-  [583] = 583,
-  [584] = 584,
-  [585] = 425,
-  [586] = 583,
-  [587] = 587,
-  [588] = 584,
-  [589] = 587,
-  [590] = 377,
-  [591] = 427,
-  [592] = 592,
-  [593] = 593,
-  [594] = 594,
-  [595] = 592,
-  [596] = 593,
-  [597] = 594,
-  [598] = 429,
-  [599] = 599,
-  [600] = 600,
-  [601] = 601,
-  [602] = 600,
-  [603] = 19,
-  [604] = 601,
-  [605] = 599,
-  [606] = 432,
-  [607] = 607,
-  [608] = 607,
-  [609] = 223,
-  [610] = 431,
-  [611] = 306,
-  [612] = 612,
-  [613] = 307,
-  [614] = 614,
-  [615] = 435,
-  [616] = 616,
-  [617] = 617,
-  [618] = 618,
-  [619] = 619,
-  [620] = 439,
-  [621] = 612,
-  [622] = 614,
-  [623] = 623,
-  [624] = 624,
-  [625] = 438,
-  [626] = 436,
-  [627] = 180,
-  [628] = 282,
-  [629] = 629,
-  [630] = 384,
-  [631] = 631,
-  [632] = 632,
-  [633] = 633,
-  [634] = 634,
-  [635] = 635,
-  [636] = 636,
-  [637] = 637,
-  [638] = 637,
-  [639] = 618,
-  [640] = 619,
-  [641] = 224,
-  [642] = 642,
-  [643] = 380,
-  [644] = 616,
-  [645] = 44,
-  [646] = 642,
-  [647] = 27,
-  [648] = 623,
-  [649] = 624,
-  [650] = 629,
-  [651] = 383,
-  [652] = 437,
-  [653] = 203,
-  [654] = 631,
-  [655] = 632,
-  [656] = 162,
-  [657] = 633,
-  [658] = 326,
-  [659] = 264,
-  [660] = 634,
-  [661] = 635,
-  [662] = 636,
-  [663] = 617,
-  [664] = 664,
-  [665] = 665,
-  [666] = 666,
-  [667] = 667,
-  [668] = 668,
-  [669] = 669,
-  [670] = 670,
-  [671] = 671,
-  [672] = 672,
-  [673] = 673,
-  [674] = 382,
-  [675] = 675,
-  [676] = 676,
-  [677] = 677,
-  [678] = 678,
-  [679] = 679,
-  [680] = 680,
-  [681] = 681,
-  [682] = 682,
-  [683] = 683,
-  [684] = 684,
-  [685] = 685,
-  [686] = 686,
-  [687] = 687,
-  [688] = 239,
-  [689] = 689,
-  [690] = 690,
-  [691] = 691,
-  [692] = 692,
-  [693] = 670,
-  [694] = 385,
-  [695] = 444,
-  [696] = 671,
-  [697] = 672,
-  [698] = 673,
-  [699] = 675,
-  [700] = 684,
-  [701] = 685,
-  [702] = 686,
-  [703] = 687,
-  [704] = 689,
-  [705] = 690,
-  [706] = 691,
-  [707] = 707,
-  [708] = 353,
-  [709] = 709,
-  [710] = 288,
-  [711] = 711,
-  [712] = 459,
-  [713] = 290,
-  [714] = 714,
-  [715] = 664,
-  [716] = 440,
-  [717] = 665,
-  [718] = 666,
-  [719] = 414,
-  [720] = 667,
-  [721] = 668,
-  [722] = 441,
-  [723] = 669,
-  [724] = 237,
-  [725] = 225,
-  [726] = 442,
-  [727] = 329,
-  [728] = 443,
-  [729] = 238,
-  [730] = 676,
-  [731] = 445,
-  [732] = 677,
-  [733] = 417,
-  [734] = 446,
-  [735] = 386,
-  [736] = 678,
-  [737] = 679,
-  [738] = 680,
-  [739] = 447,
-  [740] = 681,
-  [741] = 682,
-  [742] = 683,
-  [743] = 448,
-  [744] = 449,
-  [745] = 283,
-  [746] = 330,
-  [747] = 170,
-  [748] = 170,
-  [749] = 44,
-  [750] = 692,
-  [751] = 707,
-  [752] = 709,
-  [753] = 711,
-  [754] = 714,
-  [755] = 430,
-  [756] = 756,
-  [757] = 4,
-  [758] = 240,
-  [759] = 759,
-  [760] = 760,
-  [761] = 761,
-  [762] = 760,
-  [763] = 763,
-  [764] = 764,
-  [765] = 765,
-  [766] = 759,
-  [767] = 767,
-  [768] = 768,
-  [769] = 769,
-  [770] = 770,
-  [771] = 771,
-  [772] = 772,
-  [773] = 773,
-  [774] = 451,
-  [775] = 461,
-  [776] = 455,
-  [777] = 777,
-  [778] = 768,
-  [779] = 770,
-  [780] = 780,
-  [781] = 356,
-  [782] = 389,
-  [783] = 426,
-  [784] = 428,
-  [785] = 765,
-  [786] = 767,
-  [787] = 769,
-  [788] = 771,
-  [789] = 772,
-  [790] = 790,
-  [791] = 777,
-  [792] = 773,
-  [793] = 793,
-  [794] = 464,
-  [795] = 780,
-  [796] = 796,
-  [797] = 242,
-  [798] = 354,
-  [799] = 388,
-  [800] = 800,
-  [801] = 801,
-  [802] = 465,
-  [803] = 790,
-  [804] = 804,
-  [805] = 756,
-  [806] = 27,
-  [807] = 793,
-  [808] = 170,
-  [809] = 170,
-  [810] = 810,
-  [811] = 763,
-  [812] = 796,
-  [813] = 810,
-  [814] = 761,
-  [815] = 800,
-  [816] = 764,
-  [817] = 801,
-  [818] = 804,
-  [819] = 205,
-  [820] = 357,
-  [821] = 393,
-  [822] = 822,
-  [823] = 823,
-  [824] = 824,
-  [825] = 468,
-  [826] = 826,
-  [827] = 827,
-  [828] = 828,
-  [829] = 828,
-  [830] = 830,
-  [831] = 831,
-  [832] = 832,
-  [833] = 833,
-  [834] = 833,
-  [835] = 835,
-  [836] = 836,
-  [837] = 366,
-  [838] = 471,
-  [839] = 839,
-  [840] = 840,
-  [841] = 841,
-  [842] = 842,
-  [843] = 189,
-  [844] = 250,
-  [845] = 227,
-  [846] = 474,
-  [847] = 475,
-  [848] = 54,
-  [849] = 103,
-  [850] = 246,
-  [851] = 128,
-  [852] = 477,
-  [853] = 473,
-  [854] = 839,
-  [855] = 841,
-  [856] = 476,
-  [857] = 270,
-  [858] = 271,
-  [859] = 478,
-  [860] = 395,
-  [861] = 378,
-  [862] = 335,
-  [863] = 183,
-  [864] = 840,
-  [865] = 842,
-  [866] = 410,
-  [867] = 867,
-  [868] = 868,
-  [869] = 869,
-  [870] = 400,
-  [871] = 871,
-  [872] = 872,
-  [873] = 873,
-  [874] = 400,
-  [875] = 875,
-  [876] = 170,
-  [877] = 877,
-  [878] = 251,
-  [879] = 868,
-  [880] = 880,
-  [881] = 62,
-  [882] = 411,
-  [883] = 883,
-  [884] = 884,
-  [885] = 885,
-  [886] = 886,
-  [887] = 191,
-  [888] = 888,
-  [889] = 889,
-  [890] = 890,
-  [891] = 891,
-  [892] = 875,
-  [893] = 314,
-  [894] = 285,
-  [895] = 400,
-  [896] = 875,
-  [897] = 875,
-  [898] = 898,
-  [899] = 875,
-  [900] = 900,
-  [901] = 875,
-  [902] = 889,
-  [903] = 898,
-  [904] = 891,
-  [905] = 905,
-  [906] = 906,
-  [907] = 873,
-  [908] = 883,
-  [909] = 409,
-  [910] = 315,
-  [911] = 337,
-  [912] = 170,
-  [913] = 871,
-  [914] = 914,
-  [915] = 875,
-  [916] = 482,
-  [917] = 337,
-  [918] = 341,
-  [919] = 883,
-  [920] = 341,
-  [921] = 921,
-  [922] = 922,
-  [923] = 923,
-  [924] = 501,
-  [925] = 286,
-  [926] = 490,
-  [927] = 927,
-  [928] = 368,
-  [929] = 403,
-  [930] = 930,
-  [931] = 931,
-  [932] = 255,
-  [933] = 931,
-  [934] = 934,
-  [935] = 489,
-  [936] = 230,
-  [937] = 927,
-  [938] = 930,
-  [939] = 939,
-  [940] = 44,
-  [941] = 941,
-  [942] = 493,
-  [943] = 943,
-  [944] = 943,
-  [945] = 945,
-  [946] = 946,
-  [947] = 947,
-  [948] = 945,
-  [949] = 949,
-  [950] = 950,
-  [951] = 949,
-  [952] = 946,
-  [953] = 947,
-  [954] = 950,
-  [955] = 939,
-  [956] = 492,
-  [957] = 957,
-  [958] = 958,
-  [959] = 959,
-  [960] = 497,
-  [961] = 961,
-  [962] = 962,
-  [963] = 963,
-  [964] = 963,
-  [965] = 965,
-  [966] = 966,
-  [967] = 967,
-  [968] = 502,
-  [969] = 969,
-  [970] = 962,
-  [971] = 971,
-  [972] = 972,
-  [973] = 961,
-  [974] = 974,
-  [975] = 971,
-  [976] = 170,
-  [977] = 498,
-  [978] = 503,
-  [979] = 957,
-  [980] = 980,
-  [981] = 496,
-  [982] = 982,
-  [983] = 213,
-  [984] = 500,
-  [985] = 967,
-  [986] = 980,
-  [987] = 959,
-  [988] = 988,
-  [989] = 989,
-  [990] = 990,
-  [991] = 991,
-  [992] = 992,
-  [993] = 993,
-  [994] = 994,
-  [995] = 995,
-  [996] = 996,
-  [997] = 997,
-  [998] = 998,
-  [999] = 999,
-  [1000] = 1000,
-  [1001] = 1001,
-  [1002] = 1002,
-  [1003] = 1003,
-  [1004] = 999,
-  [1005] = 1005,
-  [1006] = 995,
-  [1007] = 997,
-  [1008] = 991,
-  [1009] = 998,
-  [1010] = 1002,
-  [1011] = 1005,
-  [1012] = 167,
-  [1013] = 1013,
-  [1014] = 966,
-  [1015] = 1015,
-  [1016] = 263,
-  [1017] = 287,
-  [1018] = 289,
-  [1019] = 507,
-  [1020] = 413,
-  [1021] = 508,
-  [1022] = 372,
-  [1023] = 1023,
-  [1024] = 965,
-  [1025] = 1023,
-  [1026] = 292,
-  [1027] = 506,
-  [1028] = 1028,
-  [1029] = 371,
-  [1030] = 392,
-  [1031] = 407,
-  [1032] = 1015,
-  [1033] = 982,
-  [1034] = 517,
-  [1035] = 1035,
-  [1036] = 276,
-  [1037] = 994,
-  [1038] = 988,
-  [1039] = 318,
-  [1040] = 511,
-  [1041] = 415,
-  [1042] = 418,
-  [1043] = 515,
-  [1044] = 1044,
-  [1045] = 1045,
-  [1046] = 1001,
-  [1047] = 1047,
-  [1048] = 509,
-  [1049] = 990,
-  [1050] = 1050,
-  [1051] = 408,
-  [1052] = 1052,
-  [1053] = 1050,
-  [1054] = 992,
-  [1055] = 1055,
-  [1056] = 44,
-  [1057] = 1057,
-  [1058] = 1052,
-  [1059] = 513,
-  [1060] = 494,
-  [1061] = 1055,
-  [1062] = 1044,
-  [1063] = 1057,
-  [1064] = 1035,
-  [1065] = 297,
-  [1066] = 342,
-  [1067] = 1067,
-  [1068] = 256,
-  [1069] = 1045,
-  [1070] = 516,
-  [1071] = 416,
-  [1072] = 419,
-  [1073] = 1067,
-  [1074] = 1047,
-  [1075] = 343,
-  [1076] = 1076,
-  [1077] = 1077,
-  [1078] = 1076,
-  [1079] = 1079,
-  [1080] = 1080,
-  [1081] = 1081,
-  [1082] = 1082,
-  [1083] = 1081,
-  [1084] = 1084,
-  [1085] = 1085,
-  [1086] = 1086,
-  [1087] = 1077,
-  [1088] = 1085,
-  [1089] = 514,
-  [1090] = 168,
-  [1091] = 1091,
-  [1092] = 520,
-  [1093] = 186,
-  [1094] = 277,
-  [1095] = 1080,
-  [1096] = 1096,
-  [1097] = 1079,
-  [1098] = 298,
-  [1099] = 1099,
-  [1100] = 1096,
-  [1101] = 300,
-  [1102] = 27,
-  [1103] = 1103,
-  [1104] = 1104,
-  [1105] = 373,
-  [1106] = 170,
-  [1107] = 1082,
-  [1108] = 1084,
-  [1109] = 1109,
-  [1110] = 526,
-  [1111] = 522,
-  [1112] = 301,
-  [1113] = 344,
+static const uint8_t ts_primary_state_bitmap[] = {
+  255, 127, 24, 251, 239, 63, 69, 125, 252, 63, 191, 123, 224, 191, 245, 59, 
+  49, 98, 231, 243, 239, 197, 255, 254, 255, 251, 51, 231, 255, 255, 117, 142, 
+  255, 229, 246, 252, 31, 190, 159, 94, 66, 247, 255, 53, 118, 66, 125, 215, 
+  183, 15, 139, 239, 239, 255, 249, 255, 139, 60, 255, 127, 244, 255, 247, 255, 
+  190, 127, 9, 254, 7, 96, 130, 138, 131, 9, 135, 131, 80, 143, 161, 63, 
+  4, 0, 0, 255, 251, 255, 30, 0, 168, 4, 0, 0, 0, 0, 144, 187, 
+  63, 18, 64, 18, 19, 4, 192, 221, 155, 7, 0, 0, 184, 43, 121, 15, 
+  20, 6, 4, 142, 76, 168, 110, 224, 238, 90, 80, 240, 255, 47, 160, 128, 
+  16, 8, 176, 148, 2, 8, 176, 119, 8, 137, 33, 0, 
 };
 
 static const uint16_t ts_lex_advance_map_0[] = {
@@ -3974,291 +2869,291 @@ static inline bool ts_lex_ascii_contains(const uint32_t *bits, int32_t lookahead
   }
 
 static bool ts_lex(TSLexer *lexer, TSStateId state) {
-  UNUSED TSLexerPosition start_tags[1];
+  UNUSED TSLexerCheckpoint start_tags[1];
   START_LEXER();
   eof = lookahead == 0 && lexer->eof(lexer);
   switch (state) {
     case 0:
       if (eof) ADVANCE(2031);
-      if (lookahead == '!') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2034); }
-      if (lookahead == '"') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2035); }
-      if (lookahead == '#') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2036); }
-      if (lookahead == '$') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2037); }
-      if (lookahead == '%') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2038); }
-      if (lookahead == '&') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2040); }
-      if (lookahead == '\'') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2041); }
-      if (lookahead == '(') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2042); }
-      if (lookahead == ')') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2043); }
-      if (lookahead == '*') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2044); }
-      if (lookahead == '+') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2045); }
-      if (lookahead == ',') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2046); }
-      if (lookahead == '-') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2048); }
-      if (lookahead == '.') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2049); }
-      if (lookahead == '/') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2050); }
-      if (lookahead == ':') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2051); }
-      if (lookahead == ';') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2052); }
-      if (lookahead == '<') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2053); }
-      if (lookahead == '=') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2054); }
-      if (lookahead == '>') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2055); }
-      if (lookahead == '?') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2057); }
-      if (lookahead == '@') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2058); }
-      if (lookahead == '[') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2033); }
-      if (lookahead == '\\') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2060); }
-      if (lookahead == ']') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2069); }
-      if (lookahead == '^') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2061); }
-      if (lookahead == '_') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2062); }
-      if (lookahead == '`') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2063); }
-      if (lookahead == '{') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2064); }
-      if (lookahead == '|') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2065); }
-      if (lookahead == '}') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2066); }
-      if (lookahead == '~') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2067); }
+      if (lookahead == '!') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2034); }
+      if (lookahead == '"') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2035); }
+      if (lookahead == '#') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2036); }
+      if (lookahead == '$') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2037); }
+      if (lookahead == '%') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2038); }
+      if (lookahead == '&') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2040); }
+      if (lookahead == '\'') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2041); }
+      if (lookahead == '(') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2042); }
+      if (lookahead == ')') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2043); }
+      if (lookahead == '*') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2044); }
+      if (lookahead == '+') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2045); }
+      if (lookahead == ',') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2046); }
+      if (lookahead == '-') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2048); }
+      if (lookahead == '.') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2049); }
+      if (lookahead == '/') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2050); }
+      if (lookahead == ':') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2051); }
+      if (lookahead == ';') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2052); }
+      if (lookahead == '<') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2053); }
+      if (lookahead == '=') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2054); }
+      if (lookahead == '>') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2055); }
+      if (lookahead == '?') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2057); }
+      if (lookahead == '@') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2058); }
+      if (lookahead == '[') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2033); }
+      if (lookahead == '\\') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2060); }
+      if (lookahead == ']') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2069); }
+      if (lookahead == '^') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2061); }
+      if (lookahead == '_') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2062); }
+      if (lookahead == '`') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2063); }
+      if (lookahead == '{') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2064); }
+      if (lookahead == '|') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2065); }
+      if (lookahead == '}') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2066); }
+      if (lookahead == '~') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2067); }
       if (lookahead == '\t' ||
-          lookahead == ' ') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2078); }
+          lookahead == ' ') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2078); }
       if (!eof &&
           lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2076); }
+          lookahead != '\r') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2076); }
       END_STATE();
     case 1:
       if (eof) ADVANCE(2031);
-      if (lookahead == '!') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2034); }
-      if (lookahead == '"') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2035); }
-      if (lookahead == '#') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2036); }
-      if (lookahead == '$') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2037); }
-      if (lookahead == '%') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2038); }
-      if (lookahead == '&') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2040); }
-      if (lookahead == '\'') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2041); }
-      if (lookahead == '(') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2042); }
-      if (lookahead == ')') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2043); }
-      if (lookahead == '*') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2044); }
-      if (lookahead == '+') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2045); }
-      if (lookahead == ',') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2046); }
-      if (lookahead == '-') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2047); }
-      if (lookahead == '.') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2049); }
-      if (lookahead == '/') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2050); }
-      if (lookahead == ':') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2051); }
-      if (lookahead == ';') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2052); }
-      if (lookahead == '<') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2053); }
-      if (lookahead == '=') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2054); }
-      if (lookahead == '>') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2055); }
-      if (lookahead == '?') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2056); }
-      if (lookahead == '@') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2058); }
-      if (lookahead == '[') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2033); }
-      if (lookahead == '\\') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2060); }
-      if (lookahead == ']') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2068); }
-      if (lookahead == '^') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2061); }
-      if (lookahead == '_') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2062); }
-      if (lookahead == '`') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2063); }
-      if (lookahead == '{') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2064); }
-      if (lookahead == '|') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2065); }
-      if (lookahead == '}') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2066); }
-      if (lookahead == '~') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2067); }
+      if (lookahead == '!') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2034); }
+      if (lookahead == '"') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2035); }
+      if (lookahead == '#') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2036); }
+      if (lookahead == '$') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2037); }
+      if (lookahead == '%') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2038); }
+      if (lookahead == '&') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2040); }
+      if (lookahead == '\'') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2041); }
+      if (lookahead == '(') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2042); }
+      if (lookahead == ')') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2043); }
+      if (lookahead == '*') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2044); }
+      if (lookahead == '+') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2045); }
+      if (lookahead == ',') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2046); }
+      if (lookahead == '-') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2047); }
+      if (lookahead == '.') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2049); }
+      if (lookahead == '/') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2050); }
+      if (lookahead == ':') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2051); }
+      if (lookahead == ';') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2052); }
+      if (lookahead == '<') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2053); }
+      if (lookahead == '=') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2054); }
+      if (lookahead == '>') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2055); }
+      if (lookahead == '?') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2056); }
+      if (lookahead == '@') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2058); }
+      if (lookahead == '[') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2033); }
+      if (lookahead == '\\') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2060); }
+      if (lookahead == ']') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2068); }
+      if (lookahead == '^') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2061); }
+      if (lookahead == '_') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2062); }
+      if (lookahead == '`') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2063); }
+      if (lookahead == '{') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2064); }
+      if (lookahead == '|') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2065); }
+      if (lookahead == '}') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2066); }
+      if (lookahead == '~') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2067); }
       if (lookahead == '\t' ||
-          lookahead == ' ') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2078); }
+          lookahead == ' ') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2078); }
       if (!eof &&
           lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2076); }
+          lookahead != '\r') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2076); }
       END_STATE();
     case 2:
-      if (lookahead == '!') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2034); }
-      if (lookahead == '"') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2035); }
-      if (lookahead == '#') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2036); }
-      if (lookahead == '$') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2037); }
-      if (lookahead == '%') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2038); }
-      if (lookahead == '&') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2039); }
-      if (lookahead == '\'') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2041); }
-      if (lookahead == '(') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2042); }
-      if (lookahead == ')') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2043); }
-      if (lookahead == '*') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2044); }
-      if (lookahead == '+') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2045); }
-      if (lookahead == ',') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2046); }
-      if (lookahead == '-') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2047); }
-      if (lookahead == '.') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2049); }
-      if (lookahead == '/') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2050); }
-      if (lookahead == ':') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2051); }
-      if (lookahead == ';') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2052); }
-      if (lookahead == '<') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2053); }
-      if (lookahead == '=') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2054); }
-      if (lookahead == '>') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2055); }
-      if (lookahead == '?') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2056); }
-      if (lookahead == '@') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2058); }
-      if (lookahead == '[') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2033); }
-      if (lookahead == '\\') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2059); }
-      if (lookahead == ']') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2068); }
-      if (lookahead == '^') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2061); }
-      if (lookahead == '_') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2062); }
-      if (lookahead == '`') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2063); }
-      if (lookahead == '{') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2064); }
-      if (lookahead == '|') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2065); }
-      if (lookahead == '}') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2066); }
-      if (lookahead == '~') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2067); }
+      if (lookahead == '!') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2034); }
+      if (lookahead == '"') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2035); }
+      if (lookahead == '#') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2036); }
+      if (lookahead == '$') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2037); }
+      if (lookahead == '%') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2038); }
+      if (lookahead == '&') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2039); }
+      if (lookahead == '\'') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2041); }
+      if (lookahead == '(') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2042); }
+      if (lookahead == ')') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2043); }
+      if (lookahead == '*') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2044); }
+      if (lookahead == '+') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2045); }
+      if (lookahead == ',') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2046); }
+      if (lookahead == '-') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2047); }
+      if (lookahead == '.') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2049); }
+      if (lookahead == '/') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2050); }
+      if (lookahead == ':') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2051); }
+      if (lookahead == ';') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2052); }
+      if (lookahead == '<') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2053); }
+      if (lookahead == '=') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2054); }
+      if (lookahead == '>') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2055); }
+      if (lookahead == '?') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2056); }
+      if (lookahead == '@') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2058); }
+      if (lookahead == '[') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2033); }
+      if (lookahead == '\\') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2059); }
+      if (lookahead == ']') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2068); }
+      if (lookahead == '^') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2061); }
+      if (lookahead == '_') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2062); }
+      if (lookahead == '`') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2063); }
+      if (lookahead == '{') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2064); }
+      if (lookahead == '|') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2065); }
+      if (lookahead == '}') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2066); }
+      if (lookahead == '~') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2067); }
       if (lookahead == '\t' ||
-          lookahead == ' ') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2078); }
+          lookahead == ' ') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2078); }
       if (!eof &&
           lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2076); }
+          lookahead != '\r') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2076); }
       END_STATE();
     case 3:
-      if (lookahead == '!') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2034); }
-      if (lookahead == '"') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2035); }
-      if (lookahead == '#') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2036); }
-      if (lookahead == '$') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2037); }
-      if (lookahead == '%') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2038); }
-      if (lookahead == '&') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2039); }
-      if (lookahead == '\'') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2041); }
-      if (lookahead == '(') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2042); }
-      if (lookahead == ')') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2043); }
-      if (lookahead == '*') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2044); }
-      if (lookahead == '+') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2045); }
-      if (lookahead == ',') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2046); }
-      if (lookahead == '-') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2047); }
-      if (lookahead == '.') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2049); }
-      if (lookahead == '/') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2050); }
-      if (lookahead == ':') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2051); }
-      if (lookahead == ';') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2052); }
-      if (lookahead == '<') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2053); }
-      if (lookahead == '=') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2054); }
-      if (lookahead == '>') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2055); }
-      if (lookahead == '?') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2056); }
-      if (lookahead == '@') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2058); }
-      if (lookahead == '[') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2033); }
-      if (lookahead == '\\') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2060); }
-      if (lookahead == ']') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2068); }
-      if (lookahead == '^') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2061); }
-      if (lookahead == '_') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2062); }
-      if (lookahead == '`') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2063); }
-      if (lookahead == '{') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2064); }
-      if (lookahead == '|') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2065); }
-      if (lookahead == '}') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2066); }
-      if (lookahead == '~') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2067); }
+      if (lookahead == '!') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2034); }
+      if (lookahead == '"') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2035); }
+      if (lookahead == '#') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2036); }
+      if (lookahead == '$') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2037); }
+      if (lookahead == '%') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2038); }
+      if (lookahead == '&') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2039); }
+      if (lookahead == '\'') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2041); }
+      if (lookahead == '(') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2042); }
+      if (lookahead == ')') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2043); }
+      if (lookahead == '*') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2044); }
+      if (lookahead == '+') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2045); }
+      if (lookahead == ',') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2046); }
+      if (lookahead == '-') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2047); }
+      if (lookahead == '.') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2049); }
+      if (lookahead == '/') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2050); }
+      if (lookahead == ':') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2051); }
+      if (lookahead == ';') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2052); }
+      if (lookahead == '<') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2053); }
+      if (lookahead == '=') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2054); }
+      if (lookahead == '>') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2055); }
+      if (lookahead == '?') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2056); }
+      if (lookahead == '@') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2058); }
+      if (lookahead == '[') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2033); }
+      if (lookahead == '\\') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2060); }
+      if (lookahead == ']') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2068); }
+      if (lookahead == '^') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2061); }
+      if (lookahead == '_') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2062); }
+      if (lookahead == '`') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2063); }
+      if (lookahead == '{') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2064); }
+      if (lookahead == '|') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2065); }
+      if (lookahead == '}') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2066); }
+      if (lookahead == '~') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2067); }
       if (lookahead == '\t' ||
-          lookahead == ' ') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2078); }
+          lookahead == ' ') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2078); }
       if (!eof &&
           lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2076); }
+          lookahead != '\r') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2076); }
       END_STATE();
     case 4:
-      if (lookahead == '!') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2034); }
-      if (lookahead == '"') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2035); }
-      if (lookahead == '#') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2036); }
-      if (lookahead == '$') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2037); }
-      if (lookahead == '%') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2038); }
-      if (lookahead == '&') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2039); }
-      if (lookahead == '\'') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2041); }
-      if (lookahead == '(') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2042); }
-      if (lookahead == ')') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2043); }
-      if (lookahead == '*') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2044); }
-      if (lookahead == '+') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2045); }
-      if (lookahead == ',') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2046); }
-      if (lookahead == '-') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2047); }
-      if (lookahead == '.') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2049); }
-      if (lookahead == '/') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2050); }
-      if (lookahead == ':') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2051); }
-      if (lookahead == ';') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2052); }
-      if (lookahead == '<') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2053); }
-      if (lookahead == '=') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2054); }
-      if (lookahead == '>') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2055); }
-      if (lookahead == '?') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2056); }
-      if (lookahead == '@') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2058); }
-      if (lookahead == '[') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2033); }
-      if (lookahead == '\\') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2059); }
-      if (lookahead == ']') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2069); }
-      if (lookahead == '^') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2061); }
-      if (lookahead == '_') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2062); }
-      if (lookahead == '`') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2063); }
-      if (lookahead == '{') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2064); }
-      if (lookahead == '|') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2065); }
-      if (lookahead == '}') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2066); }
-      if (lookahead == '~') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2067); }
+      if (lookahead == '!') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2034); }
+      if (lookahead == '"') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2035); }
+      if (lookahead == '#') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2036); }
+      if (lookahead == '$') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2037); }
+      if (lookahead == '%') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2038); }
+      if (lookahead == '&') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2039); }
+      if (lookahead == '\'') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2041); }
+      if (lookahead == '(') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2042); }
+      if (lookahead == ')') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2043); }
+      if (lookahead == '*') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2044); }
+      if (lookahead == '+') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2045); }
+      if (lookahead == ',') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2046); }
+      if (lookahead == '-') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2047); }
+      if (lookahead == '.') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2049); }
+      if (lookahead == '/') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2050); }
+      if (lookahead == ':') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2051); }
+      if (lookahead == ';') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2052); }
+      if (lookahead == '<') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2053); }
+      if (lookahead == '=') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2054); }
+      if (lookahead == '>') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2055); }
+      if (lookahead == '?') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2056); }
+      if (lookahead == '@') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2058); }
+      if (lookahead == '[') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2033); }
+      if (lookahead == '\\') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2059); }
+      if (lookahead == ']') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2069); }
+      if (lookahead == '^') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2061); }
+      if (lookahead == '_') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2062); }
+      if (lookahead == '`') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2063); }
+      if (lookahead == '{') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2064); }
+      if (lookahead == '|') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2065); }
+      if (lookahead == '}') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2066); }
+      if (lookahead == '~') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2067); }
       if (lookahead == '\t' ||
-          lookahead == ' ') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2078); }
+          lookahead == ' ') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2078); }
       if (!eof &&
           lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2076); }
+          lookahead != '\r') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2076); }
       END_STATE();
     case 5:
-      if (lookahead == '!') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2034); }
-      if (lookahead == '"') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2035); }
-      if (lookahead == '#') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2036); }
-      if (lookahead == '$') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2037); }
-      if (lookahead == '%') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2038); }
-      if (lookahead == '&') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2039); }
-      if (lookahead == '\'') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2041); }
-      if (lookahead == '(') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2042); }
-      if (lookahead == ')') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2043); }
-      if (lookahead == '*') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2044); }
-      if (lookahead == '+') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2045); }
-      if (lookahead == ',') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2046); }
-      if (lookahead == '-') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2048); }
-      if (lookahead == '.') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2049); }
-      if (lookahead == '/') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2050); }
-      if (lookahead == ':') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2051); }
-      if (lookahead == ';') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2052); }
-      if (lookahead == '<') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2053); }
-      if (lookahead == '=') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2054); }
-      if (lookahead == '>') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2055); }
-      if (lookahead == '?') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2056); }
-      if (lookahead == '@') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2058); }
-      if (lookahead == '[') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2033); }
-      if (lookahead == '\\') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2059); }
-      if (lookahead == ']') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2068); }
-      if (lookahead == '^') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2061); }
-      if (lookahead == '_') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2062); }
-      if (lookahead == '`') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2063); }
-      if (lookahead == '{') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2064); }
-      if (lookahead == '|') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2065); }
-      if (lookahead == '}') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2066); }
-      if (lookahead == '~') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2067); }
+      if (lookahead == '!') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2034); }
+      if (lookahead == '"') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2035); }
+      if (lookahead == '#') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2036); }
+      if (lookahead == '$') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2037); }
+      if (lookahead == '%') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2038); }
+      if (lookahead == '&') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2039); }
+      if (lookahead == '\'') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2041); }
+      if (lookahead == '(') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2042); }
+      if (lookahead == ')') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2043); }
+      if (lookahead == '*') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2044); }
+      if (lookahead == '+') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2045); }
+      if (lookahead == ',') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2046); }
+      if (lookahead == '-') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2048); }
+      if (lookahead == '.') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2049); }
+      if (lookahead == '/') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2050); }
+      if (lookahead == ':') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2051); }
+      if (lookahead == ';') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2052); }
+      if (lookahead == '<') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2053); }
+      if (lookahead == '=') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2054); }
+      if (lookahead == '>') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2055); }
+      if (lookahead == '?') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2056); }
+      if (lookahead == '@') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2058); }
+      if (lookahead == '[') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2033); }
+      if (lookahead == '\\') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2059); }
+      if (lookahead == ']') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2068); }
+      if (lookahead == '^') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2061); }
+      if (lookahead == '_') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2062); }
+      if (lookahead == '`') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2063); }
+      if (lookahead == '{') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2064); }
+      if (lookahead == '|') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2065); }
+      if (lookahead == '}') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2066); }
+      if (lookahead == '~') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2067); }
       if (lookahead == '\t' ||
-          lookahead == ' ') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2078); }
+          lookahead == ' ') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2078); }
       if (!eof &&
           lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2076); }
+          lookahead != '\r') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2076); }
       END_STATE();
     case 6:
-      if (lookahead == '!') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2034); }
-      if (lookahead == '"') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2035); }
-      if (lookahead == '#') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2036); }
-      if (lookahead == '$') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2037); }
-      if (lookahead == '%') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2038); }
-      if (lookahead == '&') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2039); }
-      if (lookahead == '\'') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2041); }
-      if (lookahead == '(') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2042); }
-      if (lookahead == ')') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2043); }
-      if (lookahead == '*') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2044); }
-      if (lookahead == '+') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2045); }
-      if (lookahead == ',') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2046); }
-      if (lookahead == '-') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2047); }
-      if (lookahead == '.') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2049); }
-      if (lookahead == '/') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2050); }
-      if (lookahead == ':') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2051); }
-      if (lookahead == ';') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2052); }
-      if (lookahead == '<') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2053); }
-      if (lookahead == '=') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2054); }
-      if (lookahead == '>') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2055); }
-      if (lookahead == '?') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2057); }
-      if (lookahead == '@') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2058); }
-      if (lookahead == '[') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2033); }
-      if (lookahead == '\\') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2059); }
-      if (lookahead == ']') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2068); }
-      if (lookahead == '^') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2061); }
-      if (lookahead == '_') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2062); }
-      if (lookahead == '`') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2063); }
-      if (lookahead == '{') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2064); }
-      if (lookahead == '|') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2065); }
-      if (lookahead == '}') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2066); }
-      if (lookahead == '~') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2067); }
+      if (lookahead == '!') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2034); }
+      if (lookahead == '"') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2035); }
+      if (lookahead == '#') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2036); }
+      if (lookahead == '$') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2037); }
+      if (lookahead == '%') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2038); }
+      if (lookahead == '&') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2039); }
+      if (lookahead == '\'') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2041); }
+      if (lookahead == '(') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2042); }
+      if (lookahead == ')') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2043); }
+      if (lookahead == '*') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2044); }
+      if (lookahead == '+') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2045); }
+      if (lookahead == ',') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2046); }
+      if (lookahead == '-') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2047); }
+      if (lookahead == '.') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2049); }
+      if (lookahead == '/') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2050); }
+      if (lookahead == ':') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2051); }
+      if (lookahead == ';') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2052); }
+      if (lookahead == '<') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2053); }
+      if (lookahead == '=') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2054); }
+      if (lookahead == '>') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2055); }
+      if (lookahead == '?') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2057); }
+      if (lookahead == '@') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2058); }
+      if (lookahead == '[') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2033); }
+      if (lookahead == '\\') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2059); }
+      if (lookahead == ']') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2068); }
+      if (lookahead == '^') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2061); }
+      if (lookahead == '_') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2062); }
+      if (lookahead == '`') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2063); }
+      if (lookahead == '{') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2064); }
+      if (lookahead == '|') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2065); }
+      if (lookahead == '}') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2066); }
+      if (lookahead == '~') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2067); }
       if (lookahead == '\t' ||
-          lookahead == ' ') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2078); }
+          lookahead == ' ') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2078); }
       if (!eof &&
           lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') { lexer->get_position(lexer, &start_tags[0]); ADVANCE(2076); }
+          lookahead != '\r') { lexer->get_checkpoint(lexer, &start_tags[0]); ADVANCE(2076); }
       END_STATE();
     case 7:
       if (lookahead == '1') ADVANCE(2001);
@@ -11765,7 +10660,7 @@ static const TSLexerMode ts_lex_modes[] = {
   [72] = {.lex_state = 0, .lex_state_after_extra = 0, .external_lex_state = 59, .external_lex_state_after_extra = 59, .reserved_word_set_id = 0},
 };
 
-static const uint16_t ts_lex_mode_ids[STATE_COUNT] = {
+static const uint8_t ts_lex_mode_ids[STATE_COUNT] = {
   0, 1, 2, 2, 3, 3, 4, 2, 5, 5, 2, 6, 7, 7, 8, 2, 
   9, 10, 10, 3, 2, 11, 11, 12, 3, 5, 13, 14, 14, 5, 15, 15, 
   12, 2, 16, 5, 17, 5, 8, 18, 3, 3, 18, 19, 20, 21, 22, 21, 
@@ -27475,7 +26370,7 @@ TS_PUBLIC const TSLanguage *tree_sitter_markdown(void) {
       tree_sitter_markdown_external_scanner_serialize,
       tree_sitter_markdown_external_scanner_deserialize,
     },
-    .primary_state_ids = ts_primary_state_ids,
+    .primary_state_bitmap = ts_primary_state_bitmap,
     .name = "markdown",
     .max_reserved_word_set_size = 0,
     .metadata = {
