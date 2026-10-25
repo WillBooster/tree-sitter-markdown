@@ -16,7 +16,7 @@ This fork builds on the grammars, external scanners, and queries of upstream's v
 with the [WillBooster/tree-sitter](https://github.com/WillBooster/tree-sitter) generator. The block scanner compares the
 digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigit`, which the C headers for
 `wasm32-unknown-unknown` do not declare; both accept the ASCII digits only. The parsers carry that fork's
-own ABI number (`0x57420009`) and load only with that fork's runtime, version 13.0.0 or later within 13.x: upstream's tree-sitter
+own ABI number (`0x5742000b`) and load only with that fork's runtime, version 15.0.0 or later within 15.x: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
 - Inline emphasis and strikethrough preserve source punctuation and whitespace across edits, including boundaries
@@ -74,7 +74,7 @@ included, as they are not in upstream's packages.
 ## Usage
 
 The npm package ships `tree-sitter-markdown.wasm` and `tree-sitter-markdown_inline.wasm` for
-[@willbooster/web-tree-sitter](https://www.npmjs.com/package/@willbooster/web-tree-sitter) version 13.0.0 or later within 13.x, which
+[@willbooster/web-tree-sitter](https://www.npmjs.com/package/@willbooster/web-tree-sitter) version 15.0.0 or later within 15.x, which
 runs in Node.js, Bun, browsers, and Cloudflare Workers. Parse a document with the block grammar, then parse the inline
 content of each `inline` or `pipe_table_cell` node with the inline grammar, limited to the node's range without its
 named children (block continuations such as the `>` of a block quote). In Node.js and Bun, load the grammars from their
@@ -159,8 +159,8 @@ fuzzed with:
 
 ```toml
 [dependencies]
-tree-sitter = { package = "willbooster-tree-sitter", version = "13.0.0" }
-tree-sitter-md = { package = "willbooster-tree-sitter-md", version = "7" }
+tree-sitter = { package = "willbooster-tree-sitter", version = "15.0.0" }
+tree-sitter-md = { package = "willbooster-tree-sitter-md", version = "9" }
 ```
 
 ```rust
@@ -170,7 +170,7 @@ parser.set_language(&tree_sitter_md::LANGUAGE.into())?;
 
 The crate keeps the API of upstream's `tree-sitter-md` crate: `tree_sitter_md::INLINE_LANGUAGE` is the inline grammar,
 and the `parser` feature adds `MarkdownParser`, which parses a document with both grammars into a `MarkdownTree`.
-The `parser` feature requires runtime version 13.0.0 or later within 13.x, which supports UTF-8 characters split across short input chunks.
+The `parser` feature requires runtime version 15.0.0 or later within 15.x, which supports UTF-8 characters split across short input chunks.
 `MarkdownCursor::field_name` returns a name that borrows from the tree (`Option<&'tree str>`), since the
 willbooster-tree-sitter runtime returns field names with that lifetime, where upstream's returns `Option<&'static str>`.
 
