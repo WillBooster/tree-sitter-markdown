@@ -229,7 +229,7 @@ module.exports = grammar(add_inline_rules({
             $._literal_emphasis_run,
             ...(common.EXTENSION_STRIKETHROUGH ? [$._strikethrough_literal] : []),
         ),
-        _text_base: $ => choice($._text_base_no_emphasis, '*', '_', '~'),
+        _text_base: $ => choice($._text_base_no_emphasis, '*', '_', ...(common.EXTENSION_STRIKETHROUGH ? ['~'] : [])),
         _text_base_no_emphasis: $ => choice(
             $._word,
             common.punctuation_without($, ['[', ']', '*', '_', ...(common.EXTENSION_STRIKETHROUGH ? ['~'] : [])]),
