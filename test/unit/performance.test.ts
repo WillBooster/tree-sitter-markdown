@@ -20,8 +20,6 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
   parser.setLanguage(await Language.load(wasmPath));
 
   describe(grammar, () => {
-    // The tests load the existing Wasm build, so a stale one would hide an edit that makes parsing slower than linear.
-    // `tree-sitter build --wasm` compiles src/ without regenerating it, so each step is checked on its own.
     test('uses a Wasm build built from the current parser', () => {
       const mtime = (file: string): number => fs.statSync(path.join(Root, grammar, file)).mtimeMs;
       expect(
@@ -57,7 +55,7 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
           { timeout: 60_000 },
           () => {
             // A run is read faster than a line, so it needs more repetitions for a measurable CPU time.
-            expectLinearParsing(parser, delimiter, (run) => `a\n${run}x${run}\n`, 20_000);
+            expectLinearParsing(parser, delimiter, (run) => `a\n${run}x${run}\n`, 20_000 / delimiter.length);
           }
         );
       }
@@ -80,7 +78,6 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
       expectLinearParsing(parser, line);
     });
     if (grammar === 'tree-sitter-markdown-inline') {
-      // One test per line keeps each within the timeout on slow runners.
       for (const line of ['1_*_*a ', 'b_*_*a ', '~~a ', '~a ', '**a*.', 'foo **bar* baz. ']) {
         test(`parses repeated delimiter runs ${JSON.stringify(line)} in linear time`, { timeout: 60_000 }, () => {
           expectLinearParsing(parser, line);
