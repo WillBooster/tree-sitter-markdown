@@ -1233,7 +1233,7 @@ static bool is_email_local(int32_t character) {
 }
 
 // A code or LaTeX span that closes is one token whose contents are not delimiters, as `parse_leaf_delimiter` reads
-// it. An unclosed opener is text, but the proof has then read past what follows it.
+// it.
 static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t delimiter) {
     uint32_t level = 0;
     while (lexer->lookahead == delimiter) {
