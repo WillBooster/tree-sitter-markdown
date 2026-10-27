@@ -299,6 +299,7 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
 static bool is_blank_parent(Scanner *s, uint32_t depth);
 static void set_blank_parent(Scanner *s, uint32_t depth, bool blank);
 static bool closes_bracket(const int32_t *text, unsigned length);
+static bool definitely_unclosed_head(const int32_t *text, unsigned length);
 static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer);
 static unsigned span_end(const int32_t *text, unsigned length, unsigned start);
 static TokenType following_label(TSLexer *lexer);
@@ -788,6 +789,7 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
     s->context_pending = is_inline_delimiter(lexer->lookahead);
     s->num_emphasis_delimiters_left = 0;
     bool blank = false;
+    bool unclosed = s->no_closing_bracket;
     if (!s->no_closing_bracket) {
         // Spans decide which `]` closes, and their extent depends on runs further on, so the text is read first.
         int32_t text[CERTIFIED_LIMIT];
@@ -798,13 +800,27 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
         }
         blank = encloses_only_whitespace(text, length, lexer);
         s->no_closing_bracket = lexer->eof(lexer) && !closes_bracket(text, length);
+        unclosed = s->no_closing_bracket || (lexer->eof(lexer) && definitely_unclosed_head(text, length));
     }
-    lexer->result_symbol = s->no_closing_bracket ? UNCLOSED_OPEN_BRACKET : blank ? OPEN_BRACKET_BLANK : OPEN_BRACKET;
+    lexer->result_symbol = unclosed ? UNCLOSED_OPEN_BRACKET : blank ? OPEN_BRACKET_BLANK : OPEN_BRACKET;
     if (!valid_symbols[lexer->result_symbol]) return false;
     if (blank) set_blank_parent(s, s->bracket_depth, true);
     s->bracket_depth++;
     set_blank_parent(s, s->bracket_depth, false);
     s->flat_head_depth = s->bracket_depth;
+    return true;
+}
+
+static bool definitely_unclosed_head(const int32_t *text, unsigned length) {
+    unsigned depth = 0;
+    for (unsigned i = 0; i < length; i++) {
+        switch (text[i]) {
+            case '<': case '`': case '$': return false;
+            case '\\': i++; break;
+            case '[': depth++; break;
+            case ']': if (!depth) return false; depth--; break;
+        }
+    }
     return true;
 }
 
@@ -1233,7 +1249,7 @@ static bool is_email_local(int32_t character) {
 }
 
 // A code or LaTeX span that closes is one token whose contents are not delimiters, as `parse_leaf_delimiter` reads
-// it. An unclosed opener is text, but the proof has then read past what follows it.
+// it.
 static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t delimiter) {
     uint32_t level = 0;
     while (lexer->lookahead == delimiter) {
@@ -1242,11 +1258,16 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
         level++;
         advance_searching(lexer, proof);
     }
+    ProofLexer *input = (ProofLexer *)lexer;
+    unsigned content_start = input->cursor;
+    unsigned content_budget = proof->budget;
+    CloserSearch content_search = proof->search;
     uint32_t run = 0;
+    bool different_run = false;
     while (!lexer->eof(lexer)) {
         if (lexer->lookahead != delimiter && run == level) break;
         // Inside a span the lexer reads a run of another length piece by piece and can close the span within it.
-        if (lexer->lookahead != delimiter && run) return PROOF_UNCERTAIN;
+        if (lexer->lookahead != delimiter && run) different_run = true;
         if (!proof->budget) return PROOF_UNCERTAIN;
         // LaTeX contents read a backslash and the next character as one unit, as `parse_leaf_delimiter` does.
         bool escape = delimiter == '$' && lexer->lookahead == '\\';
@@ -1259,8 +1280,16 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
             advance_searching(lexer, proof);
         }
     }
-    if (run != level) return PROOF_UNCERTAIN;
-    proof->search = (CloserSearch){0};
+    if (run != level) {
+        // At EOF an unclosed run is ordinary text; replay its contents so they can own emphasis delimiters.
+        input->cursor = content_start;
+        lexer->lookahead = content_start < input->length ? input->characters[content_start] : input->source->lookahead;
+        proof->budget = content_budget;
+        proof->search = content_search;
+    } else {
+        if (different_run) return PROOF_UNCERTAIN;
+        proof->search = (CloserSearch){0};
+    }
     proof->previous = proof->emphasis_previous = delimiter;
     return PROOF_TEXT;
 }

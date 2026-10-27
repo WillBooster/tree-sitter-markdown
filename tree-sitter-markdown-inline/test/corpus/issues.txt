@@ -1107,3 +1107,26 @@ An unclosed destination after nested image brackets retains the inner shortcut
 (inline
   (shortcut_link
     (link_text)))
+
+================================================================================
+Unfinished nested image descriptions retain a text interpretation
+================================================================================
+![![[]](
+
+--------------------------------------------------------------------------------
+
+(inline)
+
+================================================================================
+Unclosed image heads do not claim an inner shortcut bracket
+================================================================================
+![~~![~~[b]
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strikethrough
+    (emphasis_delimiter)
+    (emphasis_delimiter))
+  (shortcut_link
+    (link_text)))
