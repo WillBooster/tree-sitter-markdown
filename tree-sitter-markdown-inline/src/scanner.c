@@ -813,12 +813,14 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
 
 static bool definitely_unclosed_head(const int32_t *text, unsigned length) {
     unsigned depth = 0;
+    bool possible_destination = false;
     for (unsigned i = 0; i < length; i++) {
         switch (text[i]) {
             case '<': case '`': case '$': return false;
             case '\\': i++; break;
-            case '[': depth++; break;
-            case ']': if (!depth) return false; depth--; break;
+            case '(': possible_destination = true; break;
+            case '[': if (possible_destination) return false; depth++; break;
+            case ']': if (!depth || possible_destination) return false; depth--; break;
         }
     }
     return true;

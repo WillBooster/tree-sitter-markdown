@@ -14,6 +14,13 @@ afterAll(() => {
 });
 
 for (const [source, expected] of [
+  [
+    '![a [b](x[) c](u)',
+    [
+      ['image', '![a [b](x[) c](u)', 0, 17],
+      ['inline_link', '[b](x[)', 4, 11],
+    ],
+  ],
   ['![![[]](', []],
   ['![~~![~~[b]', [['shortcut_link', '[b]', 8, 11]]],
   ['![`[`](u)', [['image', '![`[`](u)', 0, 9]]],
