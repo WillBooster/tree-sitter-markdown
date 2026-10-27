@@ -78,6 +78,7 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
       expectLinearParsing(parser, line);
     });
     if (grammar === 'tree-sitter-markdown-inline') {
+      // One test per line keeps each within the timeout on slow runners.
       for (const line of ['1_*_*a ', 'b_*_*a ', '~~a ', '~a ', '**a*.', 'foo **bar* baz. ']) {
         test(`parses repeated delimiter runs ${JSON.stringify(line)} in linear time`, { timeout: 60_000 }, () => {
           expectLinearParsing(parser, line);
