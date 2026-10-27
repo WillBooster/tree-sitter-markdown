@@ -297,6 +297,9 @@ function addImageContentConflicts(conflicts) {
     }
     for (const noTilde of ['', '_no_tilde']) conflicts.push([`_inline_element${noTilde}_no_link`, `_inline_element${noTilde}_in_image`]);
     if (common.EXTENSION_STRIKETHROUGH) conflicts.push(['_inline_element_no_link', '_strikethrough_no_link', '_inline_element_in_image', '_strikethrough_in_image']);
+    if (common.EXTENSION_WIKI_LINK) {
+        conflicts.push(['wiki_link', '_text_base_no_emphasis']);
+    }
 }
 
 function addOpenerRules(grammar) {
