@@ -59,7 +59,9 @@ module.exports = grammar(add_inline_rules({
         // Processing instructions, declarations, and CDATA sections, which the scanner reads so that it can remember a
         // missing terminator instead of rescanning the rest of the input at every later opener.
         $._html_special,
-        $._html_special_opener
+        $._html_special_opener,
+        $._uri_autolink_start,
+        $._email_autolink_start
     ],
     precedences: $ => [
         [$.hard_line_break, $._whitespace],
@@ -176,17 +178,8 @@ module.exports = grammar(add_inline_rules({
         _image_full_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq($._image_description_with_label, $.link_label)),
         _image_collapsed_reference_link: $ => prec.dynamic(PRECEDENCE_LEVEL_LINK, seq(prec.dynamic(3 * PRECEDENCE_LEVEL_LINK, $._image_description_non_blank_with_label), alias($._open_bracket_blank, '['), ']')),
 
-        // Autolinks. Uri autolinks actually accept protocolls of arbitrary length which does not
-        // align with the spec. This is because the binary for the grammar gets to large if done
-        // otherwise as tree-sitters code generation is not very concise for this type of regex.
-        //
-        // Email autolinks do not match every valid email (emails normally should not be parsed
-        // using regexes), but this is how they are defined in the spec.
-        //
-        // https://github.github.com/gfm/#autolinks
-        uri_autolink: $ => /<[a-zA-Z][a-zA-Z0-9+\.\-][a-zA-Z0-9+\.\-]*:[^ \t\r\n<>]*>/,
-        email_autolink: $ =>
-            /<[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>/,
+        uri_autolink: $ => seq(alias($._uri_autolink_start, $.autolink_delimiter), /[a-zA-Z][a-zA-Z0-9+\.\-][a-zA-Z0-9+\.\-]*:[^ \t\r\n<>]*/, alias('>', $.autolink_delimiter)),
+        email_autolink: $ => seq(alias($._email_autolink_start, $.autolink_delimiter), /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*/, alias('>', $.autolink_delimiter)),
 
         _html_tag: $ => choice($._open_tag, $._closing_tag, $._html_comment, $._html_special),
         _open_tag: $ => token(/<[A-Za-z][A-Za-z0-9-]*([ \t\r\n]+[A-Za-z_:][A-Za-z0-9_.:\-]*([ \t\r\n]*=[ \t\r\n]*("[^"]*"|'[^']*'|[^ \t\r\n"'=<>`]+))?)*[ \t\r\n]*\/?>/),

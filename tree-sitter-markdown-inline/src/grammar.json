@@ -2634,8 +2634,31 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "PATTERN",
-          "value": "<[a-zA-Z][a-zA-Z0-9+\\.\\-][a-zA-Z0-9+\\.\\-]*:[^ \\t\\r\\n<>]*>"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_uri_autolink_start"
+              },
+              "named": true,
+              "value": "autolink_delimiter"
+            },
+            {
+              "type": "PATTERN",
+              "value": "[a-zA-Z][a-zA-Z0-9+\\.\\-][a-zA-Z0-9+\\.\\-]*:[^ \\t\\r\\n<>]*"
+            },
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "STRING",
+                "value": ">"
+              },
+              "named": true,
+              "value": "autolink_delimiter"
+            }
+          ]
         },
         {
           "type": "CHOICE",
@@ -2655,8 +2678,31 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "PATTERN",
-          "value": "<[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_email_autolink_start"
+              },
+              "named": true,
+              "value": "autolink_delimiter"
+            },
+            {
+              "type": "PATTERN",
+              "value": "[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*"
+            },
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "STRING",
+                "value": ">"
+              },
+              "named": true,
+              "value": "autolink_delimiter"
+            }
+          ]
         },
         {
           "type": "CHOICE",
@@ -9607,6 +9653,14 @@
     {
       "type": "SYMBOL",
       "name": "_html_special_opener"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_uri_autolink_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_email_autolink_start"
     }
   ],
   "inline": [],

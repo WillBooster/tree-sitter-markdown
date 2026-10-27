@@ -99,7 +99,9 @@ typedef enum {
     CLOSE_BRACKET_UNKNOWN_LABEL,
     CLOSE_BRACKET_NESTED,
     HTML_SPECIAL,
-    HTML_SPECIAL_OPENER
+    HTML_SPECIAL_OPENER,
+    URI_AUTOLINK_START,
+    EMAIL_AUTOLINK_START
 } TokenType;
 
 // Constructs whose terminator is known to be missing from the scanned position to the end of the input.
@@ -270,7 +272,10 @@ static bool emit_context(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool dispatch_delimiter(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
 static bool parse_backtick(Scanner *s, TSLexer *lexer,
                            const bool *valid_symbols);
-static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
+static bool parse_angle(Scanner *s, TSLexer *lexer, const bool *valid_symbols);
+static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_symbols, uint8_t kind, const char *terminator);
+static bool parse_autolink_start(TSLexer *lexer, const bool *valid_symbols);
+static void mark_buffered_end(TSLexer *lexer);
 static bool scan_html_terminator(TSLexer *lexer, const char *terminator);
 static uint8_t read_html_special_opener(TSLexer *lexer, const char **terminator);
 static bool parse_dollar(Scanner *s, TSLexer *lexer,
@@ -427,7 +432,7 @@ static bool dispatch_delimiter(Scanner *s, TSLexer *lexer, const bool *valid_sym
         case '[': return parse_bracket(s, lexer, valid_symbols);
         case '`': return parse_backtick(s, lexer, valid_symbols);
         case '$': return parse_dollar(s, lexer, valid_symbols);
-        case '<': return parse_html_special(s, lexer, valid_symbols);
+        case '<': return parse_angle(s, lexer, valid_symbols);
         case '*': return parse_emphasis(s, lexer, valid_symbols, '*', EMPHASIS_STAR_OPEN_LEFT_0);
         case '_': return parse_emphasis(s, lexer, valid_symbols, '_', EMPHASIS_UNDERSCORE_OPEN_LEFT_0);
         case '~': return parse_emphasis(s, lexer, valid_symbols, '~', STRIKETHROUGH_FORCED_OPEN);
@@ -435,12 +440,30 @@ static bool dispatch_delimiter(Scanner *s, TSLexer *lexer, const bool *valid_sym
     }
 }
 
-static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
-    if (!valid_symbols[HTML_SPECIAL] && !valid_symbols[HTML_SPECIAL_OPENER]) return false;
-    lexer->advance(lexer, false);
+static bool parse_angle(Scanner *s, TSLexer *source, const bool *valid_symbols) {
+    if (!valid_symbols[HTML_SPECIAL] && !valid_symbols[HTML_SPECIAL_OPENER] &&
+        !valid_symbols[URI_AUTOLINK_START] && !valid_symbols[EMAIL_AUTOLINK_START]) return false;
+    source->advance(source, false);
+    source->mark_end(source);
+    ProofLexer input = {.source = source, .lexer = {.lookahead = source->lookahead,
+        .advance = advance_proof_lexer, .eof = proof_lexer_eof, .mark_end = mark_buffered_end}};
+    TSLexer *lexer = &input.lexer;
     const char *terminator = NULL;
-    uint8_t kind = read_html_special_opener(lexer, &terminator);
-    if (!kind) return false;
+    uint8_t kind = valid_symbols[HTML_SPECIAL] || valid_symbols[HTML_SPECIAL_OPENER]
+        ? read_html_special_opener(lexer, &terminator) : 0;
+    bool result;
+    if (kind) result = parse_html_special(s, lexer, valid_symbols, kind, terminator);
+    else {
+        input.cursor = 0;
+        lexer->lookahead = input.length ? input.characters[0] : source->lookahead;
+        result = parse_autolink_start(lexer, valid_symbols);
+    }
+    source->result_symbol = lexer->result_symbol;
+    return result;
+}
+
+static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_symbols,
+                               uint8_t kind, const char *terminator) {
     lexer->mark_end(lexer);
     if (terminator && valid_symbols[HTML_SPECIAL] && !(s->unterminated_html & kind)) {
         if (scan_html_terminator(lexer, terminator)) {
@@ -453,6 +476,27 @@ static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_sym
     if (!valid_symbols[HTML_SPECIAL_OPENER]) return false;
     lexer->result_symbol = HTML_SPECIAL_OPENER;
     return true;
+}
+
+static bool parse_autolink_start(TSLexer *lexer, const bool *valid_symbols) {
+    ProofAngle angle = opening_angle(lexer->lookahead) & ~ANGLE_HTML_MASK;
+    while (angle && !lexer->eof(lexer)) {
+        ProofAngle next = next_uri_angle(angle, lexer->lookahead) | next_email_angle(angle, lexer->lookahead);
+        lexer->advance(lexer, false);
+        if (next == ANGLE_COMPLETE) {
+            TokenType token = angle & ANGLE_URI_BODY ? URI_AUTOLINK_START : EMAIL_AUTOLINK_START;
+            lexer->result_symbol = token;
+            return valid_symbols[token];
+        }
+        angle = next;
+    }
+    return false;
+}
+
+static void mark_buffered_end(TSLexer *lexer) {
+    ProofLexer *input = (ProofLexer *)lexer;
+    assert(input->cursor == input->length);
+    input->source->mark_end(input->source);
 }
 
 // Reads the opener after `<` and returns its kind, or 0 when there is none. A declaration needs whitespace after its

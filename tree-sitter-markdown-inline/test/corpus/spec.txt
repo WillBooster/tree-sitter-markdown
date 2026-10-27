@@ -130,7 +130,9 @@ Example 316 - https://github.github.com/gfm/#example-316
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 317 - https://github.github.com/gfm/#example-317
@@ -545,7 +547,9 @@ Example 356 - https://github.github.com/gfm/#example-356
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 357 - https://github.github.com/gfm/#example-357
@@ -2167,7 +2171,9 @@ Example 489 - https://github.github.com/gfm/#example-489
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 490 - https://github.github.com/gfm/#example-490
@@ -2177,7 +2183,9 @@ __a<http://foo.bar/?q=__>
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 493 - https://github.github.com/gfm/#example-493
@@ -2708,7 +2716,9 @@ Example 534 - https://github.github.com/gfm/#example-534
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 535 - https://github.github.com/gfm/#example-535
@@ -2847,7 +2857,9 @@ Example 546 - https://github.github.com/gfm/#example-546
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 547 - https://github.github.com/gfm/#example-547
@@ -3496,7 +3508,9 @@ Example 602 - https://github.github.com/gfm/#example-602
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 603 - https://github.github.com/gfm/#example-603
@@ -3506,7 +3520,9 @@ Example 603 - https://github.github.com/gfm/#example-603
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 604 - https://github.github.com/gfm/#example-604
@@ -3516,7 +3532,9 @@ Example 604 - https://github.github.com/gfm/#example-604
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 605 - https://github.github.com/gfm/#example-605
@@ -3526,7 +3544,9 @@ Example 605 - https://github.github.com/gfm/#example-605
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 606 - https://github.github.com/gfm/#example-606
@@ -3536,7 +3556,9 @@ Example 606 - https://github.github.com/gfm/#example-606
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 607 - https://github.github.com/gfm/#example-607
@@ -3546,7 +3568,9 @@ Example 607 - https://github.github.com/gfm/#example-607
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 608 - https://github.github.com/gfm/#example-608
@@ -3556,7 +3580,9 @@ Example 608 - https://github.github.com/gfm/#example-608
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 609 - https://github.github.com/gfm/#example-609
@@ -3566,7 +3592,9 @@ Example 609 - https://github.github.com/gfm/#example-609
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 610 - https://github.github.com/gfm/#example-610
@@ -3585,7 +3613,9 @@ Example 611 - https://github.github.com/gfm/#example-611
 --------------------------------------------------------------------------------
 
 (inline
-  (uri_autolink))
+  (uri_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 612 - https://github.github.com/gfm/#example-612
@@ -3595,7 +3625,9 @@ Example 612 - https://github.github.com/gfm/#example-612
 --------------------------------------------------------------------------------
 
 (inline
-  (email_autolink))
+  (email_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 613 - https://github.github.com/gfm/#example-613
@@ -3605,7 +3637,9 @@ Example 613 - https://github.github.com/gfm/#example-613
 --------------------------------------------------------------------------------
 
 (inline
-  (email_autolink))
+  (email_autolink
+    (autolink_delimiter)
+    (autolink_delimiter)))
 
 ================================================================================
 Example 614 - https://github.github.com/gfm/#example-614

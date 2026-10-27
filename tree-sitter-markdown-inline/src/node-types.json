@@ -37,7 +37,17 @@
   {
     "type": "email_autolink",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "autolink_delimiter",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "emphasis",
@@ -710,7 +720,17 @@
   {
     "type": "uri_autolink",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "autolink_delimiter",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "!",
@@ -827,6 +847,10 @@
   {
     "type": "`",
     "named": false
+  },
+  {
+    "type": "autolink_delimiter",
+    "named": true
   },
   {
     "type": "code_span_delimiter",
