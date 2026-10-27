@@ -818,7 +818,7 @@ static bool definitely_unclosed_head(const int32_t *text, unsigned length) {
         switch (text[i]) {
             case '<': case '`': case '$': return false;
             case '\\': i++; break;
-            case '(': possible_destination = true; break;
+            case '(': if (i && text[i - 1] == ']') possible_destination = true; break;
             case '[': if (possible_destination) return false; depth++; break;
             case ']': if (!depth || possible_destination) return false; depth--; break;
         }

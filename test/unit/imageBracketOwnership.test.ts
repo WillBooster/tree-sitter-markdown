@@ -15,6 +15,14 @@ afterAll(() => {
 
 for (const [source, expected] of [
   [
+    '![a [b](x(y[)) c](u)',
+    [
+      ['image', '![a [b](x(y[)) c](u)', 0, 20],
+      ['inline_link', '[b](x(y[))', 4, 14],
+    ],
+  ],
+  ['![![([]](', []],
+  [
     '![a [b](x[) c](u)',
     [
       ['image', '![a [b](x[) c](u)', 0, 17],
