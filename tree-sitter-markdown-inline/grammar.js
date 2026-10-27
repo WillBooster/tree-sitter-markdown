@@ -209,6 +209,7 @@ module.exports = grammar(add_inline_rules({
         _blank_text: $ => repeat1(choice($._whitespace, $._soft_line_break, $.hard_line_break)),
         // Whitespace-only brackets are no link, but they still balance inside link text and image descriptions.
         _blank_brackets: $ => seq(alias($._open_bracket_blank, '['), optional($._blank_text), ']', optional($._last_token_punctuation)),
+        _image_description_brackets: $ => seq('[', $._inline_in_image, ']'),
 
         _inline_base: $ => choice(
             $.image,
@@ -255,12 +256,13 @@ module.exports = grammar(add_inline_rules({
 function add_inline_rules(grammar) {
     const conflicts = [];
     addOpenerRules(grammar);
-    for (const link of [true, false]) {
-        const suffix = link ? '' : '_no_link';
+    for (const suffix of ['', '_no_link', '_in_image']) {
+        const link = suffix !== '_no_link';
         for (const noTilde of [false, true]) addInlineCollection(grammar, conflicts, suffix, link, noTilde);
         addEmphasisRules(grammar, suffix);
     }
 
+    addImageContentConflicts(conflicts);
     addReferenceHeads(grammar, conflicts);
     add_context_rules(grammar);
     for (const name of Object.keys(grammar.rules)) {
@@ -284,6 +286,17 @@ function add_inline_rules(grammar) {
     }
 
     return grammar;
+}
+
+function addImageContentConflicts(conflicts) {
+    for (const kind of EMPHASIS_DELIMITERS) for (const flank of ['left', 'both']) for (const modulo of [0, 1, 2]) {
+        for (const noTilde of ['', '_no_tilde']) conflicts.push([
+            `_inline_element${noTilde}_no_link`, `_inline_element${noTilde}_in_image`,
+            `_emphasis_opener_${kind}_${flank}_${modulo}`,
+        ]);
+    }
+    for (const noTilde of ['', '_no_tilde']) conflicts.push([`_inline_element${noTilde}_no_link`, `_inline_element${noTilde}_in_image`]);
+    conflicts.push(['_inline_element_no_link', '_strikethrough_no_link', '_inline_element_in_image', '_strikethrough_in_image']);
 }
 
 function addOpenerRules(grammar) {
@@ -318,9 +331,10 @@ function inlineElements($, suffixLink, link, noTilde) {
         ...(common.EXTENSION_STRIKETHROUGH ? [alias($['_strikethrough' + suffixLink], $.strikethrough)] : []),
         ...(noTilde ? [] : [$._strikethrough_open]),
         $._blank_brackets,
+        ...(suffixLink === '_in_image' ? [$._image_description_brackets] : []),
         ...(link ? [
             $.shortcut_link, $.full_reference_link, $.collapsed_reference_link, $.inline_link,
-            seq(choice('[', ']'), optional($._last_token_punctuation)),
+            ...(suffixLink === '' ? [seq(choice('[', ']'), optional($._last_token_punctuation))] : []),
             ...(common.EXTENSION_WIKI_LINK ? [$.wiki_link] : []),
         ] : []),
     );
@@ -403,7 +417,7 @@ function addReferenceHeads(grammar, conflicts) {
 // inline links and full references accept it.
 function referenceHead($, kind, label, variant) {
     const image = kind === 'image_description';
-    const content = alias(image ? $._inline : $._inline_no_link, $[kind]);
+    const content = alias(image ? $._inline_in_image : $._inline_no_link, $[kind]);
     const close = variant === 'nested'
         ? alias($._close_bracket_nested, ']')
         : alias(choice($['_close_bracket_' + label], $._close_bracket_unknown_label), ']');
