@@ -7,13 +7,16 @@ await Parser.init();
 const parser = new Parser();
 const language = await Language.load(path.resolve(import.meta.dirname, '../../tree-sitter-markdown_inline.wasm'));
 parser.setLanguage(language);
-const query = new Query(language, '[(image) (inline_link) (full_reference_link)] @link');
+const query = new Query(language, '[(image) (inline_link) (full_reference_link) (shortcut_link)] @link');
 afterAll(() => {
   query.delete();
   parser.delete();
 });
 
 for (const [source, expected] of [
+  ['[![[a](', [['shortcut_link', '[a]', 3, 6]]],
+  ['_![[_](', [['shortcut_link', '[_]', 3, 6]]],
+  ['[![[.](', [['shortcut_link', '[.]', 3, 6]]],
   ['![a [ ][r] b]', [['full_reference_link', '[ ][r]', 4, 10]]],
   ['![a [ ][r](x) b]', [['full_reference_link', '[ ][r]', 4, 10]]],
   [
@@ -53,8 +56,8 @@ for (const [source, expected] of [
       expect(tree.rootNode.hasError).toBe(false);
       expect(captures(tree)).toEqual(expected);
       const original = snapshot(tree.rootNode);
-      for (const [start, character] of [...source].entries()) {
-        if (character !== '[' && character !== ']') continue;
+      for (let start = 0; start < source.length; start++) {
+        if (source[start] !== '[' && source[start] !== ']') continue;
         const changed = source.slice(0, start) + source.slice(start + 1);
         tree = edit(tree, changed, start, 1, 0);
         tree = edit(tree, source, start, 0, 1);
