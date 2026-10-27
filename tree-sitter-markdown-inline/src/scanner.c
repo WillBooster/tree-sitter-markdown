@@ -1242,11 +1242,16 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
         level++;
         advance_searching(lexer, proof);
     }
+    ProofLexer *input = (ProofLexer *)lexer;
+    unsigned content_start = input->cursor;
+    unsigned content_budget = proof->budget;
+    CloserSearch content_search = proof->search;
     uint32_t run = 0;
+    bool different_run = false;
     while (!lexer->eof(lexer)) {
         if (lexer->lookahead != delimiter && run == level) break;
         // Inside a span the lexer reads a run of another length piece by piece and can close the span within it.
-        if (lexer->lookahead != delimiter && run) return PROOF_UNCERTAIN;
+        if (lexer->lookahead != delimiter && run) different_run = true;
         if (!proof->budget) return PROOF_UNCERTAIN;
         // LaTeX contents read a backslash and the next character as one unit, as `parse_leaf_delimiter` does.
         bool escape = delimiter == '$' && lexer->lookahead == '\\';
@@ -1259,8 +1264,16 @@ static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t 
             advance_searching(lexer, proof);
         }
     }
-    if (run != level) return PROOF_UNCERTAIN;
-    proof->search = (CloserSearch){0};
+    if (run != level) {
+        // At EOF an unclosed run is ordinary text; replay its contents so they can own emphasis delimiters.
+        input->cursor = content_start;
+        lexer->lookahead = content_start < input->length ? input->characters[content_start] : input->source->lookahead;
+        proof->budget = content_budget;
+        proof->search = content_search;
+    } else {
+        if (different_run) return PROOF_UNCERTAIN;
+        proof->search = (CloserSearch){0};
+    }
     proof->previous = proof->emphasis_previous = delimiter;
     return PROOF_TEXT;
 }
