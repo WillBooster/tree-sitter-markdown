@@ -128,6 +128,9 @@ typedef struct {
     bool context_pending;
     char run_delimiter;
     bool no_closing_bracket;
+    bool plain_suffix_checked;
+    bool plain_suffix_proved;
+    bool uncertain_emphasis;
     uint8_t unterminated_html;
     uint32_t bracket_depth;
     uint32_t flat_head_depth;
@@ -175,6 +178,7 @@ typedef struct {
     uint8_t modulo;
     char delimiter;
     bool can_close;
+    bool paired;
 } PendingDelimiter;
 
 // Looks for any run that could close the proof's first opener, ignoring the structure a proof would respect.
@@ -228,6 +232,7 @@ typedef struct {
     unsigned tilde_runs;
     unsigned discard_offset;
     bool strikethrough;
+    bool repeated_pair;
     const bool *scope_symbols;
     ProofAngle angle;
     // Started where the proof first met a construct it cannot read for certain.
@@ -335,6 +340,11 @@ static bool is_unquoted_value(int32_t character);
 static bool is_email_local(int32_t character);
 static ProofStep read_proof_escape(TSLexer *lexer, DelimiterProof *proof);
 static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
+static bool certify_plain_suffix(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
+static bool read_plain_suffix(TSLexer *lexer, DelimiterProof *suffix);
+static bool read_single_tick_span(TSLexer *lexer);
+static bool append_suffix_delimiter(DelimiterProof *suffix, FutureDelimiter *run);
+static bool read_plain_suffix_text(TSLexer *lexer, DelimiterProof *suffix, bool *plain_bracket);
 static void read_transparent_tildes(TSLexer *lexer, DelimiterProof *proof,
                                       FutureDelimiter *run, FutureDelimiter *tildes);
 static bool consume_emphasis_run(Scanner *s, TSLexer *lexer, char delimiter,
@@ -684,6 +694,10 @@ static bool proof_boundary(Scanner *s, DelimiterProof *proof, char delimiter, ui
 }
 
 static uint32_t uncertain_proof(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
+    if (certify_plain_suffix(s, lexer, proof)) {
+        s->discard_offset = proof->discard_offset;
+        return proof->matched_initial;
+    }
     // The search ends where the proof's budget would have, so every opener gets the same window.
     for (; proof->budget && !lexer->eof(lexer) && !proof->search.found; proof->budget--) advance_searching(lexer, proof);
     if (lexer->eof(lexer)) search_closer(proof, -1);
@@ -744,6 +758,8 @@ static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run) 
             proof->top = candidate->previous;
             return;
         }
+        if (candidate->paired) proof->repeated_pair = true;
+        candidate->paired = true;
         uint32_t matched = candidate->count < run->count ? candidate->count : run->count;
         if (!opener) proof->matched_initial += matched;
         candidate->count -= matched;
@@ -754,6 +770,7 @@ static void match_future_delimiter(DelimiterProof *proof, FutureDelimiter *run) 
 }
 
 static bool record_emphasis_role(Scanner *s, EmphasisRole role) {
+    if (role == EMPHASIS_ROLE_CANDIDATE) s->uncertain_emphasis = true;
     if (role == EMPHASIS_ROLE_OPEN || role == EMPHASIS_ROLE_CANDIDATE) s->state |= STATE_EMPHASIS_DELIMITER_IS_OPEN;
     if (role == EMPHASIS_ROLE_OPEN) return push_certified_opener(s);
     if (role == EMPHASIS_ROLE_CLOSE && s->certified_depth) pop_certified_opener(s);
@@ -871,6 +888,7 @@ static bool parse_close_bracket(Scanner *s, TSLexer *lexer, const bool *valid_sy
     lexer->result_symbol = nested && valid_symbols[CLOSE_BRACKET_NESTED] ? CLOSE_BRACKET_NESTED : following_label(lexer);
     if (!valid_symbols[lexer->result_symbol]) return false;
     set_blank_parent(s, s->bracket_depth, false);
+    s->plain_suffix_checked = false;
     if (s->bracket_depth) s->bracket_depth--;
     if (s->flat_head_depth > s->bracket_depth) s->flat_head_depth = 0;
     return true;
@@ -1292,6 +1310,105 @@ static ProofStep read_proof_bracket(Scanner *s, TSLexer *lexer, DelimiterProof *
     if (lexer->lookahead == '(' || lexer->lookahead == '[') return PROOF_UNCERTAIN;
     proof->previous = proof->emphasis_previous = ']';
     return PROOF_TEXT;
+}
+
+static bool certify_plain_suffix(Scanner *s, TSLexer *lexer, DelimiterProof *proof) {
+    if (!proof->matched_initial || s->run_delimiter == '~') return false;
+    if (s->plain_suffix_proved) return true;
+    if (s->plain_suffix_checked || s->bracket_depth || s->certified_depth || s->uncertain_emphasis) return false;
+    s->plain_suffix_checked = true;
+    ProofLexer *input = (ProofLexer *)lexer;
+    DelimiterProof suffix = {.top = 0, .budget = UINT32_MAX, .strikethrough = proof->strikethrough,
+        .previous = s->run_delimiter, .emphasis_previous = s->run_delimiter,
+        .pending = {{.previous = -1, .count = proof->initial_count, .modulo = proof->pending[0].modulo,
+            .delimiter = s->run_delimiter, .can_close = proof->pending[0].can_close}}};
+    unsigned start = input->cursor;
+    int32_t lookahead = lexer->lookahead;
+    input->cursor = 0;
+    lexer->lookahead = input->characters[0];
+    if (!read_plain_suffix(lexer, &suffix)) {
+        input->cursor = start;
+        lexer->lookahead = lookahead;
+        return false;
+    }
+    s->plain_suffix_proved = true;
+    return true;
+}
+
+static bool read_plain_suffix(TSLexer *lexer, DelimiterProof *suffix) {
+    bool plain_bracket = false;
+    while (!lexer->eof(lexer)) {
+        int32_t character = lexer->lookahead;
+        if (character == '`') {
+            if (suffix->angle || !read_single_tick_span(lexer)) return false;
+            suffix->previous = suffix->emphasis_previous = '`';
+            plain_bracket = false;
+            continue;
+        }
+        if (character != '*' && character != '_') {
+            if (!read_plain_suffix_text(lexer, suffix, &plain_bracket)) return false;
+            continue;
+        }
+        suffix->angle = next_angle(suffix->angle, character);
+        plain_bracket = false;
+        FutureDelimiter run = read_future_delimiter(&suffix->budget, lexer, suffix->previous);
+        if (!append_suffix_delimiter(suffix, &run)) return false;
+    }
+    return true;
+}
+
+static bool read_single_tick_span(TSLexer *lexer) {
+    lexer->advance(lexer, false);
+    if (lexer->lookahead == '`') return false;
+    while (!lexer->eof(lexer) && lexer->lookahead != '`') lexer->advance(lexer, false);
+    if (lexer->eof(lexer)) return false;
+    lexer->advance(lexer, false);
+    return lexer->lookahead != '`';
+}
+
+static bool append_suffix_delimiter(DelimiterProof *suffix, FutureDelimiter *run) {
+    match_future_delimiter(suffix, run);
+    if (suffix->repeated_pair || !suffix->pending[0].count) return false;
+    if (run->flanks.can_open && run->count) {
+        if (suffix->top >= CERTIFIED_LIMIT) return false;
+        int top = suffix->top;
+        suffix->pending[++suffix->top] = (PendingDelimiter){.previous = top, .count = run->count,
+            .modulo = run->modulo, .delimiter = run->delimiter, .can_close = run->flanks.can_close};
+    }
+    PendingDelimiter *last = &suffix->pending[suffix->top];
+    int below = last->previous;
+    if (below > 0) {
+        PendingDelimiter *previous = &suffix->pending[below];
+        // Another match on either residual aborts the proof, so equal residuals need only one frame.
+        if (last->paired && previous->paired && last->delimiter == previous->delimiter &&
+            last->modulo == previous->modulo && last->can_close == previous->can_close) {
+            if (UINT32_MAX - previous->count < last->count) return false;
+            previous->count += last->count;
+            suffix->top = below;
+        }
+    }
+    suffix->previous = run->delimiter;
+    if (run->delimiter != '~') suffix->emphasis_previous = run->delimiter;
+    return true;
+}
+
+static bool read_plain_suffix_text(TSLexer *lexer, DelimiterProof *suffix, bool *plain_bracket) {
+    int32_t character = lexer->lookahead;
+    if (character == '`' || character == '$' || character == '\\' ||
+        (suffix->strikethrough && character == '~')) return false;
+    suffix->angle = next_angle(suffix->angle, character);
+    if (suffix->angle & (ANGLE_COMPLETE | ANGLE_SPECIAL)) return false;
+    if (character == ']' && !*plain_bracket) return false;
+    suffix->previous = suffix->emphasis_previous = character;
+    lexer->advance(lexer, false);
+    if (character == '<' && !suffix->angle) suffix->angle = opening_angle(lexer->lookahead);
+    if (suffix->angle & ANGLE_SPECIAL) return false;
+    if (character == '[') *plain_bracket = true;
+    if (character == ']') {
+        if (lexer->lookahead == '(' || lexer->lookahead == '[') return false;
+        *plain_bracket = false;
+    }
+    return true;
 }
 
 static void read_transparent_tildes(TSLexer *lexer, DelimiterProof *proof,
