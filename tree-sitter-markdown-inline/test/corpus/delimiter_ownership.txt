@@ -489,3 +489,72 @@ A tag in a link label does not hide its closing bracket from a strikethrough pro
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+An unterminated HTML comment opener ends in punctuation before emphasis
+================================================================================
+<!--_a_
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+An unterminated processing instruction opener ends in punctuation before emphasis
+================================================================================
+<?_a_
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+An unterminated CDATA opener ends in punctuation before emphasis
+================================================================================
+<![CDATA[_a_
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+An unterminated declaration name is a word before emphasis
+================================================================================
+<!X_a_
+
+--------------------------------------------------------------------------------
+
+(inline)
+
+================================================================================
+Strikethrough discarded across an unterminated HTML comment opener
+================================================================================
+~<!--_~a_~~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+Strikethrough after an unterminated HTML comment opener
+================================================================================
+~~<!--~)~*~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (strikethrough
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
