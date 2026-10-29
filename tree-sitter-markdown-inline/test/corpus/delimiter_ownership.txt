@@ -447,3 +447,45 @@ Unclosed double LaTeX run with a single dollar stays text
   (emphasis
     (emphasis_delimiter)
     (emphasis_delimiter)))
+
+================================================================================
+Code span delimiters in a link label do not hide its closing bracket from a strikethrough proof
+================================================================================
+[][` ~`]~`*~a*~~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (full_reference_link
+    (link_label))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+LaTeX delimiters in a link label do not hide its closing bracket from a strikethrough proof
+================================================================================
+[][$ ~$]~$*~a*~~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (full_reference_link
+    (link_label))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
+
+================================================================================
+A tag in a link label does not hide its closing bracket from a strikethrough proof
+================================================================================
+[][x ~<a b="]~">*~a*~~
+
+--------------------------------------------------------------------------------
+
+(inline
+  (full_reference_link
+    (link_label))
+  (emphasis
+    (emphasis_delimiter)
+    (emphasis_delimiter)))
