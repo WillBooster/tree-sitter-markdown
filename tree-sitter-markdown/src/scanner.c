@@ -776,6 +776,8 @@ static bool parse_ordered_list_marker(Scanner *s, TSLexer *lexer,
     return true;
 }
 
+static void consume_line_ending(Scanner *s, TSLexer *lexer);
+
 static bool parse_minus(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     if (s->indentation <= 3 &&
         (valid_symbols[LIST_MARKER_MINUS] ||
@@ -851,49 +853,29 @@ static bool parse_minus(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         if (minus_count == 3 && (!minus_after_whitespace) && line_end &&
             valid_symbols[MINUS_METADATA]) {
             for (;;) {
-                // advance over newline
-                if (lexer->lookahead == '\r') {
-                    advance(s, lexer);
-                    if (lexer->lookahead == '\n') {
-                        advance(s, lexer);
-                    }
-                } else {
-                    advance(s, lexer);
-                }
-                // check for minuses
+                consume_line_ending(s, lexer);
                 minus_count = 0;
-                while (lexer->lookahead == '-') {
+                int32_t delimiter = lexer->lookahead;
+                while ((delimiter == '-' || delimiter == '.') && lexer->lookahead == delimiter) {
                     minus_count++;
                     advance(s, lexer);
                 }
                 if (minus_count == 3) {
-                    // if exactly 3 check if next symbol (after eventual
-                    // whitespace) is newline
                     while (lexer->lookahead == ' ' ||
                            lexer->lookahead == '\t') {
                         advance(s, lexer);
                     }
-                    if (lexer->lookahead == '\r' || lexer->lookahead == '\n') {
-                        // if so also consume newline
-                        if (lexer->lookahead == '\r') {
-                            advance(s, lexer);
-                            if (lexer->lookahead == '\n') {
-                                advance(s, lexer);
-                            }
-                        } else {
-                            advance(s, lexer);
-                        }
+                    if (lexer->lookahead == '\r' || lexer->lookahead == '\n' || lexer->eof(lexer)) {
+                        consume_line_ending(s, lexer);
                         mark_end(s, lexer);
                         lexer->result_symbol = MINUS_METADATA;
                         return true;
                     }
                 }
-                // otherwise consume rest of line
                 while (lexer->lookahead != '\n' && lexer->lookahead != '\r' &&
                        !lexer->eof(lexer)) {
                     advance(s, lexer);
                 }
-                // if end of file is reached, then this is not metadata
                 if (lexer->eof(lexer)) {
                     break;
                 }
@@ -916,6 +898,13 @@ static bool push_list_item(Scanner *s, uint8_t extra_indentation, size_t marker_
         extra_indentation = marker_indentation;
     }
     return push_block(s, (Block)(LIST_ITEM + extra_indentation + marker_digits));
+}
+
+static void consume_line_ending(Scanner *s, TSLexer *lexer) {
+    int32_t first = lexer->lookahead;
+    if (first != '\r' && first != '\n') return;
+    advance(s, lexer);
+    if (first == '\r' && lexer->lookahead == '\n') advance(s, lexer);
 }
 
 static bool parse_html_block(Scanner *s, TSLexer *lexer,
