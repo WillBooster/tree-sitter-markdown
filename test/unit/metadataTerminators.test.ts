@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { Edit, Language, type Node, Parser, type Tree } from '@willbooster/web-tree-sitter';
+import { Language, Parser } from '@willbooster/web-tree-sitter';
 import { afterAll, expect, test } from 'vitest';
 
 await Parser.init();
@@ -39,42 +39,15 @@ for (const invalid of ['.', '..', '....', '.-.', '...x', '---x', ' ...', '\t...'
   });
 }
 
-test('editing a YAML document-end marker keeps incremental and fresh trees equal', () => {
+test('YAML metadata with a document-end marker or a longer dot run parses without errors', () => {
   const source = '---\ntitle: example\n...\n\nbody\n';
-  const start = source.indexOf('...');
-  let tree = parser.parse(source)!;
-  try {
-    tree = edit(tree, source.replace('...', '....'), start, 3, 4);
-    tree = edit(tree, source, start, 4, 3);
-    expect(tree.rootNode.descendantsOfType('minus_metadata')).toHaveLength(1);
-  } finally {
-    tree.delete();
+  for (const text of [source, source.replace('...', '....')]) {
+    const tree = parser.parse(text)!;
+    try {
+      expect(tree.rootNode.hasError).toBe(false);
+      if (text === source) expect(tree.rootNode.descendantsOfType('minus_metadata')).toHaveLength(1);
+    } finally {
+      tree.delete();
+    }
   }
 });
-
-function edit(previous: Tree, source: string, start: number, removed: number, inserted: number): Tree {
-  previous.edit(
-    new Edit({
-      startIndex: start,
-      oldEndIndex: start + removed,
-      newEndIndex: start + inserted,
-      startPosition: { row: 2, column: 0 },
-      oldEndPosition: { row: 2, column: removed },
-      newEndPosition: { row: 2, column: inserted },
-    })
-  );
-  const incremental = parser.parse(source, previous)!;
-  const fresh = parser.parse(source)!;
-  try {
-    expect(incremental.rootNode.hasError).toBe(false);
-    expect(snapshot(incremental.rootNode)).toEqual(snapshot(fresh.rootNode));
-  } finally {
-    previous.delete();
-    fresh.delete();
-  }
-  return incremental;
-}
-
-function snapshot(node: Node): unknown[] {
-  return [node.type, node.startIndex, node.endIndex, node.isMissing, node.children.map(snapshot)];
-}

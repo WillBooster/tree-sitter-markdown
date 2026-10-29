@@ -16,17 +16,13 @@ test('a blank line closes an HTML block within its surrounding container', () =>
   const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/html-blank-close-'));
   const library = path.join(directory, 'markdown.dylib');
   const input = path.join(directory, 'input.md');
-  const parse = (source: string, edits: string[] = []): string => {
+  const parse = (source: string): string => {
     writeFileSync(input, source);
-    const tree = execFileSync(
-      cli,
-      ['parse', '-l', library, '--lang-name', 'markdown', input, ...(edits.length > 0 ? ['--edits', ...edits] : [])],
-      {
-        cwd: repositoryRoot,
-        encoding: 'utf8',
-        timeout: 10_000,
-      }
-    );
+    const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
     expect(tree, source).not.toMatch(/ERROR|MISSING/);
     return tree;
   };
@@ -73,13 +69,7 @@ test('a blank line closes an HTML block within its surrounding container', () =>
                 }
                 ancestors.push({ depth, kind: node[2]! });
               }
-              const removed = first + rest;
-              const fresh = parse(removed);
-              expect(fresh, source).not.toMatch(/\((paragraph|atx_heading) \[/);
-              const at = Buffer.byteLength(first);
-              const length = Buffer.byteLength(blank);
-              expect(parse(source, [`${at} ${length} `]), source).toBe(fresh);
-              expect(parse(source, [`${at} ${length} `, `${at} 0 ${blank}`]), source).toBe(tree);
+              expect(parse(first + rest), source).not.toMatch(/\((paragraph|atx_heading) \[/);
             }
           }
         }

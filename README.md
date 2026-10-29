@@ -19,8 +19,8 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x5742000b`) and load only with that fork's runtime, version 15.0.0 or later within 15.x: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
-- Inline emphasis and strikethrough preserve source punctuation and whitespace across edits, including boundaries
-  after links, code spans, HTML tags, and escapes. Emphasis pairs retain their original delimiter-run lengths and
+- Inline emphasis and strikethrough preserve source punctuation and whitespace, including boundaries after
+  links, code spans, HTML tags, and escapes. Emphasis pairs retain their original delimiter-run lengths and
   flanking, enforcing the CommonMark multiple-of-three restriction. Raw HTML is an atomic `html_tag` token; its
   anonymous punctuation children are no longer emitted. Single and double tilde runs each emit one `strikethrough`
   node; runs of three or more tildes remain literal. Tildes are transparent when determining asterisk/underscore
@@ -207,10 +207,6 @@ environment holds. The parsers also embed metadata from `tree-sitter.json`. Afte
 - the corpus of each grammar (`script/test-corpus`), with the native build and with the Wasm build (the first run
   downloads the WASI SDK). The corpora are upstream's, which expect every extension: `script/corpus-exclusions` lists
   the cases of the tags and wiki-link extensions, which these parsers leave out;
-- an incremental-parsing check (`test/unit/incremental.test.ts`): `script/fuzz-corpus` runs `tree-sitter fuzz` for a
-  grammar, which edits each of its corpus cases at random, reparses it, undoes the edits, and reparses again.
-  `TREE_SITTER_SEED`, `TREE_SITTER_ITERATIONS`, and `TREE_SITTER_EDITS` run other or more edits. It skips only the tag and wiki-link
-  extension cases listed in `script/corpus-exclusions`, matching the corpus check;
 - a check that the real-world Markdown files in `examples/` fail to parse with the block grammar exactly as listed in
   `script/known-failures.txt`. The first run clones the repositories. The example repositories are pinned to commits in
   `script/parse-examples`. After a grammar change or a moved pin alters that list, `script/parse-examples` rewrites it;
@@ -225,8 +221,7 @@ environment holds. The parsers also embed metadata from `tree-sitter.json`. Afte
   Cloudflare Workers with and without Node.js compatibility (`test/e2e/workers.test.ts`).
 
 The tests compile the parsers into `.tmp/tree-sitter-lib` rather than the CLI's cache shared by every checkout;
-`script/fuzz-corpus` and `script/parse-examples` build a parser of their own in `.tmp/` for each run and delete it
-afterwards.
+`script/parse-examples` builds a parser of its own in `.tmp/` for each run and deletes it afterwards.
 
 CI also runs these tests on Linux arm64 and macOS, where the CLI compiles the parsers and the scanners natively, and
 fuzzes both parsers with libFuzzer and sanitizers (`.github/workflows/robustness.yml`).

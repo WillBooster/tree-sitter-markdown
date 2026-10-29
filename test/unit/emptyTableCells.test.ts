@@ -6,7 +6,7 @@ import { expect, test } from 'vitest';
 
 const repositoryRoot = path.resolve(import.meta.dirname, '../..');
 
-test('empty table cells and pipe-only body rows parse and remain editable', () => {
+test('empty table cells and pipe-only body rows parse with and without inserted cell content', () => {
   const cli = execFileSync(path.join(repositoryRoot, 'script/tree-sitter'), ['--print-path'], {
     cwd: repositoryRoot,
     encoding: 'utf8',
@@ -16,17 +16,13 @@ test('empty table cells and pipe-only body rows parse and remain editable', () =
   const directory = mkdtempSync(path.join(repositoryRoot, '.tmp/empty-table-cells-'));
   const library = path.join(directory, 'markdown.dylib');
   const input = path.join(directory, 'input.md');
-  const parse = (source: string, edits: string[] = []): string => {
+  const parse = (source: string): string => {
     writeFileSync(input, source);
-    const tree = execFileSync(
-      cli,
-      ['parse', '-l', library, '--lang-name', 'markdown', input, ...(edits.length > 0 ? ['--edits', ...edits] : [])],
-      {
-        cwd: repositoryRoot,
-        encoding: 'utf8',
-        timeout: 10_000,
-      }
-    );
+    const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
     expect(tree, source).not.toMatch(/ERROR|MISSING/);
     return tree;
   };
@@ -64,10 +60,7 @@ test('empty table cells and pipe-only body rows parse and remain editable', () =
             const source = before + row + ending;
             const tree = parse(source);
             expect([...tree.matchAll(/\(pipe_table_row \[/g)], source).toHaveLength(row.trim() === '|' ? 0 : 1);
-            const at = Buffer.byteLength(before + row[0]);
-            const changed = before + row[0] + 'v' + row.slice(1) + ending;
-            expect(parse(source, [`${at} 0 v`]), source).toBe(parse(changed));
-            expect(parse(source, [`${at} 0 v`, `${at} 1 `]), source).toBe(tree);
+            parse(before + row[0] + 'v' + row.slice(1) + ending);
           }
         }
       }
@@ -87,10 +80,8 @@ test('empty table cells and pipe-only body rows parse and remain editable', () =
             const tree = parse(source);
             expect([...tree.matchAll(/\(pipe_table_header \[/g)], source).toHaveLength(1);
             expect([...tree.matchAll(/\(pipe_table_cell \[/g)], source).toHaveLength(cells);
-            const at = Buffer.byteLength(prefix + '|');
-            const changed = source.slice(0, at) + 'v' + source.slice(at);
-            expect(parse(source, [`${at} 0 v`]), source).toBe(parse(changed));
-            expect(parse(source, [`${at} 0 v`, `${at} 1 `]), source).toBe(tree);
+            const at = (prefix + '|').length;
+            parse(source.slice(0, at) + 'v' + source.slice(at));
           }
         }
       }

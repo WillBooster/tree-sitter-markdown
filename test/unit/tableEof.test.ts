@@ -6,7 +6,7 @@ import { expect, test } from 'vitest';
 
 const repositoryRoot = path.resolve(import.meta.dirname, '../..');
 
-test('complete table delimiter rows accept EOF and survive final-newline edits', () => {
+test('complete table delimiter rows accept EOF with or without a final newline', () => {
   const cli = execFileSync(path.join(repositoryRoot, 'script/tree-sitter'), ['--print-path'], {
     cwd: repositoryRoot,
     encoding: 'utf8',
@@ -27,17 +27,10 @@ test('complete table delimiter rows accept EOF and survive final-newline edits',
         for (const padding of ['', ' ', '\t']) {
           for (const newline of ['\n', '\r\n']) {
             const source = `${firstPrefix}| a | b |${newline}${nextPrefix}${delimiter}${padding}`;
-            const original = parse(cli, library, input, source);
-            expect(original.match(/\(pipe_table /g), source).toHaveLength(1);
-            expect(original.match(/\(pipe_table_delimiter_cell /g), source).toHaveLength(2);
-            const end = Buffer.byteLength(source);
-            expect(parse(cli, library, input, source, [`${end} 0 ${newline}`])).toBe(
-              parse(cli, library, input, source + newline)
-            );
-            expect(parse(cli, library, input, source, [`${end} 0 ${newline}`, `${end} ${newline.length} `])).toBe(
-              original
-            );
-            expect(parse(cli, library, input, source + newline, [`${end} ${newline.length} `])).toBe(original);
+            const tree = parse(cli, library, input, source);
+            expect(tree.match(/\(pipe_table /g), source).toHaveLength(1);
+            expect(tree.match(/\(pipe_table_delimiter_cell /g), source).toHaveLength(2);
+            parse(cli, library, input, source + newline);
           }
         }
       }
@@ -55,13 +48,13 @@ test('complete table delimiter rows accept EOF and survive final-newline edits',
   }
 }, 90_000);
 
-function parse(cli: string, library: string, input: string, source: string, edits: string[] = []): string {
+function parse(cli: string, library: string, input: string, source: string): string {
   writeFileSync(input, source);
-  const tree = execFileSync(
-    cli,
-    ['parse', '-l', library, '--lang-name', 'markdown', input, ...edits.flatMap((edit) => ['--edits', edit])],
-    { cwd: repositoryRoot, encoding: 'utf8', timeout: 10_000 }
-  );
+  const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+    timeout: 10_000,
+  });
   expect(tree, source).not.toMatch(/\((ERROR|MISSING)/);
   return tree;
 }

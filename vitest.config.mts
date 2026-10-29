@@ -21,7 +21,7 @@ export default defineConfig({
         test: {
           name: 'performance',
           include: PerformanceTests,
-          // CLI parsing and fuzzing in the other project can consume this project's wall-clock deadline.
+          // CLI parsing in the other project can consume this project's wall-clock deadline.
           sequence: { groupOrder: 1 },
         },
       },
