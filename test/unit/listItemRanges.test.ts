@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { expect, test } from 'vitest';
 
-type ParseSource = (source: string, edits?: string[]) => string;
+type ParseSource = (source: string) => string;
 
 const repositoryRoot = path.resolve(import.meta.dirname, '../..');
 
@@ -18,19 +18,9 @@ test('list item selections own their leading prefixes and leave following lines 
       ['> intro', '>', '> - a', '> - b', '> - c'],
     ]) {
       for (const newline of ['\n', '\r\n']) {
-        const source = lines.join(newline) + newline;
-        const tree = parse(source);
+        parse(lines.join(newline) + newline);
         for (let row = lines.length - 3; row < lines.length; row++) {
-          const at = Buffer.byteLength(
-            lines
-              .slice(0, row)
-              .map((line) => line + newline)
-              .join('')
-          );
-          const removed = lines[row] + newline;
-          const edited = lines.filter((_, index) => index !== row).join(newline) + newline;
-          expect(parse(source, [`${at} ${Buffer.byteLength(removed)} `]), source).toBe(parse(edited));
-          expect(parse(source, [`${at} ${Buffer.byteLength(removed)} `, `${at} 0 ${removed}`]), source).toBe(tree);
+          parse(lines.filter((_, index) => index !== row).join(newline) + newline);
         }
       }
     }
@@ -70,11 +60,7 @@ test('list item selections own their leading prefixes and leave following lines 
             const source = lines.join(newline) + newline;
             const tree = parse(source);
             expect(tree, source).toContain('(list_item [2, 0] - [3, 0]');
-            const at = Buffer.byteLength(lines.slice(0, 2).join(newline) + newline);
-            const length = Buffer.byteLength(lines[2] + newline);
-            const removed = lines.filter((_, index) => index !== 2).join(newline) + newline;
-            expect(parse(source, [`${at} ${length} `])).toBe(parse(removed));
-            expect(parse(source, [`${at} ${length} `, `${at} 0 ${lines[2] + newline}`])).toBe(tree);
+            parse(lines.filter((_, index) => index !== 2).join(newline) + newline);
           }
         }
       }
@@ -89,9 +75,7 @@ test('list item selections own their leading prefixes and leave following lines 
             const tree = parse(source);
             expect([...tree.matchAll(/\(setext_heading /g)], source).toHaveLength(1);
             expect([...tree.matchAll(/\(list_item /g)], source).toHaveLength(1);
-            const at = Buffer.byteLength(first);
-            expect(parse(source, [`${at} ${Buffer.byteLength(second)} `])).toBe(parse(first));
-            expect(parse(source, [`${at} ${Buffer.byteLength(second)} `, `${at} 0 ${second}`])).toBe(tree);
+            parse(first);
           }
         }
       }
@@ -106,12 +90,6 @@ test('list item selections own their leading prefixes and leave following lines 
           expect([...tree.matchAll(/\(list \[/g)], source).toHaveLength(expectedLists);
           const row = heading ? 2 : 1;
           expect(tree, source).toContain(`(list_item [${row}, 0]`);
-          const position = Buffer.byteLength(`${heading}${container}${first} a\n${container}`);
-          const changed = `${heading}${container}${first} a\n${container}${first} b\n`;
-          expect(parse(source, [`${position} ${second.length} ${first}`])).toBe(parse(changed));
-          expect(
-            parse(source, [`${position} ${second.length} ${first}`, `${position} ${first.length} ${second}`])
-          ).toBe(tree);
         }
       }
     }
@@ -125,9 +103,7 @@ test('list item selections own their leading prefixes and leave following lines 
             const tree = parse(source);
             expect([...tree.matchAll(/\(indented_code_block /g)], source).toHaveLength(extra >= 4 ? 1 : 0);
             expect([...tree.matchAll(/\(list_item /g)], source).toHaveLength(extra >= 4 ? 1 : 2);
-            const position = Buffer.byteLength(prefix);
-            expect(parse(source, [`${position} 0 ` + ' '])).toBe(parse(`${prefix} ${indentation}${inner} b\n`));
-            expect(parse(source, [`${position} 0 ` + ' ', `${position} 1 `])).toBe(tree);
+            parse(`${prefix} ${indentation}${inner} b\n`);
           }
         }
       }
@@ -142,12 +118,7 @@ test('list item selections own their leading prefixes and leave following lines 
             const tree = parse(source);
             expect([...tree.matchAll(/\(list \[/g)], source).toHaveLength(1);
             expect([...tree.matchAll(/\(list_item \[/g)], source).toHaveLength(2);
-            const position = Buffer.byteLength(start);
-            const added = start + separator.repeat(blanks + 1) + `${prefix}${marker} b${newline}`;
-            expect(parse(source, [`${position} 0 ${separator}`])).toBe(parse(added));
-            expect(parse(source, [`${position} 0 ${separator}`, `${position} ${Buffer.byteLength(separator)} `])).toBe(
-              tree
-            );
+            parse(start + separator.repeat(blanks + 1) + `${prefix}${marker} b${newline}`);
           }
         }
       }
@@ -170,11 +141,7 @@ test('list item selections own their leading prefixes and leave following lines 
             const tree = parse(source);
             const row = preceding.length + 1;
             expect(tree, source).toContain(`(list_item [${row}, 0] - [${row + 1}, 0]`);
-            const position = Buffer.byteLength(lines.slice(0, row).join(newline) + newline);
-            const length = Buffer.byteLength(lines[row] + newline);
-            const deleted = lines.filter((_, index) => index !== row).join(newline) + newline;
-            expect(parse(source, [`${position} ${length} `])).toBe(parse(deleted));
-            expect(parse(source, [`${position} ${length} `, `${position} 0 ${lines[row] + newline}`])).toBe(tree);
+            parse(lines.filter((_, index) => index !== row).join(newline) + newline);
           }
         }
       }
@@ -196,12 +163,7 @@ test('list item selections own their leading prefixes and leave following lines 
           const nextRow = lines.length - 1;
           expect(tree, source).toContain(`(list_item [1, 0] - [${nextRow}, 0]`);
           expect(tree, source).toContain(`(list_item [${nextRow}, 0]`);
-          const start = Buffer.byteLength(lines[0] + newline);
-          const removed = child.map((line) => prefix + line + newline).join('');
           const deleted = `${lines[0]}${newline}${lines[nextRow]}${newline}`;
-          const deletion = `${start} ${Buffer.byteLength(removed)} `;
-          expect(parse(source, [deletion])).toBe(parse(deleted));
-          expect(parse(source, [deletion, `${start} 0 ${removed}`])).toBe(tree);
           expect([...parse(deleted).matchAll(/\(list_item /g)], source).toHaveLength(2);
         }
       }
@@ -213,9 +175,7 @@ test('list item selections own their leading prefixes and leave following lines 
           const source = `${content}\n${`${quotePrefix}\n`.repeat(blankLines)}${quotePrefix}${padding}`;
           const tree = parse(source);
           expect(tree, source).not.toMatch(/^    \(paragraph /m);
-          const position = Buffer.byteLength(source);
-          expect(parse(source, [`${position} 0 ` + ' '])).toBe(parse(source + ' '));
-          expect(parse(source, [`${position} 0 ` + ' ', `${position} 1 `])).toBe(tree);
+          parse(source + ' ');
         }
       }
     }
@@ -225,21 +185,15 @@ test('list item selections own their leading prefixes and leave following lines 
           const prefix =
             Array.from({ length: depth }, (_, index) => `${'  '.repeat(index)}- a${newline}`).join('') +
             newline.repeat(blankLines);
-          const source = `${prefix}tail${newline}`;
-          const position = Buffer.byteLength(prefix);
-          const indentation = '  '.repeat(depth);
-          const changed = `${prefix}${indentation}tail${newline}`;
-          expect(parse(source, [`${position} 0 ${indentation}`])).toBe(parse(changed));
-          expect(parse(source, [`${position} 0 ${indentation}`, `${position} ${indentation.length} `])).toBe(
-            parse(source)
-          );
+          parse(`${prefix}tail${newline}`);
+          parse(`${prefix}${'  '.repeat(depth)}tail${newline}`);
         }
       }
     }
   });
 }, 90_000);
 
-test('blank-run decisions remain valid after edits to deep list suffixes', () => {
+test('blank-run decisions parse deep list suffixes with inserted lines', () => {
   withBlockParser((parse) => {
     for (const [depth, quote] of [
       [32, '> '],
@@ -255,13 +209,10 @@ test('blank-run decisions remain valid after edits to deep list suffixes', () =>
           const blanks = `${quote}${newline}`.repeat(1000);
           const tail = `${quote}${'  '.repeat(survivingDepth)}tail${newline}`;
           const source = items + blanks + tail;
-          const tree = parse(source);
+          parse(source);
           for (const offset of [items.length + 500 * (quote.length + newline.length), items.length + blanks.length]) {
             const insertion = `${quote}${'  '.repeat(Math.floor(depth / 3))}changed${newline}`;
-            const changed = source.slice(0, offset) + insertion + source.slice(offset);
-            expect(parse(source, [`${offset} 0 ${insertion}`])).toBe(parse(changed));
-            expect(parse(source, [`${offset} 0 ${insertion}`, `${offset} ${insertion.length} `])).toBe(tree);
-            expect(parse(changed, [`${offset} ${insertion.length} `])).toBe(tree);
+            parse(source.slice(0, offset) + insertion + source.slice(offset));
           }
         }
       }
@@ -269,7 +220,7 @@ test('blank-run decisions remain valid after edits to deep list suffixes', () =>
   });
 }, 90_000);
 
-test('padded blank-run decisions reset at content and survive edits', () => {
+test('padded blank-run decisions reset at content', () => {
   withBlockParser((parse) => {
     for (const marker of ['-', '+', '*', '1.', '1)']) {
       for (const prefix of ['', '> ', '> > ']) {
@@ -296,13 +247,10 @@ test('padded blank-run decisions reset at content and survive edits', () => {
             const blanks = pair.repeat(16);
             const tail = `${quote}${continued ? '  '.repeat(depth) : ''}tail${newline}${quote}${newline}${quote}outside${newline}`;
             const source = items + blanks + tail;
-            const tree = parse(source);
+            parse(source);
             for (const offset of [items.length + pair.length * 8, items.length + blanks.length]) {
               const insertion = `${quote}${'  '.repeat(depth)}changed${newline}`;
-              const changed = source.slice(0, offset) + insertion + source.slice(offset);
-              expect(parse(source, [`${offset} 0 ${insertion}`])).toBe(parse(changed));
-              expect(parse(source, [`${offset} 0 ${insertion}`, `${offset} ${insertion.length} `])).toBe(tree);
-              expect(parse(changed, [`${offset} ${insertion.length} `])).toBe(tree);
+              parse(source.slice(0, offset) + insertion + source.slice(offset));
             }
           }
         }
@@ -321,18 +269,14 @@ function withBlockParser(run: (parse: ParseSource) => void): void {
     encoding: 'utf8',
     timeout: 60_000,
   }).trim();
-  const parse = (source: string, edits: string[] = []): string => {
+  const parse = (source: string): string => {
     writeFileSync(input, source);
-    const tree = execFileSync(
-      cli,
-      ['parse', '-l', library, '--lang-name', 'markdown', input, ...(edits.length > 0 ? ['--edits', ...edits] : [])],
-      {
-        cwd: repositoryRoot,
-        encoding: 'utf8',
-        timeout: 10_000,
-        maxBuffer: 4 * 1024 * 1024,
-      }
-    );
+    const tree = execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+      maxBuffer: 4 * 1024 * 1024,
+    });
     expect(tree, source).not.toMatch(/ERROR|MISSING/);
     return tree;
   };

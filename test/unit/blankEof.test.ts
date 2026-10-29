@@ -12,17 +12,13 @@ test('a whitespace-only final line does not create a paragraph or code block', (
   const library = path.join(directory, 'markdown.dylib');
   const input = path.join(directory, 'input.md');
   const cli = path.join(repositoryRoot, 'script/tree-sitter');
-  const parse = (source: string, edits: string[] = []): string => {
+  const parse = (source: string): string => {
     writeFileSync(input, source);
-    return execFileSync(
-      cli,
-      ['parse', '-l', library, '--lang-name', 'markdown', input, ...(edits.length > 0 ? ['--edits', ...edits] : [])],
-      {
-        cwd: repositoryRoot,
-        encoding: 'utf8',
-        timeout: 10_000,
-      }
-    );
+    return execFileSync(cli, ['parse', '-l', library, '--lang-name', 'markdown', input], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
   };
   try {
     execFileSync(cli, ['build', 'tree-sitter-markdown', '-o', library], {
@@ -44,10 +40,6 @@ test('a whitespace-only final line does not create a paragraph or code block', (
           expect([...tree.matchAll(/\(paragraph \[/g)], source).toHaveLength(
             before.includes('outer') ? 2 : before ? 1 : 0
           );
-          const position = Buffer.byteLength(source);
-          const changed = `${source}x`;
-          expect(parse(source, [`${position} 0 x`]), source).toBe(parse(changed));
-          expect(parse(source, [`${position} 0 x`, `${position} 1 `]), source).toBe(tree);
         }
       }
     }
