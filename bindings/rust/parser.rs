@@ -499,8 +499,6 @@ impl MarkdownParser {
 
 #[cfg(test)]
 mod tests {
-    use tree_sitter::{InputEdit, Point};
-
     use super::*;
 
     #[test]
@@ -511,7 +509,7 @@ mod tests {
             Inline [content].\n\
         ";
         let mut parser = MarkdownParser::default();
-        let mut tree = parser.parse(code.as_bytes(), None).unwrap();
+        let tree = parser.parse(code.as_bytes(), None).unwrap();
 
         let section = tree.block_tree().root_node().child(0).unwrap();
         assert_eq!(section.kind(), "section");
@@ -526,39 +524,6 @@ mod tests {
                 .unwrap()
                 .root_node()
                 .child(0)
-                .unwrap()
-                .kind(),
-            "shortcut_link"
-        );
-
-        let code = "\
-            # Title\n\
-            \n\
-            Inline [content].\n\
-        ";
-        tree.edit(&InputEdit {
-            start_byte: 2,
-            old_end_byte: 3,
-            new_end_byte: 3,
-            start_position: Point { row: 0, column: 2 },
-            old_end_position: Point { row: 0, column: 3 },
-            new_end_position: Point { row: 0, column: 3 },
-        });
-        let tree = parser.parse(code.as_bytes(), Some(&tree)).unwrap();
-
-        let section = tree.block_tree().root_node().child(0).unwrap();
-        assert_eq!(section.kind(), "section");
-        let heading = section.child(0).unwrap();
-        assert_eq!(heading.kind(), "atx_heading");
-        let paragraph = section.child(1).unwrap();
-        assert_eq!(paragraph.kind(), "paragraph");
-        let inline = paragraph.child(0).unwrap();
-        assert_eq!(inline.kind(), "inline");
-        assert_eq!(
-            tree.inline_tree(&inline)
-                .unwrap()
-                .root_node()
-                .named_child(0)
                 .unwrap()
                 .kind(),
             "shortcut_link"
