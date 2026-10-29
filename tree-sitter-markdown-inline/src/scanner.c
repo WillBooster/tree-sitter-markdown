@@ -347,6 +347,8 @@ static TokenType read_open_bracket(Scanner *s, TSLexer *lexer);
 static bool closes_bracket(const int32_t *text, unsigned length);
 static TokenType image_bracket_closure(const int32_t *text, unsigned length, bool eof);
 static bool encloses_whitespace_in(const int32_t *text, unsigned length);
+static bool span_hides_no_bracket(const int32_t *text, unsigned start, unsigned end, unsigned length, bool eof);
+static bool may_open_destination(const int32_t *rest, unsigned length, bool eof);
 static void read_image_head_bracket(ImageHeadScan *scan, const int32_t *rest, unsigned length);
 static TokenType image_head_close(const ImageHeadScan *scan, int32_t next);
 static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer);
@@ -890,25 +892,56 @@ static TokenType read_open_bracket(Scanner *s, TSLexer *lexer) {
 
 // Classifies the `[` of `![` from `text`, the rest of the input up to `eof`. A `[` proven to have no `]` of its own is
 // unclosed text, so that delimiter runs can pair across it; one that may lack it opens a head that the grammar ends at
-// the end of the input. Brackets inside spans, raw HTML, autolinks, and link destinations are text that the grammar
-// may read differently, so they leave the `[` open. A head that directly holds a whitespace-only pair needs a
-// destination or label after its `]`; without one the `[` is literal, so that both brackets are text as well.
+// the end of the input. Raw HTML, autolinks, and link destinations hold text that the grammar may read differently, so
+// they leave the `[` open. A head that directly holds a whitespace-only pair needs a destination or label after its
+// `]`; without one the `[` is literal, so that both brackets are text as well.
 static TokenType image_bracket_closure(const int32_t *text, unsigned length, bool eof) {
     ImageHeadScan scan = {.depth = 1};
     for (unsigned i = 0; i < length; i++) {
         int32_t character = text[i];
-        if (character == '`' || character == '$' || character == '<') return OPEN_BRACKET;
-        if (character == '\\' && i + 1 < length && is_punctuation(text[i + 1])) {
+        if (character == '<') return OPEN_BRACKET;
+        if (character == '`' || character == '$') {
+            unsigned end = span_end(text, length, i);
+            if (!span_hides_no_bracket(text, i, end, length, eof)) return OPEN_BRACKET;
+            i = end - 1;
+        } else if (character == '\\' && i + 1 < length && is_punctuation(text[i + 1])) {
             i++;
         } else if (character == '[') {
             read_image_head_bracket(&scan, text + i + 1, length - i - 1);
         } else if (character == ']' && !--scan.depth) {
             return image_head_close(&scan, i + 1 < length ? text[i + 1] : eof ? 0 : -1);
         } else if (character == ']') {
-            scan.destination |= i + 1 >= length || text[i + 1] == '(';
+            scan.destination |= may_open_destination(text + i + 1, length - i - 1, eof);
         }
     }
     return eof ? UNCLOSED_OPEN_BRACKET : OPEN_BRACKET;
+}
+
+// Reports whether the run at `start`, read by `span_end` up to `end`, cannot change which `]` closes the head. A code
+// span keeps its brackets from the scanner, and so does a LaTeX span only when the extension is enabled, so brackets
+// inside the latter leave the head uncertain. A run whose closing run may lie past the text read could hide any
+// bracket after it.
+static bool span_hides_no_bracket(const int32_t *text, unsigned start, unsigned end, unsigned length, bool eof) {
+    unsigned opener_end = start;
+    while (opener_end < length && text[opener_end] == text[start]) opener_end++;
+    if (end == opener_end) return eof;
+    if (text[start] == '`') return true;
+    for (unsigned i = opener_end; i < end; i++) {
+        if (text[i] == '[' || text[i] == ']') return false;
+    }
+    return true;
+}
+
+// Reports whether a link destination may follow a `]` that `rest` follows. A destination ends at `)`, so one that the
+// rest of the input lacks cannot hide brackets.
+static bool may_open_destination(const int32_t *rest, unsigned length, bool eof) {
+    if (!length) return !eof;
+    if (rest[0] != '(') return false;
+    if (!eof) return true;
+    for (unsigned i = 1; i < length; i++) {
+        if (rest[i] == ')') return true;
+    }
+    return false;
 }
 
 static void read_image_head_bracket(ImageHeadScan *scan, const int32_t *rest, unsigned length) {

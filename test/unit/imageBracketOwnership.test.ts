@@ -115,7 +115,9 @@ for (const [source, expected] of [
   ['[outer ![[] [inner](u)] end](v)', [['inline_link', '[inner](u)', 12, 22]]],
   ['[a ![b [] c] d](u)', [['inline_link', '[a ![b [] c] d](u)', 0, 18]]],
   ['~![[![](~', [['strikethrough', '~![[![](~', 0, 9]]],
-  ['[![~[](]~', []],
+  ['[![~[](]~', [['strikethrough', '~[](]~', 3, 9]]],
+  ['*![a [] $ b*]', [['emphasis', '*![a [] $ b*', 0, 12]]],
+  ['*![a [] `[` b*]', [['emphasis', '*![a [] `[` b*', 0, 14]]],
   [
     '[![[[]![x](]]',
     [
