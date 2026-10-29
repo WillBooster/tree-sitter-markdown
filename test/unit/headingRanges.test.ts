@@ -21,7 +21,7 @@ test('heading ranges exclude closing syntax and following container prefixes', (
     { heading: '## go#', content: 'go#' },
     { heading: '### foo ### b', content: 'foo ### b' },
     { heading: '# foo # ##', content: 'foo #' },
-    { heading: '# foo \\###', content: 'foo \\###' },
+    { heading: String.raw`# foo \###`, content: String.raw`foo \###` },
     { heading: '# café\t###\t', content: 'café' },
     { heading: '# ###', content: undefined },
     { heading: '#   ###', content: undefined },
