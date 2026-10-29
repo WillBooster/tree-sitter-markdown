@@ -284,6 +284,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "parser")]
     fn inline_nodes(tree: &tree_sitter::Tree) -> Vec<(String, tree_sitter::Range)> {
         let mut cursor = tree.walk();
         let mut nodes = vec![];
