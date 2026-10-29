@@ -114,6 +114,15 @@ for (const [source, expected] of [
   ['~![a [] b~]', [['strikethrough', '~![a [] b~', 0, 10]]],
   ['[outer ![[] [inner](u)] end](v)', [['inline_link', '[inner](u)', 12, 22]]],
   ['[a ![b [] c] d](u)', [['inline_link', '[a ![b [] c] d](u)', 0, 18]]],
+  ['~![[![](~', [['strikethrough', '~![[![](~', 0, 9]]],
+  ['[![~[](]~', []],
+  [
+    '[![[[]![x](]]',
+    [
+      ['image', '![[[]![x](]]', 1, 13],
+      ['image', '![x]', 6, 10],
+    ],
+  ],
   ['![![[]](<', []],
   ['![![[]](x[', []],
   ['![![[]](x`', []],
@@ -148,22 +157,31 @@ for (const [source, expected] of [
   });
 }
 
-test('images nested beyond the tracked bracket owners are all recognized', () => {
-  for (const depth of [256, 600]) {
-    const source = wrap('leaf', depth);
+// `i` nests an image and `p` a link at each level; alternating owners exceed the scanner's tracked owner runs.
+for (const [pattern, depth] of [
+  ['i', 256],
+  ['i', 600],
+  ['ip', 200],
+  ['ppi', 200],
+] as const) {
+  test(`nested images stay recognized beyond the tracked bracket owners: ${pattern} x ${depth}`, () => {
+    const source = wrap(pattern, depth);
+    const images = Array.from({ length: depth }, (_, level) => pattern[level % pattern.length]).filter(
+      (kind) => kind === 'i'
+    ).length;
     let tree = parser.parse(source)!;
     try {
       expect(tree.rootNode.hasError).toBe(false);
-      expect(captures(tree)).toHaveLength(depth);
+      expect(tree.rootNode.descendantsOfType('image')).toHaveLength(images);
       const leaf = source.indexOf('leaf');
       tree = edit(tree, source.slice(0, leaf) + source.slice(leaf + 1), leaf, 1, 0);
       tree = edit(tree, source, leaf, 0, 1);
-      expect(captures(tree)).toHaveLength(depth);
+      expect(tree.rootNode.descendantsOfType('image')).toHaveLength(images);
     } finally {
       tree.delete();
     }
-  }
-});
+  });
+}
 
 test('an unfinished nested image stays text beyond the scanner lookahead', () => {
   const tree = parser.parse(`![![[]](x${'a'.repeat(1030)}`)!;
@@ -175,8 +193,12 @@ test('an unfinished nested image stays text beyond the scanner lookahead', () =>
   }
 });
 
-function wrap(text: string, depth: number): string {
-  return depth ? wrap(`![${text}](u)`, depth - 1) : text;
+function wrap(pattern: string, depth: number): string {
+  let text = 'leaf';
+  for (let level = depth - 1; level >= 0; level--) {
+    text = pattern[level % pattern.length] === 'i' ? `![${text}](u)` : `[${text}](v)`;
+  }
+  return text;
 }
 
 function captures(tree: Tree): unknown[] {

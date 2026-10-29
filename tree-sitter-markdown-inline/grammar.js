@@ -11,12 +11,9 @@ const literalTokens = delimiter => emphasisTokens(delimiter).filter(name => name
 const openTokens = delimiter => emphasisTokens(delimiter).filter(name => name.includes('_candidate_'));
 const PRECEDENCE_LEVEL_LINK = 100;
 const CLOSE_BRACKET_LABELS = ['no_label', 'with_label', 'unknown_label', 'nested'];
-// Which opener a `]` closes: a `[` after `!`, another `[`, or one too deep for the scanner to track.
-const closeBracketToken = (owner, label) => `_close${owner ? '_' + owner : ''}_bracket_${label}`;
-const closeBrackets = ($, owners, labels = CLOSE_BRACKET_LABELS) => alias(choice(...owners.flatMap(owner => labels.map(label => $[closeBracketToken(owner, label)]))), ']');
-const IMAGE_OWNERS = ['image', 'untracked'];
-const imageOpenBracket = $ => alias(choice($._open_bracket, $._unproven_open_bracket), '[');
-const PLAIN_OWNERS = ['', 'untracked'];
+// Which opener a `]` closes: a `[` after `!`, another `[`, or one the scanner did not track.
+const closeBracketToken = (owner, label) => `_close${owner}_bracket_${label}`;
+const closeBrackets = ($, image, labels = CLOSE_BRACKET_LABELS) => alias(choice(...[image ? '_image' : '', '_untracked'].flatMap(owner => labels.map(label => $[closeBracketToken(owner, label)]))), ']');
 const LITERAL_BRACKET_RULES = ['code_span', 'latex_block', 'link_destination', '_link_destination_parenthesis', '_text_no_angle', 'link_title'];
 
 const PUNCTUATION_CHARACTERS_REGEX = '!-/:-@\\[-`\\{-~';
@@ -68,9 +65,9 @@ module.exports = grammar(add_inline_rules({
         $._html_special,
         $._html_special_opener,
         $._image_bang,
-        $._unproven_open_bracket,
         $._literal_open_bracket,
-        ...IMAGE_OWNERS.flatMap(owner => CLOSE_BRACKET_LABELS.map(label => $[closeBracketToken(owner, label)])),
+        $._image_literal_end,
+        ...['_image', '_untracked'].flatMap(owner => CLOSE_BRACKET_LABELS.map(label => $[closeBracketToken(owner, label)])),
     ],
     precedences: $ => [
         [$.hard_line_break, $._whitespace],
@@ -219,22 +216,22 @@ module.exports = grammar(add_inline_rules({
         _soft_line_break: $ => seq($._newline_token, optional($._last_token_whitespace)),
         _blank_text: $ => repeat1(choice($._whitespace, $._soft_line_break, $.hard_line_break)),
         // Whitespace-only brackets are no link, but they still balance inside link text and image descriptions.
-        _blank_brackets: $ => seq(alias($._open_bracket_blank, '['), optional($._blank_text), closeBrackets($, PLAIN_OWNERS), optional($._last_token_punctuation)),
+        _blank_brackets: $ => seq(alias($._open_bracket_blank, '['), optional($._blank_text), closeBrackets($, false), optional($._last_token_punctuation)),
         // `![` that forms no image: its brackets still pair with each other, so that no image closes at its `]`. It reads
-        // its contents as an image description does.
-        _image_literal: $ => seq(alias($._image_bang, '!'), imageOpenBracket($), $._inline, prec(1, closeBrackets($, IMAGE_OWNERS))),
-        // Text for `![` whose `[` has no `]` of its own or may lack one; when its `]` follows, only an image or
-        // `_image_literal` accepts it.
+        // its contents as an image description does. Only a head holding a whitespace-only pair or followed by a label
+        // can fail once its `]` follows, since any other head is at least a shortcut image. A `[` the scanner cannot prove
+        // unclosed may still lack a `]` of its own, and then stays open to the end of the input, where the scanner ends it.
+        _image_literal: $ => seq(alias($._image_bang, '!'), alias($._open_bracket, '['), $._inline, choice(prec(1, closeBrackets($, true, ['nested', 'with_label'])), $._image_literal_end)),
         _image_bang_text: $ => seq(alias($._image_bang, '!'), choice(
-            seq(alias(choice($._unproven_open_bracket, $._unclosed_open_bracket), '['), optional($._last_token_punctuation)),
-            seq(alias($._open_bracket_blank, '['), optional($._blank_text), prec(1, seq(closeBrackets($, IMAGE_OWNERS), optional($._last_token_punctuation)))),
+            seq(alias($._unclosed_open_bracket, '['), optional($._last_token_punctuation)),
+            seq(alias($._open_bracket_blank, '['), optional($._blank_text), prec(1, seq(closeBrackets($, true), optional($._last_token_punctuation)))),
         )),
 
         // `![` whose `[` the scanner proves to form no image although it has a `]` of its own: in link text, which takes
         // no unpaired brackets, the pair encloses its contents; elsewhere both brackets are text, so that delimiter runs
         // pair across them.
         _literal_image_bang: $ => seq(alias($._image_bang, '!'), alias($._literal_open_bracket, '['), optional($._last_token_punctuation)),
-        _literal_image_no_link: $ => seq(alias($._image_bang, '!'), alias($._literal_open_bracket, '['), $._inline_no_link, closeBrackets($, PLAIN_OWNERS), optional($._last_token_punctuation)),
+        _literal_image_no_link: $ => seq(alias($._image_bang, '!'), alias($._literal_open_bracket, '['), $._inline_no_link, closeBrackets($, false), optional($._last_token_punctuation)),
 
         _inline_base: $ => choice(
             $.image,
@@ -399,7 +396,7 @@ function with_context(rule) {
 }
 
 function replace_bracket(rule, $, requiresClose) {
-    if (rule.type === 'STRING' && rule.value === ']') return closeBrackets($, PLAIN_OWNERS);
+    if (rule.type === 'STRING' && rule.value === ']') return closeBrackets($, false);
     if (rule.type === 'STRING' && rule.value === '[') return alias(requiresClose ? $._open_bracket : choice($._open_bracket, $._unclosed_open_bracket), '[');
     if (rule.content) return {...rule, content: replace_bracket(rule.content, $, requiresClose)};
     if (rule.members) return {...rule, members: rule.members.map(member => replace_bracket(member, $, requiresClose))};
@@ -417,16 +414,12 @@ function addReferenceHeads(grammar, conflicts) {
     }
     const heads = kind => [`_${kind}_non_blank_no_label`, `_${kind}_no_label`, `_${kind}_non_blank_with_label`, `_${kind}_with_label`];
     for (const suffix of ['', '_no_tilde']) conflicts.push(['_inline_element' + suffix, ...heads('link_text')]);
-    const imageHeads = heads('image_description');
     conflicts.push(
-        ['_image_literal', '_image_bang_text', ...imageHeads],
-        ['_image_bang_text', ...imageHeads],
         ['_image_bang_text', '_image_description_no_label'],
         ['_image_bang_text', '_image_description_with_label'],
-        ['_image_literal', '_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
-        ...imageHeads.map(head => ['_image_literal', head]),
-    );
-    conflicts.push(
+        ['_image_literal', '_image_description_no_label'],
+        ['_image_literal', '_image_description_with_label'],
+        ['_image_literal', '_image_description_non_blank_with_label'],
         ['_link_text_non_blank_no_label', '_link_text_non_blank_with_label'],
         ['_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
         ['_blank_brackets', '_link_text_no_label'],
@@ -440,12 +433,12 @@ function addReferenceHeads(grammar, conflicts) {
 function referenceHead($, kind, label, variant) {
     const image = kind === 'image_description';
     const content = alias(image ? $._inline : $._inline_no_link, $[kind]);
-    const close = closeBrackets($, image ? IMAGE_OWNERS : PLAIN_OWNERS, variant === 'nested' ? ['nested'] : [label, 'unknown_label']);
+    const close = closeBrackets($, image, variant === 'nested' ? ['nested'] : [label, 'unknown_label']);
     return seq(
         ...(image ? [alias($._image_bang, '!')] : []),
         ...(variant === 'blank'
             ? [alias($._open_bracket_blank, '['), optional(alias($._blank_text, $[kind]))]
-            : [image ? imageOpenBracket($) : '[', content]),
+            : ['[', content]),
         image ? prec(1, close) : close,
     );
 }
