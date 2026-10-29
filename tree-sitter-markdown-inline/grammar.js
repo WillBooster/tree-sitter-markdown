@@ -69,6 +69,7 @@ module.exports = grammar(add_inline_rules({
         $._html_special_opener,
         $._image_bang,
         $._unproven_open_bracket,
+        $._literal_open_bracket,
         ...IMAGE_OWNERS.flatMap(owner => CLOSE_BRACKET_LABELS.map(label => $[closeBracketToken(owner, label)])),
     ],
     precedences: $ => [
@@ -219,7 +220,8 @@ module.exports = grammar(add_inline_rules({
         _blank_text: $ => repeat1(choice($._whitespace, $._soft_line_break, $.hard_line_break)),
         // Whitespace-only brackets are no link, but they still balance inside link text and image descriptions.
         _blank_brackets: $ => seq(alias($._open_bracket_blank, '['), optional($._blank_text), closeBrackets($, PLAIN_OWNERS), optional($._last_token_punctuation)),
-        // `![` that cannot form an image: its brackets still pair with each other, so that no image closes at its `]`.
+        // `![` that forms no image: its brackets still pair with each other, so that no image closes at its `]`. It reads
+        // its contents as an image description does.
         _image_literal: $ => seq(alias($._image_bang, '!'), imageOpenBracket($), $._inline, prec(1, closeBrackets($, IMAGE_OWNERS))),
         // Text for `![` whose `[` has no `]` of its own or may lack one; when its `]` follows, only an image or
         // `_image_literal` accepts it.
@@ -228,9 +230,14 @@ module.exports = grammar(add_inline_rules({
             seq(alias($._open_bracket_blank, '['), optional($._blank_text), prec(1, seq(closeBrackets($, IMAGE_OWNERS), optional($._last_token_punctuation)))),
         )),
 
+        // `![` whose `[` the scanner proves to form no image although it has a `]` of its own: in link text, which takes
+        // no unpaired brackets, the pair encloses its contents; elsewhere both brackets are text, so that delimiter runs
+        // pair across them.
+        _literal_image_bang: $ => seq(alias($._image_bang, '!'), alias($._literal_open_bracket, '['), optional($._last_token_punctuation)),
+        _literal_image_no_link: $ => seq(alias($._image_bang, '!'), alias($._literal_open_bracket, '['), $._inline_no_link, closeBrackets($, PLAIN_OWNERS), optional($._last_token_punctuation)),
+
         _inline_base: $ => choice(
             $.image,
-            $._image_literal,
             $._image_bang_text,
             $._soft_line_break,
             $.backslash_escape,
@@ -339,10 +346,12 @@ function inlineElements($, suffixLink, link, noTilde) {
         ...(noTilde ? [] : [$._strikethrough_open]),
         $._blank_brackets,
         ...(link ? [
+            $._image_literal,
+            $._literal_image_bang,
             $.shortcut_link, $.full_reference_link, $.collapsed_reference_link, $.inline_link,
             seq(choice('[', ']'), optional($._last_token_punctuation)),
             ...(common.EXTENSION_WIKI_LINK ? [$.wiki_link] : []),
-        ] : []),
+        ] : [$._literal_image_no_link]),
     );
 }
 
@@ -411,6 +420,7 @@ function addReferenceHeads(grammar, conflicts) {
     const imageHeads = heads('image_description');
     conflicts.push(
         ['_image_literal', '_image_bang_text', ...imageHeads],
+        ['_image_bang_text', ...imageHeads],
         ['_image_bang_text', '_image_description_no_label'],
         ['_image_bang_text', '_image_description_with_label'],
         ['_image_literal', '_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
@@ -418,6 +428,7 @@ function addReferenceHeads(grammar, conflicts) {
     );
     conflicts.push(
         ['_link_text_non_blank_no_label', '_link_text_non_blank_with_label'],
+        ['_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
         ['_blank_brackets', '_link_text_no_label'],
         ['_blank_brackets', '_link_text_with_label'],
     );

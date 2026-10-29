@@ -102,6 +102,7 @@ typedef enum {
     HTML_SPECIAL_OPENER,
     IMAGE_BANG,
     UNPROVEN_OPEN_BRACKET,
+    LITERAL_OPEN_BRACKET,
     CLOSE_IMAGE_BRACKET_NO_LABEL,
     CLOSE_IMAGE_BRACKET_WITH_LABEL,
     CLOSE_IMAGE_BRACKET_UNKNOWN_LABEL,
@@ -279,6 +280,14 @@ typedef struct {
     unsigned length;
 } ProofLexer;
 
+// The text after the `[` of `![` as `image_bracket_closure` reads it. After `](`, a link destination may hide
+// brackets, so later `[` no longer count: only proving that no `]` can close the head remains possible.
+typedef struct {
+    unsigned depth;
+    bool holds_blank;
+    bool destination;
+} ImageHeadScan;
+
 typedef enum {
     PROOF_DELIMITER,
     PROOF_TEXT,
@@ -331,6 +340,9 @@ static void set_blank_parent(Scanner *s, uint32_t depth, bool blank);
 static TokenType read_open_bracket(Scanner *s, TSLexer *lexer);
 static bool closes_bracket(const int32_t *text, unsigned length);
 static TokenType image_bracket_closure(const int32_t *text, unsigned length, bool eof);
+static bool encloses_whitespace_in(const int32_t *text, unsigned length);
+static void read_image_head_bracket(ImageHeadScan *scan, const int32_t *rest, unsigned length);
+static TokenType image_head_close(const ImageHeadScan *scan, int32_t next);
 static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer);
 static unsigned span_end(const int32_t *text, unsigned length, unsigned start);
 static TokenType following_label(TSLexer *lexer);
@@ -814,7 +826,7 @@ static void pop_certified_opener(Scanner *s) {
 
 static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
     if (!valid_symbols[OPEN_BRACKET] && !valid_symbols[UNCLOSED_OPEN_BRACKET] && !valid_symbols[OPEN_BRACKET_BLANK] &&
-        !valid_symbols[UNPROVEN_OPEN_BRACKET]) {
+        !valid_symbols[UNPROVEN_OPEN_BRACKET] && !valid_symbols[LITERAL_OPEN_BRACKET]) {
         return false;
     }
     lexer->advance(lexer, false);
@@ -829,8 +841,9 @@ static bool parse_bracket(Scanner *s, TSLexer *lexer, const bool *valid_symbols)
     if (blank) set_blank_parent(s, s->bracket_depth, true);
     s->bracket_depth++;
     set_blank_parent(s, s->bracket_depth, false);
-    // The grammar reads an unclosed `[` as text, so a `]` that the scanner still pairs with it must be text as well.
-    push_bracket_owner(s, s->image_pending && lexer->result_symbol != UNCLOSED_OPEN_BRACKET);
+    // The grammar reads an unclosed or literal `[` as text, so a `]` that the scanner pairs with it is text as well.
+    push_bracket_owner(s, s->image_pending && lexer->result_symbol != UNCLOSED_OPEN_BRACKET &&
+                              lexer->result_symbol != LITERAL_OPEN_BRACKET);
     s->image_pending = false;
     s->flat_head_depth = s->bracket_depth;
     return true;
@@ -868,22 +881,42 @@ static TokenType read_open_bracket(Scanner *s, TSLexer *lexer) {
 // Classifies the `[` of `![` by whether a `]` of its own follows in `text`, the rest of the input up to `eof`: the
 // grammar keeps a text interpretation open for an image whose `]` may be missing although another `]` follows.
 // Brackets inside spans, raw HTML, autolinks, and link destinations are text that the grammar may read differently.
+// A head that directly holds a whitespace-only pair needs a destination or label after its `]`; without one the `[`
+// is literal, so that both brackets are text and delimiter runs can pair across them.
 static TokenType image_bracket_closure(const int32_t *text, unsigned length, bool eof) {
-    unsigned depth = 1;
+    ImageHeadScan scan = {.depth = 1};
     for (unsigned i = 0; i < length; i++) {
-        switch (text[i]) {
-            case '`': case '$': case '<': return UNPROVEN_OPEN_BRACKET;
-            case '\\':
-                if (i + 1 < length && is_punctuation(text[i + 1])) i++;
-                break;
-            case '[': depth++; break;
-            case ']':
-                if (!--depth) return OPEN_BRACKET;
-                if (i + 1 >= length || text[i + 1] == '(') return UNPROVEN_OPEN_BRACKET;
-                break;
+        int32_t character = text[i];
+        if (character == '`' || character == '$' || character == '<') return UNPROVEN_OPEN_BRACKET;
+        if (character == '\\' && i + 1 < length && is_punctuation(text[i + 1])) {
+            i++;
+        } else if (character == '[') {
+            read_image_head_bracket(&scan, text + i + 1, length - i - 1);
+        } else if (character == ']' && !--scan.depth) {
+            return image_head_close(&scan, i + 1 < length ? text[i + 1] : eof ? 0 : -1);
+        } else if (character == ']') {
+            scan.destination |= i + 1 >= length || text[i + 1] == '(';
         }
     }
     return eof ? UNCLOSED_OPEN_BRACKET : UNPROVEN_OPEN_BRACKET;
+}
+
+static void read_image_head_bracket(ImageHeadScan *scan, const int32_t *rest, unsigned length) {
+    if (scan->destination) return;
+    if (scan->depth++ == 1) scan->holds_blank |= encloses_whitespace_in(rest, length);
+}
+
+// `next` follows the head's `]`: 0 at the end of the input, -1 past the text read.
+static TokenType image_head_close(const ImageHeadScan *scan, int32_t next) {
+    if (scan->destination) return UNPROVEN_OPEN_BRACKET;
+    if (!scan->holds_blank || next == '(' || next == '[' || next == -1) return OPEN_BRACKET;
+    return LITERAL_OPEN_BRACKET;
+}
+
+static bool encloses_whitespace_in(const int32_t *text, unsigned length) {
+    unsigned i = 0;
+    while (i < length && is_whitespace(text[i])) i++;
+    return i < length && text[i] == ']';
 }
 
 // Reports whether `text`, the rest of the input, holds a `]` outside escapes, raw HTML, autolinks, and code or LaTeX
