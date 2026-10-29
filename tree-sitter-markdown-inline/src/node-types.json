@@ -452,6 +452,10 @@
           "named": true
         },
         {
+          "type": "collapsed_reference_link",
+          "named": true
+        },
+        {
           "type": "email_autolink",
           "named": true
         },
@@ -461,6 +465,10 @@
         },
         {
           "type": "entity_reference",
+          "named": true
+        },
+        {
+          "type": "full_reference_link",
           "named": true
         },
         {
@@ -476,11 +484,19 @@
           "named": true
         },
         {
+          "type": "inline_link",
+          "named": true
+        },
+        {
           "type": "latex_block",
           "named": true
         },
         {
           "type": "numeric_character_reference",
+          "named": true
+        },
+        {
+          "type": "shortcut_link",
           "named": true
         },
         {

@@ -7,7 +7,10 @@ await Parser.init();
 const parser = new Parser();
 const language = await Language.load(path.resolve(import.meta.dirname, '../../tree-sitter-markdown_inline.wasm'));
 parser.setLanguage(language);
-const query = new Query(language, '[(image) (inline_link) (full_reference_link) (shortcut_link)] @link');
+const query = new Query(
+  language,
+  '[(image) (inline_link) (full_reference_link) (shortcut_link) (emphasis) (strikethrough)] @node'
+);
 afterAll(() => {
   query.delete();
   parser.delete();
@@ -30,7 +33,13 @@ for (const [source, expected] of [
     ],
   ],
   ['![![[]](', []],
-  ['![~~![~~[b]', [['shortcut_link', '[b]', 8, 11]]],
+  [
+    '![~~![~~[b]',
+    [
+      ['strikethrough', '~~![~~', 2, 8],
+      ['shortcut_link', '[b]', 8, 11],
+    ],
+  ],
   ['![`[`](u)', [['image', '![`[`](u)', 0, 9]]],
   ['![<i x="[">](u)', [['image', '![<i x="[">](u)', 0, 15]]],
   ['[![[a](', [['shortcut_link', '[a]', 3, 6]]],
@@ -68,6 +77,52 @@ for (const [source, expected] of [
   ],
   [String.raw`![a \[ b](v)`, [['image', String.raw`![a \[ b](v)`, 0, 12]]],
   ['![a [x b](v)', [['inline_link', '[x b](v)', 4, 12]]],
+  [
+    '![~~[a](u)~~](v)',
+    [
+      ['image', '![~~[a](u)~~](v)', 0, 16],
+      ['strikethrough', '~~[a](u)~~', 2, 12],
+      ['inline_link', '[a](u)', 4, 10],
+    ],
+  ],
+  [
+    '![~~[a](u)![b]~~](v)',
+    [
+      ['image', '![~~[a](u)![b]~~](v)', 0, 20],
+      ['strikethrough', '~~[a](u)![b]~~', 2, 16],
+      ['inline_link', '[a](u)', 4, 10],
+      ['image', '![b]', 10, 14],
+    ],
+  ],
+  [
+    '![_a [x] b_](y)',
+    [
+      ['image', '![_a [x] b_](y)', 0, 15],
+      ['emphasis', '_a [x] b_', 2, 11],
+      ['shortcut_link', '[x]', 5, 8],
+    ],
+  ],
+  [
+    '![*a [b [c]* d] e](f)',
+    [
+      ['image', '![*a [b [c]* d] e](f)', 0, 21],
+      ['emphasis', '*a [b [c]*', 2, 12],
+      ['shortcut_link', '[c]', 8, 11],
+    ],
+  ],
+  ['![![[]](<', []],
+  ['![![[]](x[', []],
+  ['![![[]](x`', []],
+  ['![![[]](x$', []],
+  ['![![[]](x ![', []],
+  ['![<`a>`]a>`', []],
+  [
+    '~a [b] c~d~',
+    [
+      ['strikethrough', '~a [b] c~', 0, 9],
+      ['shortcut_link', '[b]', 3, 6],
+    ],
+  ],
 ] as const) {
   test(`image brackets retain their owners: ${source}`, () => {
     let tree = parser.parse(source)!;
@@ -87,6 +142,37 @@ for (const [source, expected] of [
       tree.delete();
     }
   });
+}
+
+test('images nested beyond the tracked bracket owners are all recognized', () => {
+  for (const depth of [256, 600]) {
+    const source = wrap('leaf', depth);
+    let tree = parser.parse(source)!;
+    try {
+      expect(tree.rootNode.hasError).toBe(false);
+      expect(captures(tree)).toHaveLength(depth);
+      const leaf = source.indexOf('leaf');
+      tree = edit(tree, source.slice(0, leaf) + source.slice(leaf + 1), leaf, 1, 0);
+      tree = edit(tree, source, leaf, 0, 1);
+      expect(captures(tree)).toHaveLength(depth);
+    } finally {
+      tree.delete();
+    }
+  }
+});
+
+test('an unfinished nested image stays text beyond the scanner lookahead', () => {
+  const tree = parser.parse(`![![[]](x${'a'.repeat(1030)}`)!;
+  try {
+    expect(tree.rootNode.hasError).toBe(false);
+    expect(captures(tree)).toEqual([]);
+  } finally {
+    tree.delete();
+  }
+});
+
+function wrap(text: string, depth: number): string {
+  return depth ? wrap(`![${text}](u)`, depth - 1) : text;
 }
 
 function captures(tree: Tree): unknown[] {

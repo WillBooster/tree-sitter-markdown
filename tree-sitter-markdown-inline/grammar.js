@@ -10,6 +10,13 @@ const emphasisTokens = delimiter => ['open', 'close', 'literal', 'candidate'].fl
 const literalTokens = delimiter => emphasisTokens(delimiter).filter(name => name.includes('_literal_'));
 const openTokens = delimiter => emphasisTokens(delimiter).filter(name => name.includes('_candidate_'));
 const PRECEDENCE_LEVEL_LINK = 100;
+const CLOSE_BRACKET_LABELS = ['no_label', 'with_label', 'unknown_label', 'nested'];
+// Which opener a `]` closes: a `[` after `!`, another `[`, or one too deep for the scanner to track.
+const closeBracketToken = (owner, label) => `_close${owner ? '_' + owner : ''}_bracket_${label}`;
+const closeBrackets = ($, owners, labels = CLOSE_BRACKET_LABELS) => alias(choice(...owners.flatMap(owner => labels.map(label => $[closeBracketToken(owner, label)]))), ']');
+const IMAGE_OWNERS = ['image', 'untracked'];
+const imageOpenBracket = $ => alias(choice($._open_bracket, $._unproven_open_bracket), '[');
+const PLAIN_OWNERS = ['', 'untracked'];
 const LITERAL_BRACKET_RULES = ['code_span', 'latex_block', 'link_destination', '_link_destination_parenthesis', '_text_no_angle', 'link_title'];
 
 const PUNCTUATION_CHARACTERS_REGEX = '!-/:-@\\[-`\\{-~';
@@ -59,7 +66,10 @@ module.exports = grammar(add_inline_rules({
         // Processing instructions, declarations, and CDATA sections, which the scanner reads so that it can remember a
         // missing terminator instead of rescanning the rest of the input at every later opener.
         $._html_special,
-        $._html_special_opener
+        $._html_special_opener,
+        $._image_bang,
+        $._unproven_open_bracket,
+        ...IMAGE_OWNERS.flatMap(owner => CLOSE_BRACKET_LABELS.map(label => $[closeBracketToken(owner, label)])),
     ],
     precedences: $ => [
         [$.hard_line_break, $._whitespace],
@@ -208,11 +218,20 @@ module.exports = grammar(add_inline_rules({
         _soft_line_break: $ => seq($._newline_token, optional($._last_token_whitespace)),
         _blank_text: $ => repeat1(choice($._whitespace, $._soft_line_break, $.hard_line_break)),
         // Whitespace-only brackets are no link, but they still balance inside link text and image descriptions.
-        _blank_brackets: $ => seq(alias($._open_bracket_blank, '['), optional($._blank_text), ']', optional($._last_token_punctuation)),
-        _image_description_brackets: $ => seq('[', $._inline_in_image, ']'),
+        _blank_brackets: $ => seq(alias($._open_bracket_blank, '['), optional($._blank_text), closeBrackets($, PLAIN_OWNERS), optional($._last_token_punctuation)),
+        // `![` that cannot form an image: its brackets still pair with each other, so that no image closes at its `]`.
+        _image_literal: $ => seq(alias($._image_bang, '!'), imageOpenBracket($), $._inline, prec(1, closeBrackets($, IMAGE_OWNERS))),
+        // Text for `![` whose `[` has no `]` of its own or may lack one; when its `]` follows, only an image or
+        // `_image_literal` accepts it.
+        _image_bang_text: $ => seq(alias($._image_bang, '!'), choice(
+            seq(alias(choice($._unproven_open_bracket, $._unclosed_open_bracket), '['), optional($._last_token_punctuation)),
+            seq(alias($._open_bracket_blank, '['), optional($._blank_text), prec(1, seq(closeBrackets($, IMAGE_OWNERS), optional($._last_token_punctuation)))),
+        )),
 
         _inline_base: $ => choice(
             $.image,
+            $._image_literal,
+            $._image_bang_text,
             $._soft_line_break,
             $.backslash_escape,
             $.hard_line_break,
@@ -256,13 +275,12 @@ module.exports = grammar(add_inline_rules({
 function add_inline_rules(grammar) {
     const conflicts = [];
     addOpenerRules(grammar);
-    for (const suffix of ['', '_no_link', '_in_image']) {
-        const link = suffix !== '_no_link';
+    for (const link of [true, false]) {
+        const suffix = link ? '' : '_no_link';
         for (const noTilde of [false, true]) addInlineCollection(grammar, conflicts, suffix, link, noTilde);
         addEmphasisRules(grammar, suffix);
     }
 
-    addImageContentConflicts(conflicts);
     addReferenceHeads(grammar, conflicts);
     add_context_rules(grammar);
     for (const name of Object.keys(grammar.rules)) {
@@ -286,20 +304,6 @@ function add_inline_rules(grammar) {
     }
 
     return grammar;
-}
-
-function addImageContentConflicts(conflicts) {
-    for (const kind of EMPHASIS_DELIMITERS) for (const flank of ['left', 'both']) for (const modulo of [0, 1, 2]) {
-        for (const noTilde of ['', '_no_tilde']) conflicts.push([
-            `_inline_element${noTilde}_no_link`, `_inline_element${noTilde}_in_image`,
-            `_emphasis_opener_${kind}_${flank}_${modulo}`,
-        ]);
-    }
-    for (const noTilde of ['', '_no_tilde']) conflicts.push([`_inline_element${noTilde}_no_link`, `_inline_element${noTilde}_in_image`]);
-    if (common.EXTENSION_STRIKETHROUGH) conflicts.push(['_inline_element_no_link', '_strikethrough_no_link', '_inline_element_in_image', '_strikethrough_in_image']);
-    if (common.EXTENSION_WIKI_LINK) {
-        conflicts.push(['wiki_link', '_text_base_no_emphasis']);
-    }
 }
 
 function addOpenerRules(grammar) {
@@ -334,10 +338,9 @@ function inlineElements($, suffixLink, link, noTilde) {
         ...(common.EXTENSION_STRIKETHROUGH ? [alias($['_strikethrough' + suffixLink], $.strikethrough)] : []),
         ...(noTilde ? [] : [$._strikethrough_open]),
         $._blank_brackets,
-        ...(suffixLink === '_in_image' ? [$._image_description_brackets] : []),
         ...(link ? [
             $.shortcut_link, $.full_reference_link, $.collapsed_reference_link, $.inline_link,
-            ...(suffixLink === '' ? [seq(choice('[', ']'), optional($._last_token_punctuation))] : []),
+            seq(choice('[', ']'), optional($._last_token_punctuation)),
             ...(common.EXTENSION_WIKI_LINK ? [$.wiki_link] : []),
         ] : []),
     );
@@ -387,7 +390,7 @@ function with_context(rule) {
 }
 
 function replace_bracket(rule, $, requiresClose) {
-    if (rule.type === 'STRING' && rule.value === ']') return alias(choice($._close_bracket_no_label, $._close_bracket_with_label, $._close_bracket_unknown_label, $._close_bracket_nested), ']');
+    if (rule.type === 'STRING' && rule.value === ']') return closeBrackets($, PLAIN_OWNERS);
     if (rule.type === 'STRING' && rule.value === '[') return alias(requiresClose ? $._open_bracket : choice($._open_bracket, $._unclosed_open_bracket), '[');
     if (rule.content) return {...rule, content: replace_bracket(rule.content, $, requiresClose)};
     if (rule.members) return {...rule, members: rule.members.map(member => replace_bracket(member, $, requiresClose))};
@@ -405,11 +408,16 @@ function addReferenceHeads(grammar, conflicts) {
     }
     const heads = kind => [`_${kind}_non_blank_no_label`, `_${kind}_no_label`, `_${kind}_non_blank_with_label`, `_${kind}_with_label`];
     for (const suffix of ['', '_no_tilde']) conflicts.push(['_inline_element' + suffix, ...heads('link_text')]);
+    const imageHeads = heads('image_description');
     conflicts.push(
-        ['_text_base_no_emphasis', ...heads('image_description')],
-        ['_text_base_no_emphasis', '_image_description_no_label', '_image_description_with_label'],
+        ['_image_literal', '_image_bang_text', ...imageHeads],
+        ['_image_bang_text', '_image_description_no_label'],
+        ['_image_bang_text', '_image_description_with_label'],
+        ['_image_literal', '_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
+        ...imageHeads.map(head => ['_image_literal', head]),
+    );
+    conflicts.push(
         ['_link_text_non_blank_no_label', '_link_text_non_blank_with_label'],
-        ['_image_description_non_blank_no_label', '_image_description_non_blank_with_label'],
         ['_blank_brackets', '_link_text_no_label'],
         ['_blank_brackets', '_link_text_with_label'],
     );
@@ -420,15 +428,13 @@ function addReferenceHeads(grammar, conflicts) {
 // inline links and full references accept it.
 function referenceHead($, kind, label, variant) {
     const image = kind === 'image_description';
-    const content = alias(image ? $._inline_in_image : $._inline_no_link, $[kind]);
-    const close = variant === 'nested'
-        ? alias($._close_bracket_nested, ']')
-        : alias(choice($['_close_bracket_' + label], $._close_bracket_unknown_label), ']');
+    const content = alias(image ? $._inline : $._inline_no_link, $[kind]);
+    const close = closeBrackets($, image ? IMAGE_OWNERS : PLAIN_OWNERS, variant === 'nested' ? ['nested'] : [label, 'unknown_label']);
     return seq(
-        ...(image ? ['!'] : []),
+        ...(image ? [alias($._image_bang, '!')] : []),
         ...(variant === 'blank'
             ? [alias($._open_bracket_blank, '['), optional(alias($._blank_text, $[kind]))]
-            : ['[', content]),
+            : [image ? imageOpenBracket($) : '[', content]),
         image ? prec(1, close) : close,
     );
 }
