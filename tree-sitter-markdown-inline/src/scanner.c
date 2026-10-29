@@ -319,6 +319,7 @@ static uint8_t opener_modulo(uint8_t opener);
 static void advance_proof_lexer(TSLexer *lexer, bool skip);
 static bool proof_lexer_eof(const TSLexer *lexer);
 static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *proof);
+static bool proof_construct_starts(DelimiterProof *proof, int32_t delimiter);
 static bool read_proof_angle(TSLexer *lexer, DelimiterProof *proof, bool *invalid);
 static ProofStep read_proof_span(TSLexer *lexer, DelimiterProof *proof, int32_t delimiter);
 static ProofAngle opening_angle(int32_t next);
@@ -1095,7 +1096,9 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     if (next == ']' && s->flat_head_depth == s->bracket_depth && s->bracket_depth) return PROOF_SCOPE_END;
     if (next == ']' && s->bracket_depth) return PROOF_UNCERTAIN;
     if (next == '>' && proof->angle) return PROOF_UNCERTAIN;
-    if (next == '`' || next == '$') return proof->angle ? PROOF_UNCERTAIN : read_proof_span(lexer, proof, next);
+    if ((next == '`' || next == '$') && proof_construct_starts(proof, next)) {
+        return proof->angle ? PROOF_UNCERTAIN : read_proof_span(lexer, proof, next);
+    }
     if (next == '*' || next == '_' || (proof->strikethrough && next == '~')) return PROOF_DELIMITER;
     proof->budget--;
     proof->previous = proof->emphasis_previous = next;
@@ -1105,7 +1108,17 @@ static ProofStep advance_proof_text(Scanner *s, TSLexer *lexer, DelimiterProof *
     return PROOF_TEXT;
 }
 
+// A span, raw HTML, or an autolink starts only where the grammar allows one, so none hides the `]` of a link label, which
+// holds only text. Code spans are allowed wherever raw HTML and autolinks are, so their start token stands for all three.
+static bool proof_construct_starts(DelimiterProof *proof, int32_t delimiter) {
+    return proof->scope_symbols[delimiter == '$' ? LATEX_SPAN_START : CODE_SPAN_START];
+}
+
 static bool read_proof_angle(TSLexer *lexer, DelimiterProof *proof, bool *invalid) {
+    if (!proof_construct_starts(proof, '<')) {
+        *invalid = true;
+        return false;
+    }
     ProofLexer *input = (ProofLexer *)lexer;
     unsigned start = input->cursor;
     unsigned remaining = proof->budget;
