@@ -349,8 +349,9 @@ static TokenType image_bracket_closure(const int32_t *text, unsigned length, boo
 static bool encloses_whitespace_in(const int32_t *text, unsigned length);
 static bool span_hides_no_bracket(const int32_t *text, unsigned start, unsigned end, unsigned length, bool eof);
 static bool may_open_destination(const int32_t *rest, unsigned length, bool eof);
+static bool may_follow(const int32_t *text, unsigned length, bool eof, int32_t character);
 static void read_image_head_bracket(ImageHeadScan *scan, const int32_t *rest, unsigned length);
-static TokenType image_head_close(const ImageHeadScan *scan, int32_t next);
+static TokenType image_head_close(const ImageHeadScan *scan, const int32_t *rest, unsigned length, bool eof);
 static bool encloses_only_whitespace(const int32_t *text, unsigned length, TSLexer *lexer);
 static unsigned span_end(const int32_t *text, unsigned length, unsigned start);
 static TokenType following_label(TSLexer *lexer);
@@ -500,7 +501,6 @@ static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_sym
     const char *terminator = NULL;
     uint8_t kind = read_html_special_opener(lexer, &terminator);
     if (!kind) return false;
-    lexer->mark_end(lexer);
     if (terminator && valid_symbols[HTML_SPECIAL] && !(s->unterminated_html & kind)) {
         if (scan_html_terminator(lexer, terminator)) {
             lexer->mark_end(lexer);
@@ -514,11 +514,13 @@ static bool parse_html_special(Scanner *s, TSLexer *lexer, const bool *valid_sym
     return true;
 }
 
-// Reads the opener after `<` and returns its kind, or 0 when there is none. A declaration needs whitespace after its
-// name before a terminator can complete it.
+// Reads the opener after `<`, marks the end of its token, and returns its kind, or 0 when there is none. A declaration
+// needs whitespace after its name before a terminator can complete it. The token ends at punctuation, which the grammar
+// gives a punctuation context, so a declaration's token leaves out its name.
 static uint8_t read_html_special_opener(TSLexer *lexer, const char **terminator) {
     if (lexer->lookahead == '?') {
         lexer->advance(lexer, false);
+        lexer->mark_end(lexer);
         *terminator = "?>";
         return UNTERMINATED_PROCESSING_INSTRUCTION;
     }
@@ -529,10 +531,12 @@ static uint8_t read_html_special_opener(TSLexer *lexer, const char **terminator)
             if (lexer->lookahead != *c) return 0;
             lexer->advance(lexer, false);
         }
+        lexer->mark_end(lexer);
         *terminator = "]]>";
         return UNTERMINATED_CDATA;
     }
     if (lexer->lookahead < 'A' || lexer->lookahead > 'Z') return 0;
+    lexer->mark_end(lexer);
     while (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') lexer->advance(lexer, false);
     if (is_whitespace(lexer->lookahead)) *terminator = ">";
     return UNTERMINATED_DECLARATION;
@@ -909,7 +913,7 @@ static TokenType image_bracket_closure(const int32_t *text, unsigned length, boo
         } else if (character == '[') {
             read_image_head_bracket(&scan, text + i + 1, length - i - 1);
         } else if (character == ']' && !--scan.depth) {
-            return image_head_close(&scan, i + 1 < length ? text[i + 1] : eof ? 0 : -1);
+            return image_head_close(&scan, text + i + 1, length - i - 1, eof);
         } else if (character == ']') {
             scan.destination |= may_open_destination(text + i + 1, length - i - 1, eof);
         }
@@ -936,10 +940,13 @@ static bool span_hides_no_bracket(const int32_t *text, unsigned start, unsigned 
 // rest of the input lacks cannot hide brackets.
 static bool may_open_destination(const int32_t *rest, unsigned length, bool eof) {
     if (!length) return !eof;
-    if (rest[0] != '(') return false;
+    return rest[0] == '(' && may_follow(rest + 1, length - 1, eof, ')');
+}
+
+static bool may_follow(const int32_t *text, unsigned length, bool eof, int32_t character) {
     if (!eof) return true;
-    for (unsigned i = 1; i < length; i++) {
-        if (rest[i] == ')') return true;
+    for (unsigned i = 0; i < length; i++) {
+        if (text[i] == character) return true;
     }
     return false;
 }
@@ -949,10 +956,13 @@ static void read_image_head_bracket(ImageHeadScan *scan, const int32_t *rest, un
     if (scan->depth++ == 1) scan->holds_blank |= encloses_whitespace_in(rest, length);
 }
 
-// `next` follows the head's `]`: 0 at the end of the input, -1 past the text read.
-static TokenType image_head_close(const ImageHeadScan *scan, int32_t next) {
-    if (scan->destination || !scan->holds_blank || next == '(' || next == '[' || next == -1) return OPEN_BRACKET;
-    return LITERAL_OPEN_BRACKET;
+// `rest` follows the head's `]`. A head holding a whitespace-only pair forms an image only with a destination or a
+// label after it, which needs a `)` or `]` of its own.
+static TokenType image_head_close(const ImageHeadScan *scan, const int32_t *rest, unsigned length, bool eof) {
+    if (scan->destination || !scan->holds_blank) return OPEN_BRACKET;
+    if (!length) return eof ? LITERAL_OPEN_BRACKET : OPEN_BRACKET;
+    if (rest[0] != '(' && rest[0] != '[') return LITERAL_OPEN_BRACKET;
+    return may_follow(rest + 1, length - 1, eof, rest[0] == '(' ? ')' : ']') ? OPEN_BRACKET : LITERAL_OPEN_BRACKET;
 }
 
 static bool encloses_whitespace_in(const int32_t *text, unsigned length) {

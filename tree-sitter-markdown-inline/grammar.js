@@ -258,8 +258,7 @@ module.exports = grammar(add_inline_rules({
             $._word,
             common.punctuation_without($, ['[', ']', '*', '_', ...(common.EXTENSION_STRIKETHROUGH ? ['~'] : [])]),
             $._whitespace,
-            '<!--',
-            $._html_special_opener,
+            seq(choice('<!--', $._html_special_opener), optional($._last_token_punctuation)),
         ),
         _text_inline_no_link: $ => choice(
             $._text_base_no_emphasis,
