@@ -19,8 +19,8 @@ digits of an ordered list marker with `'0'` and `'9'` instead of calling `isdigi
 own ABI number (`0x5742000b`) and load only with that fork's runtime, version 15.0.0 or later within 15.x: upstream's tree-sitter
 runtime rejects them. They parse as the parsers in upstream's 0.5.3 packages do, with these exceptions:
 
-- Inline emphasis and strikethrough preserve source punctuation and whitespace across edits, including boundaries
-  after links, code spans, HTML tags, and escapes. Emphasis pairs retain their original delimiter-run lengths and
+- Inline emphasis and strikethrough preserve source punctuation and whitespace, including boundaries after
+  links, code spans, HTML tags, and escapes. Emphasis pairs retain their original delimiter-run lengths and
   flanking, enforcing the CommonMark multiple-of-three restriction. Raw HTML is an atomic `html_tag` token; its
   anonymous punctuation children are no longer emitted. Single and double tilde runs each emit one `strikethrough`
   node; runs of three or more tildes remain literal. Tildes are transparent when determining asterisk/underscore
