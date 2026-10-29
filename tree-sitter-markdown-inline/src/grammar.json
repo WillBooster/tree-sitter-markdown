@@ -3560,12 +3560,34 @@
           "name": "_whitespace"
         },
         {
-          "type": "STRING",
-          "value": "<!--"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_html_special_opener"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "<!--"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "_html_special_opener"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_last_token_punctuation"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
