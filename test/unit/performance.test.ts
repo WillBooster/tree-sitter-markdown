@@ -8,6 +8,8 @@ import { generationInputMtime } from '../helpers/generationInputs.js';
 import { type Grammar, WasmFiles } from '../helpers/grammars.js';
 
 const Root = path.join(import.meta.dirname, '../..');
+// How many times longer the large input of a linear-time check is than its small input.
+const Growth = 10;
 const OpenLines: Record<Grammar, string> = {
   'tree-sitter-markdown': '> - > [a *b\n',
   'tree-sitter-markdown-inline': 'a *b* [c\n',
@@ -36,17 +38,8 @@ for (const [grammar, line] of Object.entries(OpenLines) as [Grammar, string][]) 
     if (grammar === 'tree-sitter-markdown') {
       test('parses alternating blank and padded list lines in linear time', { timeout: 60_000 }, () => {
         for (const padding of ['      ', '\t ']) {
-          const small = `- a\n${`\n${padding}\n`.repeat(1000)}  tail\n`;
-          const large = `- a\n${`\n${padding}\n`.repeat(10_000)}  tail\n`;
-          parseCpuTime(parser, small);
-          parseCpuTime(parser, large);
-          const samples: { smallCpu: number; largeCpu: number }[] = [];
-          for (let run = 0; run < 3; run++) {
-            samples.push({ smallCpu: parseCpuTime(parser, small), largeCpu: parseCpuTime(parser, large) });
-          }
-          const smallFastest = Math.min(...samples.map(({ smallCpu }) => smallCpu));
-          const largeFastest = Math.min(...samples.map(({ largeCpu }) => largeCpu));
-          expect(largeFastest / smallFastest, JSON.stringify({ padding, samples })).toBeLessThan(18);
+          const lines = (count: number): string => `- a\n${`\n${padding}\n`.repeat(count)}  tail\n`;
+          expectLinearGrowth(parser, lines(1000), lines(1000 * Growth));
         }
       });
       for (const delimiter of ['*', '_', '`', '~', '* ']) {
@@ -108,17 +101,25 @@ function expectLinearParsing(
   wrap = (lines: string): string => lines,
   smallCount = 2000
 ): void {
-  const small = wrap(line.repeat(smallCount));
-  const large = wrap(line.repeat(smallCount * 10));
+  expectLinearGrowth(parser, wrap(line.repeat(smallCount)), wrap(line.repeat(smallCount * Growth)));
+}
+
+// The thread CPU time of a parse on CI virtual machines varies up to about twice between runs, and a longer
+// measurement is likelier to include such an inflated period. Each sample therefore parses the small input `Growth`
+// times so that both inputs are measured over the same amount of work; linear parsing keeps the ratio near 1, while
+// quadratic parsing makes it near `Growth`.
+function expectLinearGrowth(parser: Parser, small: string, large: string): void {
   parseCpuTime(parser, large);
   parseCpuTime(parser, large);
-  let smallFastest = Infinity;
-  let largeFastest = Infinity;
-  for (let run = 0; run < 5; run++) {
-    smallFastest = Math.min(smallFastest, parseCpuTime(parser, small));
-    largeFastest = Math.min(largeFastest, parseCpuTime(parser, large));
+  const samples: { smallCpu: number; largeCpu: number }[] = [];
+  for (let run = 0; run < 3; run++) {
+    let smallCpu = 0;
+    for (let repetition = 0; repetition < Growth; repetition++) smallCpu += parseCpuTime(parser, small);
+    samples.push({ smallCpu, largeCpu: parseCpuTime(parser, large) });
   }
-  expect(largeFastest / smallFastest).toBeLessThan(18);
+  const smallFastest = Math.min(...samples.map(({ smallCpu }) => smallCpu));
+  const largeFastest = Math.min(...samples.map(({ largeCpu }) => largeCpu));
+  expect(largeFastest / smallFastest, JSON.stringify(samples)).toBeLessThan(1.8);
 }
 
 function listWithBlankSuffix(depth: number): string {
