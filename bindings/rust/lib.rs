@@ -35,22 +35,6 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_markd
 pub const INLINE_LANGUAGE: LanguageFn =
     unsafe { LanguageFn::from_raw(tree_sitter_markdown_inline) };
 
-/// The syntax highlighting queries for the block grammar.
-pub const HIGHLIGHT_QUERY_BLOCK: &str =
-    include_str!("../../tree-sitter-markdown/queries/highlights.scm");
-
-/// The language injection queries for the block grammar.
-pub const INJECTION_QUERY_BLOCK: &str =
-    include_str!("../../tree-sitter-markdown/queries/injections.scm");
-
-/// The syntax highlighting queries for the inline grammar.
-pub const HIGHLIGHT_QUERY_INLINE: &str =
-    include_str!("../../tree-sitter-markdown-inline/queries/highlights.scm");
-
-/// The language injection queries for the inline grammar.
-pub const INJECTION_QUERY_INLINE: &str =
-    include_str!("../../tree-sitter-markdown-inline/queries/injections.scm");
-
 /// The content of the [`node-types.json`][] file for the block grammar.
 ///
 /// [`node-types.json`]: https://tree-sitter.github.io/tree-sitter/using-parsers/6-static-node-types

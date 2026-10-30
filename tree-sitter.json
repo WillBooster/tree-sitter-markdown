@@ -8,8 +8,6 @@
       "path": "tree-sitter-markdown",
       "external-files": ["common/common.js"],
       "file-types": ["md"],
-      "highlights": "tree-sitter-markdown/queries/highlights.scm",
-      "injections": "tree-sitter-markdown/queries/injections.scm",
       "injection-regex": "^(markdown|md)$"
     },
     {
@@ -18,9 +16,7 @@
       "scope": "text.markdown_inline",
       "path": "tree-sitter-markdown-inline",
       "external-files": ["common/common.js"],
-      "file-types": null,
-      "highlights": "tree-sitter-markdown-inline/queries/highlights.scm",
-      "injections": "tree-sitter-markdown-inline/queries/injections.scm"
+      "file-types": null
     }
   ],
   "metadata": {
