@@ -174,10 +174,11 @@ let mut parser = tree_sitter::Parser::new();
 parser.set_language(&tree_sitter_md::LANGUAGE.into())?;
 ```
 
-The crate keeps the API of upstream's `tree-sitter-md` crate except its query constants (`HIGHLIGHT_QUERY_*` and
-`INJECTION_QUERY_*`): `tree_sitter_md::INLINE_LANGUAGE` is the inline grammar,
+The crate keeps the API of upstream's `tree-sitter-md` crate with two exceptions, described at the end of this
+paragraph: `tree_sitter_md::INLINE_LANGUAGE` is the inline grammar,
 and the `parser` feature adds `MarkdownParser`, which parses a document with both grammars into a `MarkdownTree`.
 The `parser` feature requires runtime version 15.0.0 or later within 15.x, which supports UTF-8 characters split across short input chunks.
+The crate exports no query constants (`HIGHLIGHT_QUERY_*` and `INJECTION_QUERY_*`), and
 `MarkdownCursor::field_name` returns a name that borrows from the tree (`Option<&'tree str>`), since the
 willbooster-tree-sitter runtime returns field names with that lifetime, where upstream's returns `Option<&'static str>`.
 
