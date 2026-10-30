@@ -8,6 +8,11 @@
 [![wbfy](https://img.shields.io/badge/wbfy-21.0.2-1e90ff.svg)](https://github.com/WillBooster/shared/tree/main/packages/wbfy)
 [![crates.io](https://img.shields.io/crates/v/willbooster-tree-sitter-md.svg)](https://crates.io/crates/willbooster-tree-sitter-md)
 
+> [!WARNING]
+> This repository is archived and no longer maintained, because no WillBooster product uses it. The last release,
+> 10.0.0, stays available on npm and crates.io. It ships no queries, and its incremental parsing works as in upstream
+> tree-sitter but was not tested.
+
 Markdown grammars for [tree-sitter](https://github.com/tree-sitter/tree-sitter), forked from
 [tree-sitter-grammars/tree-sitter-markdown](https://github.com/tree-sitter-grammars/tree-sitter-markdown). We are
 grateful to its authors and contributors. This is not an official release of that project.
@@ -70,13 +75,6 @@ leaves in `inline` and `pipe_table_cell` nodes. Both parsers include the extensi
 GitHub Flavored Markdown (task lists, strikethrough, and pipe tables), YAML and TOML metadata blocks, and LaTeX spans.
 Tags and wiki links, which upstream adds only when its parsers are generated with environment variables set, are not
 included, as they are not in upstream's packages.
-
-## Support Scope
-
-This fork maintains only full parsing: valid input yields a correct tree, and invalid input yields `ERROR` or `MISSING`
-nodes without crashing, hanging, or taking more than linear time. Incremental parsing works as in upstream tree-sitter
-but is not tested here, and no queries (highlights, locals, injections, tags) are shipped. Node types, field names, and
-the trees that error recovery produces may change; such changes are released as new major versions.
 
 ## Usage
 
